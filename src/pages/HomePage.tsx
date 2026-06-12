@@ -132,7 +132,7 @@ export function HomePage() {
                 {DIFFICULTIES.map(d => (
                   <button
                     key={d.id}
-                    onClick={() => navigate(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=bundesliga`)}
+                    onClick={() => navigate(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=L1`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >

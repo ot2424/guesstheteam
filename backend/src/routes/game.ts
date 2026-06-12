@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { REAL_MADRID_2223 } from '../data/mockTeams';
 import { HttpError } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/auth';
 import { GameSessionService } from '../services/GameSessionService';
 import { PlayerMatchService } from '../services/PlayerMatchService';
 import { ProgressionService } from '../services/ProgressionService';
+import { TeamSeedService } from '../services/TeamSeedService';
 import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
 
 const startSchema = z.object({
@@ -30,6 +30,7 @@ export function createGameRouter(
   sessionService = new GameSessionService(),
   matchService = new PlayerMatchService(),
   progressionService = new ProgressionService(),
+  teamSeedService = new TeamSeedService(),
 ) {
   const router = Router();
 
@@ -41,7 +42,12 @@ export function createGameRouter(
     const difficulty = playMode === 'ranked'
       ? progressionService.getDifficultyForRank(rank)
       : payload.difficulty ?? 'easy';
-    const session = sessionService.create(req.user?.id ?? 'dev-user', REAL_MADRID_2223, {
+    const team = teamSeedService.selectTeam({
+      playMode,
+      difficulty,
+      leagueId: payload.leagueId,
+    });
+    const session = sessionService.create(req.user?.id ?? 'dev-user', team, {
       playMode,
       matchType,
       difficulty,
@@ -89,7 +95,7 @@ function getSelectionDescriptor(playMode: PlayMode, difficulty: Difficulty, leag
   if (playMode === 'casual' && difficulty === 'easy') {
     return {
       pool: 'fixed-league-modern-top-teams',
-      leagueId: leagueId ?? 'bundesliga',
+      leagueId: leagueId ?? 'L1',
       seasons: { from: 2018, to: 2026 },
     };
   }

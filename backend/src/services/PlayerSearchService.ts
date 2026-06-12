@@ -1,16 +1,17 @@
-import { PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import { PlayerMatchService } from './PlayerMatchService';
+import { TeamSeedService } from './TeamSeedService';
 
 export class PlayerSearchService {
   private matcher = new PlayerMatchService();
+
+  constructor(private teamSeedService = new TeamSeedService()) {}
 
   search(query: string, limit: number) {
     const normalizedQuery = this.matcher.normalize(query);
     if (normalizedQuery.length < 2) return [];
 
-    return PLAYER_SEARCH_POOL
-      .filter((name) => this.matcher.normalize(name).includes(normalizedQuery))
-      .slice(0, limit)
-      .map((name) => ({ name }));
+    return this.teamSeedService
+      .searchPlayers(query, limit)
+      .filter((result) => this.matcher.normalize(result.name).includes(normalizedQuery));
   }
 }
