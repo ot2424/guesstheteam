@@ -1,0 +1,141 @@
+import { useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { AdSlot } from '../components/ui/AdSlot';
+import type { MatchResult } from '../types';
+
+export function ResultPage() {
+  const { state } = useLocation();
+  const navigate = useNavigate();
+  const result = state as MatchResult | null;
+
+  if (!result) {
+    navigate('/');
+    return null;
+  }
+
+  const { teamName, teamLogo, season, solved, total, durationSec, isWin, xpGained, lpChange } = result;
+  const mins = Math.floor(durationSec / 60);
+  const secs = durationSec % 60;
+  const accuracy = Math.round((solved / total) * 100);
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: 'var(--night)' }}>
+      {/* Result card */}
+      <motion.div
+        initial={{ scale: 0.85, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+        className="w-full max-w-sm rounded-2xl border overflow-hidden"
+        style={{
+          background: '#111827',
+          borderColor: isWin ? '#22C55E' : '#EF4444',
+          boxShadow: isWin ? '0 0 40px rgba(34,197,94,0.15)' : '0 0 40px rgba(239,68,68,0.15)',
+        }}
+      >
+        {/* Top banner */}
+        <div
+          className="px-6 py-5 flex flex-col items-center gap-2"
+          style={{ background: isWin ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)' }}
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
+            className="text-5xl"
+          >
+            {isWin ? '🏆' : '😔'}
+          </motion.div>
+          <h1
+            className="bebas text-3xl tracking-widest"
+            style={{ color: isWin ? '#22C55E' : '#EF4444' }}
+          >
+            {isWin ? 'Gewonnen!' : 'Niederlage'}
+          </h1>
+          <div className="flex items-center gap-2">
+            <img
+              src={teamLogo}
+              alt={teamName}
+              className="w-6 h-6 object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+            <span className="text-gray-300 text-sm">{teamName} · {season}</span>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="px-6 py-5 grid grid-cols-3 gap-4 text-center border-b border-gray-800">
+          <div>
+            <div className="bebas text-2xl" style={{ color: isWin ? '#22C55E' : '#9CA3AF' }}>
+              {solved}/{total}
+            </div>
+            <div className="text-xs text-gray-500 mt-0.5">Erraten</div>
+          </div>
+          <div>
+            <div className="bebas text-2xl text-white">{mins}:{secs.toString().padStart(2, '0')}</div>
+            <div className="text-xs text-gray-500 mt-0.5">Zeit</div>
+          </div>
+          <div>
+            <div className="bebas text-2xl text-white">{accuracy}%</div>
+            <div className="text-xs text-gray-500 mt-0.5">Genauigkeit</div>
+          </div>
+        </div>
+
+        {/* Progression changes */}
+        <div className="px-6 py-4 flex justify-around border-b border-gray-800">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className="text-xs text-gray-500">XP</div>
+            <div className="text-green-400 font-semibold text-base">+{xpGained}</div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className="text-xs text-gray-500">LP</div>
+            <div
+              className="font-semibold text-base"
+              style={{ color: lpChange >= 0 ? '#22C55E' : '#EF4444' }}
+            >
+              {lpChange >= 0 ? '+' : ''}{lpChange}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Rewarded ad offer (on loss) */}
+        {!isWin && (
+          <div className="px-6 py-3 border-b border-gray-800">
+            <AdSlot type="rewarded" className="text-xs" />
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="px-6 py-5 flex flex-col gap-3">
+          <button
+            onClick={() => navigate('/play')}
+            className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+            style={{ background: '#22C55E', color: '#0A0E1A' }}
+          >
+            Nochmal spielen
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 rounded-xl font-semibold text-sm border border-gray-700 text-gray-300 hover:bg-gray-800 transition-all"
+          >
+            Zur Startseite
+          </button>
+        </div>
+      </motion.div>
+
+      {/* Leaderboard ad */}
+      <div className="mt-6 w-full max-w-lg">
+        <AdSlot type="leaderboard" />
+      </div>
+    </div>
+  );
+}
