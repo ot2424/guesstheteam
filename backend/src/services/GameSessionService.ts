@@ -12,6 +12,7 @@ export class GameSessionService {
       id: player.id,
       position: player.position,
       nationality: player.nationality,
+      nationality2: player.nationality2,
       nationalityFlag: player.nationalityFlag,
       formationSlot: player.formationSlot,
       career: player.career,

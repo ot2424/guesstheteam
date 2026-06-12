@@ -17,6 +17,7 @@ export interface InternalPlayer {
   name: string;
   position: Position;
   nationality: string;
+  nationality2?: string;
   nationalityFlag: string;
   formationSlot: number;
   career: CareerClub[];
@@ -26,6 +27,7 @@ export interface PublicPlayer {
   id: string;
   position: Position;
   nationality: string;
+  nationality2?: string;
   nationalityFlag: string;
   formationSlot: number;
   career: CareerClub[];

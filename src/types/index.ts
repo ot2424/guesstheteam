@@ -17,6 +17,7 @@ export interface PlayerCard {
   id: string;
   position: Position;
   nationality: string;        // e.g. "Spain"
+  nationality2?: string;      // second nationality, if any
   nationalityFlag: string;    // emoji flag or URL
   formationSlot: number;      // 0–10 (for formation layout)
   career: CareerClub[];
