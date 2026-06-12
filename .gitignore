@@ -14,3 +14,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Local data imports. Keep large upstream datasets out of git.
+data/transfermarkt/
+data/seeds/*.json
+!data/seeds/.gitkeep
