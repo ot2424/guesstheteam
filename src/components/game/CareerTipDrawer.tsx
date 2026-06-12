@@ -6,6 +6,17 @@ interface Props {
   onClose: () => void;
 }
 
+function getClubInitials(name: string) {
+  const parts = name
+    .replace(/\b(FC|CF|SC|SV|VfB|VfL|TSG|RB)\b/g, '')
+    .split(/\s+/)
+    .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
+    .filter(Boolean);
+
+  const source = parts.length > 0 ? parts : name.split(/\s+/);
+  return source.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'FT';
+}
+
 export function CareerTipDrawer({ player, onClose }: Props) {
   return (
     <AnimatePresence>
@@ -83,15 +94,21 @@ export function CareerTipDrawer({ player, onClose }: Props) {
                     </div>
 
                     {/* Club logo */}
-                    <img
-                      src={club.logoUrl}
-                      alt={club.clubName}
-                      className="w-7 h-7 object-contain flex-shrink-0 rounded"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234B5563'/%3E%3C/svg%3E";
-                      }}
-                    />
+                    {club.logoUrl ? (
+                      <img
+                        src={club.logoUrl}
+                        alt={club.clubName}
+                        className="w-7 h-7 object-contain flex-shrink-0 rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234B5563'/%3E%3C/svg%3E";
+                        }}
+                      />
+                    ) : (
+                      <div className="w-7 h-7 rounded bg-gray-800 border border-gray-700 text-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] font-bold">
+                        {getClubInitials(club.clubName)}
+                      </div>
+                    )}
 
                     {/* Name + years */}
                     <div className="flex-1 min-w-0">

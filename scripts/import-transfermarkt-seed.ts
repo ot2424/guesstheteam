@@ -74,6 +74,27 @@ interface Args {
 }
 
 const DEFAULT_COMPETITIONS = ['L1', 'GB1', 'ES1', 'IT1', 'FR1', 'CL'];
+const CLUB_NAME_ALIASES: Record<string, string> = {
+  '3': '1. FC Koeln',
+  '4': '1. FC Nuernberg',
+  '15': 'Bayer Leverkusen',
+  '16': 'Borussia Dortmund',
+  '18': 'Borussia Moenchengladbach',
+  '24': 'Eintracht Frankfurt',
+  '27': 'Bayern Muenchen',
+  '33': 'Schalke 04',
+  '39': 'Mainz 05',
+  '41': 'Hamburger SV',
+  '44': 'Hertha BSC',
+  '60': 'SC Freiburg',
+  '79': 'VfB Stuttgart',
+  '82': 'VfL Wolfsburg',
+  '86': 'Werder Bremen',
+  '89': 'Union Berlin',
+  '167': 'FC Augsburg',
+  '533': 'TSG Hoffenheim',
+  '23826': 'RB Leipzig',
+};
 const POSITION_MAP: Record<string, string> = {
   Goalkeeper: 'GK',
   Defender: 'CB',
@@ -160,7 +181,7 @@ async function readClubs(options: Args) {
 
     clubs.set(clubId, {
       clubId,
-      name: get(row, 'name') || get(row, 'pretty_name') || `Club ${clubId}`,
+      name: getDisplayClubName(clubId, get(row, 'pretty_name') || get(row, 'name') || `Club ${clubId}`),
       competitionId: get(row, 'domestic_competition_id'),
     });
   }
@@ -367,6 +388,28 @@ function inferPosition(index: number) {
   if (index <= 4) return 'CB';
   if (index <= 7) return 'CM';
   return 'ST';
+}
+
+function getDisplayClubName(clubId: string | undefined, name: string) {
+  if (clubId && CLUB_NAME_ALIASES[clubId]) return CLUB_NAME_ALIASES[clubId];
+
+  return name
+    .replace(/^1\.\s*Fussball-\s*und\s*Sportverein\s*/i, '')
+    .replace(/^1\.\s*Fu\u00dfball-\s*und\s*Sportverein\s*/i, '')
+    .replace(/^Sportverein\s+Werder\s+Bremen\s+von\s+1899$/i, 'Werder Bremen')
+    .replace(/^Fussball-Club\s+Bayern\s+Muenchen.*$/i, 'Bayern Muenchen')
+    .replace(/^Fu\u00dfball-Club\s+Bayern\s+M\u00fcnchen.*$/i, 'Bayern Muenchen')
+    .replace(/^Ballspielverein\s+Borussia\s+09\s+Dortmund.*$/i, 'Borussia Dortmund')
+    .replace(/^RasenBallsport\s+Leipzig.*$/i, 'RB Leipzig')
+    .replace(/\s+Football Club$/i, ' FC')
+    .replace(/\s+Futbol Club$/i, ' FC')
+    .replace(/\s+Club de Futbol$/i, ' CF')
+    .replace(/\s+S\.?\s*A\.?\s*D\.?$/i, '')
+    .replace(/\s+a\.?s\.?$/i, '')
+    .replace(/\s+von\s+\d{4}$/i, '')
+    .replace(/\s+\(-\d{4}\)$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 async function* readCsv(filePath: string): AsyncGenerator<Row> {
