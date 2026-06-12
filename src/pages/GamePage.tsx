@@ -7,15 +7,17 @@ import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
 import { AdSlot } from '../components/ui/AdSlot';
 import { finishGame, startGame, submitGuess } from '../lib/api';
-import type { Difficulty, GameMode, GuessState, PlayerCard, Team } from '../types';
+import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
 
 export function GamePage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const mode = ((params.get('mode') ?? 'single') as GameMode) === 'tutorial'
-    ? 'single'
-    : ((params.get('mode') ?? 'single') as GameMode);
+  const legacyMode = params.get('mode');
+  const playMode = (params.get('playMode') ?? 'casual') as PlayMode;
+  const matchType = (params.get('matchType') ?? legacyMode ?? 'single') as MatchType;
   const difficulty = (params.get('difficulty') ?? 'easy') as Difficulty;
+  const rank = (params.get('rank') ?? 'Bronze 3') as Rank;
+  const leagueId = params.get('leagueId') ?? undefined;
 
   const [startedAt] = useState(() => Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -34,7 +36,13 @@ export function GamePage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await startGame({ mode, difficulty });
+        const response = await startGame({
+          playMode,
+          matchType,
+          difficulty,
+          rank,
+          leagueId,
+        });
 
         if (controller.signal.aborted) return;
 
@@ -58,7 +66,7 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, mode]);
+  }, [difficulty, leagueId, matchType, playMode, rank]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
@@ -191,7 +199,7 @@ export function GamePage() {
                   {difficulty === 'easy' ? '🟢' : difficulty === 'medium' ? '🟡' : '🔴'} {difficulty}
                 </span>
                 <span className="px-2 py-1 rounded bg-gray-800">
-                  {mode === 'series' ? '3er-Serie' : 'Einzel'}
+                  {playMode === 'ranked' ? 'Ranked' : 'Freizeit'} · {matchType === 'series' ? '3er-Serie' : 'Einzel'}
                 </span>
               </div>
               <button

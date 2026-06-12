@@ -1,4 +1,4 @@
-import type { Difficulty, GameMode, MatchResult, Team } from '../types';
+import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
@@ -21,6 +21,15 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export interface StartGameResponse {
   sessionId: string;
+  playMode: PlayMode;
+  matchType: MatchType;
+  difficulty: Difficulty;
+  rank: Rank;
+  selection: {
+    pool: string;
+    leagueId?: string;
+    seasons: { from: number; to: number };
+  };
   team: Team;
 }
 
@@ -43,7 +52,13 @@ export interface PlayerSearchResponse {
   results: Array<{ name: string }>;
 }
 
-export function startGame(payload: { mode: GameMode; difficulty: Difficulty }) {
+export function startGame(payload: {
+  playMode: PlayMode;
+  matchType: MatchType;
+  difficulty?: Difficulty;
+  rank?: Rank;
+  leagueId?: string;
+}) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',
     body: JSON.stringify(payload),

@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import type { Difficulty, GameMode, GameSession, PublicPlayer, TeamData } from '../types';
+import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
+import { ProgressionService } from './ProgressionService';
 
 export class GameSessionService {
   private sessions = new Map<string, GameSession>();
+  private progressionService = new ProgressionService();
 
-  create(userId: string, team: TeamData, opts: { mode: GameMode; difficulty: Difficulty }): GameSession {
+  create(userId: string, team: TeamData, opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank }): GameSession {
     const sessionId = randomUUID();
     const publicPlayers: PublicPlayer[] = team.players.map((player) => ({
       id: player.id,
@@ -17,8 +19,10 @@ export class GameSessionService {
     const session: GameSession = {
       sessionId,
       userId,
-      mode: opts.mode,
+      playMode: opts.playMode,
+      matchType: opts.matchType,
       difficulty: opts.difficulty,
+      rank: opts.rank,
       startedAt: Date.now(),
       team: {
         id: team.id,
@@ -71,6 +75,19 @@ export class GameSessionService {
     const total = Object.keys(session.players).length;
     const durationSec = Math.floor((Date.now() - session.startedAt) / 1000);
     const isWin = solved === total;
+    const xpGained = this.progressionService.calcXP({
+      difficulty: session.difficulty,
+      solved,
+      total,
+      durationSec,
+      isWin,
+    });
+    const lpChange = this.progressionService.calcLP({
+      playMode: session.playMode,
+      difficulty: session.difficulty,
+      matchType: session.matchType,
+      isWin,
+    });
 
     return {
       result: {
@@ -80,8 +97,8 @@ export class GameSessionService {
         isWin,
       },
       progression: {
-        xpGained: isWin ? 150 : 30,
-        lpChange: isWin ? 25 : -20,
+        xpGained,
+        lpChange,
         newAchievements: durationSec < 60 && isWin ? ['speed_demon'] : [],
       },
     };

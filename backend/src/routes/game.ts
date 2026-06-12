@@ -5,10 +5,16 @@ import { HttpError } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/auth';
 import { GameSessionService } from '../services/GameSessionService';
 import { PlayerMatchService } from '../services/PlayerMatchService';
+import { ProgressionService } from '../services/ProgressionService';
+import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
 
 const startSchema = z.object({
-  mode: z.enum(['tutorial', 'single', 'series']).default('single'),
-  difficulty: z.enum(['easy', 'medium', 'hard']).default('easy'),
+  playMode: z.enum(['casual', 'ranked']).default('casual'),
+  matchType: z.enum(['single', 'series']).default('single'),
+  difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
+  rank: z.enum(['Bronze 3', 'Bronze 2', 'Bronze 1', 'Silver 3', 'Silver 2', 'Silver 1', 'Gold 3', 'Gold 2', 'Gold 1', 'Platinum 3', 'Platinum 2', 'Platinum 1']).default('Bronze 3'),
+  leagueId: z.string().optional(),
+  mode: z.enum(['tutorial', 'single', 'series']).optional(),
 });
 
 const guessSchema = z.object({
@@ -23,15 +29,32 @@ const finishSchema = z.object({
 export function createGameRouter(
   sessionService = new GameSessionService(),
   matchService = new PlayerMatchService(),
+  progressionService = new ProgressionService(),
 ) {
   const router = Router();
 
   router.post('/start', requireAuth, (req, res) => {
     const payload = startSchema.parse(req.body);
-    const session = sessionService.create(req.user?.id ?? 'dev-user', REAL_MADRID_2223, payload);
+    const matchType = (payload.mode && payload.mode !== 'tutorial' ? payload.mode : payload.matchType) as MatchType;
+    const playMode = payload.playMode as PlayMode;
+    const rank = payload.rank as Rank;
+    const difficulty = playMode === 'ranked'
+      ? progressionService.getDifficultyForRank(rank)
+      : payload.difficulty ?? 'easy';
+    const session = sessionService.create(req.user?.id ?? 'dev-user', REAL_MADRID_2223, {
+      playMode,
+      matchType,
+      difficulty,
+      rank,
+    });
 
     res.status(201).json({
       sessionId: session.sessionId,
+      playMode: session.playMode,
+      matchType: session.matchType,
+      difficulty: session.difficulty,
+      rank: session.rank,
+      selection: getSelectionDescriptor(session.playMode, session.difficulty, payload.leagueId),
       team: session.team,
     });
   });
@@ -60,4 +83,47 @@ export function createGameRouter(
   });
 
   return router;
+}
+
+function getSelectionDescriptor(playMode: PlayMode, difficulty: Difficulty, leagueId?: string) {
+  if (playMode === 'casual' && difficulty === 'easy') {
+    return {
+      pool: 'fixed-league-modern-top-teams',
+      leagueId: leagueId ?? 'bundesliga',
+      seasons: { from: 2018, to: 2026 },
+    };
+  }
+
+  if (playMode === 'casual') {
+    return {
+      pool: 'mixed-european-leagues',
+      seasons: { from: difficulty === 'medium' ? 2010 : 2000, to: 2026 },
+    };
+  }
+
+  if (difficulty === 'easy') {
+    return {
+      pool: 'ranked-modern-elite-clubs',
+      seasons: { from: 2018, to: 2026 },
+    };
+  }
+
+  if (difficulty === 'medium') {
+    return {
+      pool: 'ranked-established-euro-clubs',
+      seasons: { from: 2010, to: 2026 },
+    };
+  }
+
+  if (difficulty === 'hard') {
+    return {
+      pool: 'mixed-leagues-nostalgia',
+      seasons: { from: 2000, to: 2015 },
+    };
+  }
+
+  return {
+    pool: 'mixed-european-leagues',
+    seasons: { from: 2010, to: 2026 },
+  };
 }

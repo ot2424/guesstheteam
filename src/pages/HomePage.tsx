@@ -10,27 +10,38 @@ const DIFFICULTIES = [
     id: 'easy',
     label: 'Leicht',
     icon: '🟢',
-    desc: 'Top-5-Ligen · letzte 3 Saisons · nur Champions-League-Teams',
-    lp: '+25 / -20 LP',
+    desc: 'Feste Liga · moderne Top-Teams · 2018-2026',
+    xp: 'Nur XP',
     color: '#22C55E',
   },
   {
     id: 'medium',
     label: 'Mittel',
     icon: '🟡',
-    desc: 'Top-5-Ligen komplett · letzte 10 Jahre',
-    lp: '+35 / -25 LP',
+    desc: 'Ligen-Mix · etablierte Euro-Clubs · 2010-2026',
+    xp: 'Nur XP',
     color: '#F59E0B',
   },
   {
     id: 'hard',
     label: 'Schwer',
     icon: '🔴',
-    desc: 'Weltweite Ligen · historische Saisons ab 2000',
-    lp: '+50 / -35 LP',
+    desc: 'Ligen-Mix · historische Nostalgie-Teams · 2000-2015',
+    xp: 'Nur XP',
     color: '#EF4444',
   },
 ];
+
+const MATCH_TYPES = [
+  { id: 'single', label: 'Einzel-Match', desc: '1 Team · alle 11 Spieler erraten' },
+  { id: 'series', label: '3er-Match Serie', desc: '3 Teams · mindestens 2 von 3 lösen' },
+] as const;
+
+function getRankedDifficultyLabel(rank: string) {
+  if (rank.startsWith('Bronze')) return 'Leicht';
+  if (rank.startsWith('Silver')) return 'Mittel';
+  return 'Schwer / Nostalgie';
+}
 
 const container = {
   hidden: {},
@@ -111,17 +122,17 @@ export function HomePage() {
             animate="show"
             className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6"
           >
-            {/* Einzel-Match */}
+            {/* Freizeit */}
             <motion.div variants={item} className="rounded-xl border border-gray-800 overflow-hidden" style={{ background: '#111827' }}>
               <div className="px-4 py-3 border-b border-gray-800">
-                <span className="bebas tracking-wider text-white text-lg">Einzel-Match</span>
-                <p className="text-xs text-gray-500 mt-0.5">1 Team · alle 11 Spieler erraten</p>
+                <span className="bebas tracking-wider text-white text-lg">Freizeit-Modus</span>
+                <p className="text-xs text-gray-500 mt-0.5">Solo ohne Rang · XP-Gewinn · kein LP-Verlust</p>
               </div>
               <div className="p-4 flex flex-col gap-2">
                 {DIFFICULTIES.map(d => (
                   <button
                     key={d.id}
-                    onClick={() => navigate(`/play?mode=single&difficulty=${d.id}`)}
+                    onClick={() => navigate(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=bundesliga`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >
@@ -130,33 +141,38 @@ export function HomePage() {
                       <div className="text-sm font-medium text-white">{d.label}</div>
                       <div className="text-xs text-gray-500">{d.desc}</div>
                     </div>
-                    <span className="text-xs tabular-nums" style={{ color: d.color }}>{d.lp}</span>
+                    <span className="text-xs tabular-nums" style={{ color: d.color }}>{d.xp}</span>
                   </button>
                 ))}
               </div>
             </motion.div>
 
-            {/* 3er-Match */}
+            {/* Rangliste */}
             <motion.div variants={item} className="rounded-xl border border-gray-800 overflow-hidden" style={{ background: '#111827' }}>
               <div className="px-4 py-3 border-b border-gray-800 flex items-center gap-2">
-                <span className="bebas tracking-wider text-white text-lg">3er-Match Serie</span>
-                <span className="text-xs px-2 py-0.5 rounded" style={{ background: '#F59E0B20', color: '#F59E0B' }}>mehr LP</span>
+                <span className="bebas tracking-wider text-white text-lg">Solo-Rangliste</span>
+                <span className="text-xs px-2 py-0.5 rounded" style={{ background: '#F59E0B20', color: '#F59E0B' }}>
+                  {getRankedDifficultyLabel(MOCK_USER.rank)}
+                </span>
               </div>
-              <div className="p-4 flex flex-col gap-2">
-                {DIFFICULTIES.map(d => (
+              <div className="p-4 flex flex-col gap-3">
+                <p className="text-xs text-gray-500">
+                  Deine Schwierigkeit wird automatisch aus deinem Rang bestimmt. Siege und Niederlagen veraendern LP und XP.
+                </p>
+                {MATCH_TYPES.map(match => (
                   <button
-                    key={d.id}
-                    onClick={() => navigate(`/play?mode=series&difficulty=${d.id}`)}
+                    key={match.id}
+                    onClick={() => navigate(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(MOCK_USER.rank)}`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >
-                    <span className="text-xl">{d.icon}</span>
+                    <span className="text-xl">{match.id === 'series' ? '3' : '1'}</span>
                     <div className="flex-1">
-                      <div className="text-sm font-medium text-white">{d.label}</div>
-                      <div className="text-xs text-gray-500">Min. 2/3 Teams · {d.desc}</div>
+                      <div className="text-sm font-medium text-white">{match.label}</div>
+                      <div className="text-xs text-gray-500">{match.desc}</div>
                     </div>
-                    <span className="text-xs tabular-nums" style={{ color: d.color }}>
-                      +{parseInt(d.lp) * 1.5 | 0} / {d.lp.split('/')[1]}
+                    <span className="text-xs tabular-nums text-green-400">
+                      {match.id === 'series' ? 'LP x1.5' : '+/- LP'}
                     </span>
                   </button>
                 ))}
