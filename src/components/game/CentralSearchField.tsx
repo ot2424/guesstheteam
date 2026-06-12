@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MOCK_SEARCH_PLAYERS } from '../../data/mockTeams';
-import { normalizeStr } from '../../utils/playerMatching';
+import { searchPlayers } from '../../lib/api';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 interface Props {
@@ -18,17 +17,31 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchSeqRef = useRef(0);
 
   const handleInput = useCallback((val: string) => {
     setInput(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    searchAbortRef.current?.abort();
+
     debounceRef.current = setTimeout(() => {
       if (val.length >= 2) {
-        // Anti-spoiler: only show name, no club/league info
-        const matches = MOCK_SEARCH_PLAYERS
-          .filter(n => normalizeStr(n).includes(normalizeStr(val)))
-          .slice(0, 7);
-        setSuggestions(matches);
+        const controller = new AbortController();
+        const searchSeq = searchSeqRef.current + 1;
+        searchSeqRef.current = searchSeq;
+        searchAbortRef.current = controller;
+
+        void searchPlayers(val, 7, controller.signal)
+          .then((response) => {
+            if (searchSeqRef.current !== searchSeq) return;
+            setSuggestions(response.results.map((result) => result.name));
+          })
+          .catch((error: unknown) => {
+            if (error instanceof DOMException && error.name === 'AbortError') return;
+            if (searchSeqRef.current === searchSeq) setSuggestions([]);
+          });
       } else {
         setSuggestions([]);
       }

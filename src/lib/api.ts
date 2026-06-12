@@ -39,6 +39,10 @@ export interface FinishGameResponse {
   };
 }
 
+export interface PlayerSearchResponse {
+  results: Array<{ name: string }>;
+}
+
 export function startGame(payload: { mode: GameMode; difficulty: Difficulty }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',
@@ -58,4 +62,9 @@ export function finishGame(payload: { sessionId: string }) {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export function searchPlayers(query: string, limit = 7, signal?: AbortSignal) {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  return request<PlayerSearchResponse>(`/players/search?${params.toString()}`, { signal });
 }
