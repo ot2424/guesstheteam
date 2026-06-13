@@ -19,7 +19,7 @@ export function saveUserProfile(user: UserProfile) {
   window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
-export function applyRankedResultOnce(result: {
+export function applyMatchResultOnce(result: {
   resultId: string;
   playMode?: PlayMode;
   matchType?: MatchType;
@@ -28,13 +28,13 @@ export function applyRankedResultOnce(result: {
   lpChange: number;
 }): UserProfile {
   const user = loadUserProfile();
-  if (result.playMode !== 'ranked') return user;
-
   const applied = loadAppliedResultIds();
   if (applied.includes(result.resultId)) return user;
 
   const nextXp = user.xp + result.xpGained;
-  const nextLp = Math.max(0, user.lp + result.lpChange);
+  const nextLp = result.playMode === 'ranked'
+    ? Math.max(0, user.lp + result.lpChange)
+    : user.lp;
   const nextUser: UserProfile = {
     ...user,
     xp: nextXp,
@@ -43,7 +43,9 @@ export function applyRankedResultOnce(result: {
     rank: getRankFromLP(nextLp),
     matchesPlayed: user.matchesPlayed + 1,
     matchesWon: user.matchesWon + (result.isWin ? 1 : 0),
-    winStreak: result.isWin ? user.winStreak + 1 : 0,
+    winStreak: result.playMode === 'ranked'
+      ? (result.isWin ? user.winStreak + 1 : 0)
+      : user.winStreak,
   };
 
   saveUserProfile(nextUser);

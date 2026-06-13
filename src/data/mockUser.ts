@@ -14,6 +14,24 @@ export const RANK_COLORS: Record<string, { text: string; bg: string; border: str
   Platinum: { text: '#22D3EE', bg: '#001A2A', border: '#22D3EE' },
 };
 
+export const RANKED_UNLOCK_LEVEL = 5;
+
+export const LEVEL_UNLOCKS = [
+  {
+    level: RANKED_UNLOCK_LEVEL,
+    title: 'Solo-Rangliste',
+    description: 'LP, Ränge und Siegesserien werden verfügbar.',
+  },
+];
+
+export function isRankedUnlocked(level: number) {
+  return level >= RANKED_UNLOCK_LEVEL;
+}
+
+export function getNextUnlock(level: number) {
+  return LEVEL_UNLOCKS.find((unlock) => unlock.level > level) ?? null;
+}
+
 export function getRankTier(rank: Rank) {
   return rank.split(' ')[0] as keyof typeof RANK_COLORS;
 }

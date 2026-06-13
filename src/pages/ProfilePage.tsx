@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
-import { MOCK_MATCH_HISTORY, BADGES, RANKS, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { MOCK_MATCH_HISTORY, BADGES, RANKS, getNextUnlock, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS, isRankedUnlocked } from '../data/mockUser';
 import { loadUserProfile } from '../lib/localUser';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
@@ -18,6 +18,8 @@ export function ProfilePage() {
   const rank = getRankFromLP(lp);
   const currentRankIndex = RANKS.indexOf(rank);
   const rankProgress = getRankProgress(lp, rank);
+  const nextUnlock = getNextUnlock(user.level);
+  const rankedUnlocked = isRankedUnlocked(user.level);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--night)' }}>
@@ -64,7 +66,7 @@ export function ProfilePage() {
               { label: 'Matches', value: user.matchesPlayed },
               { label: 'Siege', value: user.matchesWon },
               { label: 'Winrate', value: `${winRate}%` },
-              { label: 'Gesamte XP', value: user.xp.toLocaleString() },
+              { label: 'Serie', value: `${user.winStreak}` },
             ].map(({ label, value }) => (
               <motion.div
                 key={label}
@@ -112,8 +114,37 @@ export function ProfilePage() {
               )}
             </div>
             <p className="text-xs text-gray-600">
-              Sieg: +14 bis +18 LP · Streak-Bonus bis +8 LP · Divisionen brauchen mehr LP
+              {rankedUnlocked
+                ? 'Sieg: +14 bis +18 LP · Streak-Bonus bis +8 LP · Divisionen brauchen mehr LP'
+                : 'Rangliste wird mit Level 5 freigeschaltet.'}
             </p>
+          </motion.div>
+
+          {/* Unlock progress */}
+          <motion.div
+            variants={item}
+            initial="hidden"
+            animate="show"
+            transition={{ delay: 0.32 }}
+            className="rounded-xl border border-gray-800 p-5 mb-5"
+            style={{ background: '#111827' }}
+          >
+            <h2 className="bebas text-lg tracking-wider text-white mb-4">Freischaltungen</h2>
+            {nextUnlock ? (
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-800 p-4" style={{ background: '#1F2937' }}>
+                <div>
+                  <div className="text-sm font-semibold text-white">{nextUnlock.title}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">{nextUnlock.description}</div>
+                </div>
+                <div className="text-xs font-semibold text-green-300 whitespace-nowrap">
+                  Level {nextUnlock.level}
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-green-900/50 p-4 text-sm text-green-300" style={{ background: 'rgba(34,197,94,0.08)' }}>
+                Alle aktuellen Freischaltungen aktiv. Neue Inhalte kommen später dazu.
+              </div>
+            )}
           </motion.div>
 
           {/* Badges */}

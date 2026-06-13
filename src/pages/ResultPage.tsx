@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
-import { applyRankedResultOnce, loadUserProfile } from '../lib/localUser';
+import { applyMatchResultOnce, loadUserProfile } from '../lib/localUser';
 import type { MatchResult } from '../types';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
@@ -58,7 +58,7 @@ export function ResultPage() {
       return;
     }
 
-    applyRankedResultOnce({
+    applyMatchResultOnce({
       resultId: resultId ?? `${teamName}-${season}-${durationSec}-${solved}-${lpChange}`,
       playMode,
       matchType,
