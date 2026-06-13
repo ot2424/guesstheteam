@@ -17,6 +17,7 @@ interface PlayerRecord {
   name: string;
   position: string;
   nationality: string;
+  nationality2?: string;
   imageUrl?: string;
 }
 
@@ -46,6 +47,7 @@ interface SeedPlayer {
   name: string;
   position: string;
   nationality: string;
+  nationality2?: string;
   nationalityFlag: string;
   formationSlot: number;
   career: CareerClub[];
@@ -146,6 +148,7 @@ await writeFile(
       name: player.name,
       position: player.position,
       nationality: player.nationality,
+      nationality2: player.nationality2,
     }])).values()],
   }, null, 2)}\n`,
 );
@@ -201,7 +204,7 @@ async function readPlayers(options: Args) {
       playerId,
       name,
       position: get(row, 'sub_position') || get(row, 'position') || 'Unknown',
-      nationality: get(row, 'country_of_citizenship') || get(row, 'country_of_birth') || 'Unknown',
+      ...getNationalities(row),
       imageUrl: get(row, 'image_url'),
     });
   }
@@ -267,9 +270,8 @@ function selectTeams(input: {
   const teams: SeedTeam[] = [];
   const seenTeamSeasons = new Set<string>();
 
-  for (const game of input.games.sort((a, b) => a.date.localeCompare(b.date))) {
+  for (const game of input.games.sort((a, b) => b.date.localeCompare(a.date))) {
     for (const clubId of [game.homeClubId, game.awayClubId]) {
-      if (teams.length >= input.args.limit) return teams;
       const club = input.clubs.get(clubId);
       if (!club) continue;
 
@@ -302,7 +304,7 @@ function selectTeams(input: {
     }
   }
 
-  return teams;
+  return spreadTeamsBySeason(teams, input.args.limit);
 }
 
 function toSeedPlayer(lineupPlayer: LineupPlayer, formationSlot: number, season: number, players: Map<string, PlayerRecord>, club: ClubRecord): SeedPlayer | null {
@@ -316,6 +318,7 @@ function toSeedPlayer(lineupPlayer: LineupPlayer, formationSlot: number, season:
     name: player.name,
     position: mappedPosition,
     nationality: player.nationality,
+    nationality2: player.nationality2,
     nationalityFlag: player.nationality,
     formationSlot,
     career: [{
@@ -388,6 +391,52 @@ function inferPosition(index: number) {
   if (index <= 4) return 'CB';
   if (index <= 7) return 'CM';
   return 'ST';
+}
+
+function spreadTeamsBySeason(teams: SeedTeam[], limit: number) {
+  const bySeason = new Map<string, SeedTeam[]>();
+
+  for (const team of teams) {
+    const seasonTeams = bySeason.get(team.season) ?? [];
+    seasonTeams.push(team);
+    bySeason.set(team.season, seasonTeams);
+  }
+
+  const seasons = [...bySeason.keys()].sort((a, b) => Number(b) - Number(a));
+  const selected: SeedTeam[] = [];
+  let offset = 0;
+
+  while (selected.length < limit) {
+    let added = false;
+
+    for (const season of seasons) {
+      const team = bySeason.get(season)?.[offset];
+      if (!team) continue;
+      selected.push(team);
+      added = true;
+      if (selected.length >= limit) break;
+    }
+
+    if (!added) break;
+    offset += 1;
+  }
+
+  return selected;
+}
+
+function getNationalities(row: Row) {
+  const citizenship = get(row, 'country_of_citizenship');
+  const birthCountry = get(row, 'country_of_birth');
+  const nationality = citizenship || birthCountry || 'Unknown';
+  const nationality2 = birthCountry && birthCountry !== nationality && isUsableCountry(birthCountry)
+    ? birthCountry
+    : undefined;
+
+  return { nationality, nationality2 };
+}
+
+function isUsableCountry(country: string) {
+  return !['CSSR', 'UdSSR', 'Jugoslawien (SFR)', 'East Germany (GDR)', 'Unknown'].includes(country);
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {

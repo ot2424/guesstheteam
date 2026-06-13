@@ -155,6 +155,34 @@ export function GamePage() {
     window.setTimeout(() => setLastResult(null), 700);
   }, [activeTipId, finished, navigate, sessionId, team]);
 
+  const handleSurrender = useCallback(async () => {
+    if (!sessionId || !team || finished) {
+      navigate('/');
+      return;
+    }
+
+    setFinished(true);
+
+    try {
+      const finish = await finishGame({ sessionId });
+      navigate('/result', {
+        state: {
+          teamName: team.name,
+          teamLogo: team.logoUrl,
+          season: team.season,
+          solved: finish.result.solved,
+          total: finish.result.total,
+          durationSec: finish.result.durationSec,
+          isWin: finish.result.isWin,
+          xpGained: finish.progression.xpGained,
+          lpChange: finish.progression.lpChange,
+        },
+      });
+    } catch {
+      navigate('/');
+    }
+  }, [finished, navigate, sessionId, team]);
+
   const handleTipClick = useCallback((playerId: string) => {
     setActiveTipId(prev => prev === playerId ? null : playerId);
   }, []);
@@ -222,7 +250,7 @@ export function GamePage() {
                 </span>
               </div>
               <button
-                onClick={() => navigate('/')}
+                onClick={() => void handleSurrender()}
                 className="text-xs text-gray-600 hover:text-gray-400 px-3 py-1.5 rounded border border-gray-800 hover:border-gray-700 transition-colors"
               >
                 ✕ Aufgeben
