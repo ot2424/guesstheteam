@@ -10,6 +10,7 @@ import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
+import { useAuth } from '../lib/useAuth';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
 import { getPositionLabel } from '../utils/footballDisplay';
 
@@ -28,6 +29,7 @@ function getNumberParam(value: string | null, fallback: number) {
 
 export function GamePage() {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const [params] = useSearchParams();
   const legacyMode = params.get('mode');
   const playMode = (params.get('playMode') ?? 'casual') as PlayMode;
@@ -55,11 +57,16 @@ export function GamePage() {
 
     async function createSession() {
       try {
+        if (!isAuthenticated) {
+          navigate('/login');
+          return;
+        }
+
         setLoading(true);
         setError(null);
         const saved = loadSavedGame();
 
-        if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, winStreak, leagueId })) {
+        if (saved && matchesSavedGame(saved, { userId: user.id, playMode, matchType, difficulty, rank, winStreak, leagueId })) {
           setSessionId(saved.sessionId);
           setTeam(saved.team);
           setGuesses(saved.guesses);
@@ -100,12 +107,13 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, leagueId, matchType, playMode, rank, winStreak]);
+  }, [difficulty, isAuthenticated, leagueId, matchType, navigate, playMode, rank, user.id, winStreak]);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
 
     saveGame({
+      userId: user.id,
       sessionId,
       team,
       guesses,
@@ -118,7 +126,7 @@ export function GamePage() {
       leagueId,
       savedAt: Date.now(),
     });
-  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team, winStreak]);
+  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team, user.id, winStreak]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,

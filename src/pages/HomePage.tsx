@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
@@ -6,7 +5,8 @@ import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
 import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
 import { useAuth } from '../lib/useAuth';
-import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
+import { clearSavedGame, getSavedGameUrl, loadSavedGame } from '../lib/savedGame';
+import heroImage from '../assets/hero.png';
 
 const DIFFICULTIES = [
   {
@@ -57,15 +57,85 @@ const item = {
 
 export function HomePage() {
   const navigate = useNavigate();
-  const [savedGame, setSavedGame] = useState<SavedGame | null>(() => loadSavedGame());
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const rankedUnlocked = isRankedUnlocked(user.level);
+  const storedGame = loadSavedGame();
+  const savedGame = isAuthenticated && storedGame?.userId === user.id ? storedGame : null;
 
   const startNewGame = (url: string) => {
     clearSavedGame();
-    setSavedGame(null);
     navigate(url);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen" style={{ background: 'var(--night)' }}>
+        <main className="max-w-6xl mx-auto px-4 py-10">
+          <section className="grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-8 items-center mb-10">
+            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
+              <div className="text-xs uppercase tracking-[0.3em] text-green-400 mb-3">FootyGuesser</div>
+              <h1 className="bebas text-5xl sm:text-7xl tracking-wider text-white leading-none mb-4">
+                Erkenne die Elf
+              </h1>
+              <p className="text-gray-400 max-w-xl">
+                Errate Fußballer anhand von Position, Nationalität und Karriere-Stationen. Sammle XP, schalte Rangliste frei und kämpfe dich durch moderne und historische Teams.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  onClick={() => navigate('/login')}
+                  className="rounded-lg px-5 py-3 text-sm font-semibold"
+                  style={{ background: '#22C55E', color: '#0A0E1A' }}
+                >
+                  Einloggen oder registrieren
+                </button>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="rounded-lg border border-gray-700 px-5 py-3 text-sm font-semibold text-gray-300 hover:bg-gray-800"
+                >
+                  Fortschritt speichern
+                </button>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.12 }}
+              className="overflow-hidden rounded-xl border border-gray-800"
+              style={{ background: '#111827' }}
+            >
+              <img src={heroImage} alt="FootyGuesser Gameplay" className="h-72 w-full object-cover" />
+              <div className="border-t border-gray-800 p-4">
+                <div className="text-sm font-semibold text-white">Gameplay-Vorschau</div>
+                <div className="text-xs text-gray-500 mt-1">Karriere lesen, Namen suchen, Elf vervollständigen.</div>
+              </div>
+            </motion.div>
+          </section>
+
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { title: 'Hinweise lesen', text: 'Du siehst Position, Nationalitäten und Karriere-Stationen statt Spielernamen.' },
+              { title: 'Spieler erraten', text: 'Autocomplete hilft nur beim Namen. Club-Hints bleiben verborgen.' },
+              { title: 'Aufsteigen', text: 'XP erhöht dein Level. Ab Level 5 öffnet sich die Rangliste.' },
+            ].map((card, index) => (
+              <motion.div
+                key={card.title}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.08 }}
+                className="rounded-xl border border-gray-800 p-5"
+                style={{ background: '#111827' }}
+              >
+                <GameplayMiniPreview index={index} />
+                <div className="mt-4 text-sm font-semibold text-white">{card.title}</div>
+                <p className="mt-1 text-xs text-gray-500 leading-relaxed">{card.text}</p>
+              </motion.div>
+            ))}
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--night)' }}>
@@ -227,6 +297,31 @@ export function HomePage() {
           <AdSlot type="sidebar" />
         </aside>
       </div>
+    </div>
+  );
+}
+
+function GameplayMiniPreview({ index }: { index: number }) {
+  return (
+    <div className="relative h-28 overflow-hidden rounded-lg border border-gray-800" style={{ background: '#0F172A' }}>
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(34,197,94,0.16),transparent_55%)]" />
+      {[0, 1, 2].map((slot) => (
+        <motion.div
+          key={slot}
+          className="absolute h-10 w-8 rounded border border-gray-700 bg-gray-900"
+          style={{ left: `${18 + slot * 25}%`, top: `${26 + (slot % 2) * 24}%` }}
+          animate={{ y: index === slot ? [0, -5, 0] : [0, 3, 0] }}
+          transition={{ duration: 1.6 + slot * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <div className="mx-auto mt-2 h-3 w-5 rounded-sm bg-green-500" />
+          <div className="mx-auto mt-2 h-1 w-4 rounded bg-gray-700" />
+        </motion.div>
+      ))}
+      <motion.div
+        className="absolute bottom-3 left-4 right-4 h-2 rounded bg-gray-800"
+        animate={{ opacity: [0.35, 1, 0.35] }}
+        transition={{ duration: 1.8, repeat: Infinity }}
+      />
     </div>
   );
 }

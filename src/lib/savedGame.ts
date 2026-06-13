@@ -3,6 +3,7 @@ import type { Difficulty, GuessState, MatchType, PlayMode, Rank, Team } from '..
 const STORAGE_KEY = 'footyguesser.activeGame.v1';
 
 export interface SavedGame {
+  userId?: string;
   sessionId: string;
   team: Team;
   guesses: Record<string, GuessState>;
@@ -40,9 +41,10 @@ export function clearSavedGame() {
 
 export function matchesSavedGame(
   saved: SavedGame,
-  opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number; leagueId?: string },
+  opts: { userId: string; playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number; leagueId?: string },
 ) {
-  return saved.playMode === opts.playMode
+  return saved.userId === opts.userId
+    && saved.playMode === opts.playMode
     && saved.matchType === opts.matchType
     && saved.difficulty === opts.difficulty
     && saved.rank === opts.rank
