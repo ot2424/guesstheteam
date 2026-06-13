@@ -5,9 +5,10 @@ interface Props {
   nationality2?: string | null;
   size?: number; // width in px, height follows the 3:4 flag ratio
   className?: string;
+  variant?: 'split' | 'inline';
 }
 
-export function FlagIcon({ nationality, nationality2, size = 24, className = '' }: Props) {
+export function FlagIcon({ nationality, nationality2, size = 24, className = '', variant = 'split' }: Props) {
   const width = size;
   const height = Math.round((size * 3) / 4);
   const code1 = getCountryCode(nationality);
@@ -34,6 +35,28 @@ export function FlagIcon({ nationality, nationality2, size = 24, className = '' 
         className={`inline-block rounded-sm object-cover ${className}`}
         style={{ width, height }}
       />
+    );
+  }
+
+  if (variant === 'inline') {
+    return (
+      <span
+        className={`inline-flex items-center gap-0.5 ${className}`}
+        title={`${nationality} / ${nationality2}`}
+      >
+        <img
+          src={getFlagUrl(nationality, width * 2)}
+          alt={nationality}
+          className="inline-block rounded-sm object-cover"
+          style={{ width, height }}
+        />
+        <img
+          src={getFlagUrl(nationality2, width * 2)}
+          alt={nationality2}
+          className="inline-block rounded-sm object-cover"
+          style={{ width, height }}
+        />
+      </span>
     );
   }
 

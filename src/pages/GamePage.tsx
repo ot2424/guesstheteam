@@ -314,7 +314,13 @@ export function GamePage() {
                 const g = guesses[p.id] as GuessState;
                 return (
                   <div key={p.id} className="flex items-center gap-2">
-                    <FlagIcon nationality={p.nationality} nationality2={p.nationality2} size={18} />
+                    <FlagIcon
+                      nationality={p.nationality}
+                      nationality2={p.nationality2}
+                      size={18}
+                      variant="inline"
+                      className="w-10 flex-shrink-0"
+                    />
                     <span className="text-xs text-gray-600">{getPositionLabel(p.position)}</span>
                     <span className="ml-auto text-xs">
                       {g.solved ? <span className="text-green-400">✓</span> : <span className="text-gray-700">·</span>}
