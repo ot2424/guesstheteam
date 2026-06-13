@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AdSlot } from '../components/ui/AdSlot';
+import { TeamBadge } from '../components/ui/TeamBadge';
 import type { MatchResult } from '../types';
 
 export function ResultPage() {
@@ -52,12 +53,7 @@ export function ResultPage() {
             {isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
           </h1>
           <div className="flex items-center gap-2">
-            <img
-              src={teamLogo}
-              alt={teamName}
-              className="w-6 h-6 object-contain"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
+            <TeamBadge name={teamName} logoUrl={teamLogo} size={24} />
             <span className="text-gray-300 text-sm">{teamName} · {season}</span>
           </div>
         </div>

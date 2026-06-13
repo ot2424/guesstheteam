@@ -7,22 +7,12 @@ import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
 import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
+import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
-import { getLeagueLabel, getPositionLabel } from '../utils/footballDisplay';
+import { getPositionLabel } from '../utils/footballDisplay';
 
 const COMPLETION_THRESHOLD = 0.8;
-
-function getClubInitials(name: string) {
-  const parts = name
-    .replace(/\b(FC|CF|SC|SV|VfB|VfL|TSG|RB)\b/g, '')
-    .split(/\s+/)
-    .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
-    .filter(Boolean);
-
-  const source = parts.length > 0 ? parts : name.split(/\s+/);
-  return source.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'FT';
-}
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -235,20 +225,10 @@ export function GamePage() {
           {/* Game header */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              {team.logoUrl ? (
-                <img
-                  src={team.logoUrl} alt={team.name}
-                  className="w-9 h-9 object-contain"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-md border border-gray-700 bg-gray-900 text-gray-300 flex items-center justify-center text-xs font-bold">
-                  {getClubInitials(team.name)}
-                </div>
-              )}
+              <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
               <div>
                 <h1 className="bebas text-xl tracking-wider text-white leading-none">{team.name}</h1>
-                <div className="text-xs text-gray-500">{team.season} · {getLeagueLabel(team.league)}</div>
+                <div className="text-xs text-gray-500">{team.season}</div>
               </div>
             </div>
             <div className="flex items-center gap-4">
