@@ -4,6 +4,32 @@ import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import type { MatchResult } from '../types';
 
+function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
+  if (isPerfect) {
+    return (
+      <svg viewBox="0 0 48 48" className="w-14 h-14" aria-hidden="true">
+        <path d="M14 8h20v6h7v6c0 7.2-4.9 12.4-11.6 13.4A11.9 11.9 0 0 1 27 36.2V41h7v4H14v-4h7v-4.8a11.9 11.9 0 0 1-2.4-2.8C11.9 32.4 7 27.2 7 20v-6h7V8Zm20 10v8.8A9.3 9.3 0 0 0 37 20v-2h-3Zm-23 0v2a9.3 9.3 0 0 0 3 6.8V18h-3Z" fill="#22C55E" />
+      </svg>
+    );
+  }
+
+  if (isWin) {
+    return (
+      <svg viewBox="0 0 48 48" className="w-14 h-14" aria-hidden="true">
+        <circle cx="24" cy="24" r="19" fill="none" stroke="#22C55E" strokeWidth="4" />
+        <path d="m15 24 6 6 13-15" fill="none" stroke="#22C55E" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 48 48" className="w-14 h-14" aria-hidden="true">
+      <circle cx="24" cy="24" r="19" fill="none" stroke="#EF4444" strokeWidth="4" />
+      <path d="m17 17 14 14M31 17 17 31" fill="none" stroke="#EF4444" strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function ResultPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -42,9 +68,9 @@ export function ResultPage() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
-            className="text-5xl"
+            className="flex items-center justify-center"
           >
-            {isPerfect ? '🏆' : isWin ? '✓' : '😔'}
+            <ResultIcon isPerfect={isPerfect} isWin={isWin} />
           </motion.div>
           <h1
             className="bebas text-3xl tracking-widest"
