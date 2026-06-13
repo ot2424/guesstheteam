@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard } from '../../types';
+import { FlagIcon } from '../ui/FlagIcon';
+import { getPositionLabel } from '../../utils/footballDisplay';
 
 interface Props {
   player: PlayerCard | null;
@@ -55,10 +57,12 @@ export function CareerTipDrawer({ player, onClose }: Props) {
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">{player.nationalityFlag}</span>
+                  <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={26} />
                   <div>
                     <div className="text-xs text-blue-400 font-semibold">💡 Karriere-Tipp</div>
-                    <div className="text-xs text-gray-500">{player.nationality} · {player.position}</div>
+                    <div className="text-xs text-gray-500">
+                      {player.nationality}{player.nationality2 ? ` / ${player.nationality2}` : ''} · {getPositionLabel(player.position)}
+                    </div>
                   </div>
                 </div>
                 <button

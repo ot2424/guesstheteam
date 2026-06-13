@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
+import { FlagIcon } from '../ui/FlagIcon';
+import { getPositionGroup, getPositionLabel, type PositionGroup } from '../../utils/footballDisplay';
 
 interface Props {
   players: PlayerCardType[];
@@ -9,17 +11,17 @@ interface Props {
 }
 
 const GROUPS = [
-  { label: 'Tor',       positions: ['GK'] },
-  { label: 'Abwehr',    positions: ['CB', 'LB', 'RB', 'LWB', 'RWB'] },
-  { label: 'Mittelfeld', positions: ['CDM', 'CM', 'CAM', 'LM', 'RM'] },
-  { label: 'Sturm',     positions: ['LW', 'RW', 'ST', 'CF'] },
+  { label: 'Torwart', role: 'goalkeeper' },
+  { label: 'Verteidiger', role: 'defender' },
+  { label: 'Mittelfeld', role: 'midfielder' },
+  { label: 'Angreifer', role: 'attacker' },
 ];
 
 export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: Props) {
   return (
     <div className="flex flex-col gap-3">
       {GROUPS.map((group) => {
-        const groupPlayers = players.filter(p => group.positions.includes(p.position));
+        const groupPlayers = players.filter(p => getPositionGroup(p.position) === group.role as PositionGroup);
         if (groupPlayers.length === 0) return null;
 
         return (
@@ -57,14 +59,19 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
                     }}
                   >
                     {/* Flag */}
-                    <span className="text-xl flex-shrink-0">{player.nationalityFlag}</span>
+                    <FlagIcon
+                      nationality={player.nationality}
+                      nationality2={player.nationality2}
+                      size={22}
+                      className="flex-shrink-0"
+                    />
 
                     {/* Position badge */}
                     <span
                       className="text-xs bebas px-2 py-0.5 rounded flex-shrink-0"
                       style={{ background: '#374151', color: '#9CA3AF' }}
                     >
-                      {player.position}
+                      {getPositionLabel(player.position)}
                     </span>
 
                     {/* Name or placeholder */}

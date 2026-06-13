@@ -6,8 +6,10 @@ import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
 import { AdSlot } from '../components/ui/AdSlot';
+import { FlagIcon } from '../components/ui/FlagIcon';
 import { finishGame, startGame, submitGuess } from '../lib/api';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
+import { getLeagueLabel, getPositionLabel } from '../utils/footballDisplay';
 
 function getClubInitials(name: string) {
   const parts = name
@@ -206,7 +208,7 @@ export function GamePage() {
               )}
               <div>
                 <h1 className="bebas text-xl tracking-wider text-white leading-none">{team.name}</h1>
-                <div className="text-xs text-gray-500">{team.season} · {team.league}</div>
+                <div className="text-xs text-gray-500">{team.season} · {getLeagueLabel(team.league)}</div>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -282,8 +284,8 @@ export function GamePage() {
                 const g = guesses[p.id] as GuessState;
                 return (
                   <div key={p.id} className="flex items-center gap-2">
-                    <span className="text-sm">{p.nationalityFlag}</span>
-                    <span className="text-xs text-gray-600">{p.position}</span>
+                    <FlagIcon nationality={p.nationality} nationality2={p.nationality2} size={18} />
+                    <span className="text-xs text-gray-600">{getPositionLabel(p.position)}</span>
                     <span className="ml-auto text-xs">
                       {g.solved ? <span className="text-green-400">✓</span> : <span className="text-gray-700">·</span>}
                     </span>

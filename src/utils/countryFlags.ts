@@ -98,12 +98,19 @@ const COUNTRY_CODES: Record<string, string> = {
 
 export const FLAG_CDN_BASE = 'https://flagcdn.com';
 
+// flagcdn.com only serves these fixed raster widths
+const AVAILABLE_WIDTHS = [20, 40, 80, 160, 320, 640, 1280, 2560];
+
 export function getCountryCode(nationality: string | undefined | null): string | undefined {
   if (!nationality) return undefined;
   return COUNTRY_CODES[nationality.trim()];
 }
 
+function nearestAvailableWidth(width: number): number {
+  return AVAILABLE_WIDTHS.find((available) => available >= width) ?? AVAILABLE_WIDTHS[AVAILABLE_WIDTHS.length - 1];
+}
+
 export function getFlagUrl(nationality: string | undefined | null, width = 80): string | undefined {
   const code = getCountryCode(nationality);
-  return code ? `${FLAG_CDN_BASE}/w${width}/${code}.png` : undefined;
+  return code ? `${FLAG_CDN_BASE}/w${nearestAvailableWidth(width)}/${code}.png` : undefined;
 }

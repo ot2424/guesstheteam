@@ -1,6 +1,6 @@
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
-import { FORMATIONS } from '../../data/mockTeams';
 import { PlayerCard } from './PlayerCard';
+import { getPositionGroup, type PositionGroup } from '../../utils/footballDisplay';
 
 interface Props {
   players: PlayerCardType[];
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export function FormationGrid({ players, guesses, formation, onTipClick, activeTipId }: Props) {
-  const formationData = FORMATIONS[formation] ?? FORMATIONS['4-3-3'];
+  const cards = getRoleLayout(players);
 
   return (
     <div
@@ -41,22 +41,20 @@ export function FormationGrid({ players, guesses, formation, onTipClick, activeT
 
       {/* Cards */}
       <div className="relative w-full" style={{ minHeight: '400px' }}>
-        {players.map((player) => {
-          const slot  = formationData.slots.find(s => s.slot === player.formationSlot);
-          if (!slot) return null;
+        {cards.map(({ player, x, y }, index) => {
           const guess = guesses[player.id] ?? { playerId: player.id, solved: false, attempts: 0, revealed: false };
 
           return (
             <div
               key={player.id}
               className="absolute"
-              style={{ left: `calc(${slot.x}% - 36px)`, top: `calc(${slot.y}% - 48px)` }}
+              style={{ left: `calc(${x}% - 36px)`, top: `calc(${y}% - 48px)` }}
             >
               <PlayerCard
                 player={player}
                 guess={guess}
                 onTipClick={onTipClick}
-                index={player.formationSlot}
+                index={index}
                 isActiveTip={activeTipId === player.id}
               />
             </div>
@@ -70,4 +68,26 @@ export function FormationGrid({ players, guesses, formation, onTipClick, activeT
       </div>
     </div>
   );
+}
+
+const ROW_Y: Record<PositionGroup, number> = {
+  goalkeeper: 88,
+  defender: 70,
+  midfielder: 48,
+  attacker: 24,
+};
+
+const ROLE_ORDER: PositionGroup[] = ['goalkeeper', 'defender', 'midfielder', 'attacker'];
+
+function getRoleLayout(players: PlayerCardType[]) {
+  return ROLE_ORDER.flatMap((role) => {
+    const rowPlayers = players.filter((player) => getPositionGroup(player.position) === role);
+    const spacing = 70 / Math.max(rowPlayers.length, 1);
+
+    return rowPlayers.map((player, index) => ({
+      player,
+      x: 15 + spacing / 2 + spacing * index,
+      y: ROW_Y[role],
+    }));
+  });
 }

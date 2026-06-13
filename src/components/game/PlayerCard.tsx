@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
+import { FlagIcon } from '../ui/FlagIcon';
+import { getPositionGroup, getPositionLabel } from '../../utils/footballDisplay';
 
 interface Props {
   player: PlayerCardType;
@@ -10,15 +12,15 @@ interface Props {
 }
 
 const POS_COLORS: Record<string, string> = {
-  GK:  '#F59E0B',
-  CB:  '#3B82F6', LB: '#3B82F6', RB: '#3B82F6',
-  CDM: '#8B5CF6', CM: '#8B5CF6', CAM: '#8B5CF6',
-  LW:  '#22C55E', RW: '#22C55E',
-  ST:  '#EF4444', CF: '#EF4444',
+  goalkeeper: '#F59E0B',
+  defender: '#3B82F6',
+  midfielder: '#8B5CF6',
+  attacker: '#EF4444',
 };
 
 export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Props) {
-  const posColor = POS_COLORS[player.position] ?? '#9CA3AF';
+  const positionGroup = getPositionGroup(player.position);
+  const posColor = POS_COLORS[positionGroup] ?? '#9CA3AF';
   const isSolved  = guess.solved;
   const displayName = guess.guessedName ?? player.name;
 
@@ -64,7 +66,7 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
             className="absolute top-1.5 left-1/2 -translate-x-1/2 bebas text-[10px] px-1.5 py-0.5 rounded"
             style={{ background: posColor + '25', color: posColor, border: `1px solid ${posColor}40` }}
           >
-            {player.position}
+            {getPositionLabel(player.position)}
           </div>
 
           {/* Solved: show name */}
@@ -77,7 +79,7 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
                 transition={{ duration: 0.4 }}
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 pt-5"
               >
-                <span className="text-lg">{player.nationalityFlag}</span>
+                <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={22} />
                 <span className="text-green-300 text-[9px] font-semibold text-center leading-tight px-0.5">
                   {displayName}
                 </span>
@@ -88,7 +90,7 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
                 key="unsolved"
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pt-4"
               >
-                <span className="text-2xl">{player.nationalityFlag}</span>
+                <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={28} />
                 {!isSolved && (
                   <span className="text-gray-600 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">
                     💡 Tipp
