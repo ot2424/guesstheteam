@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
-import { applyMatchResultOnce, loadUserProfile } from '../lib/localUser';
+import { useAuth } from '../lib/useAuth';
+import { loadUserProfile } from '../lib/localUser';
 import type { MatchResult } from '../types';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
@@ -35,6 +36,7 @@ function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean 
 export function ResultPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const { applyMatchResult } = useAuth();
   const result = state as MatchResult | null;
   const safeResult = result ?? {
     teamName: '',
@@ -58,7 +60,7 @@ export function ResultPage() {
       return;
     }
 
-    applyMatchResultOnce({
+    void applyMatchResult({
       resultId: resultId ?? `${teamName}-${season}-${durationSec}-${solved}-${lpChange}`,
       playMode,
       matchType,
@@ -66,7 +68,7 @@ export function ResultPage() {
       xpGained,
       lpChange,
     });
-  }, [durationSec, isWin, lpChange, matchType, navigate, playMode, result, resultId, season, solved, teamName, xpGained]);
+  }, [applyMatchResult, durationSec, isWin, lpChange, matchType, navigate, playMode, result, resultId, season, solved, teamName, xpGained]);
 
   if (!result) return null;
 

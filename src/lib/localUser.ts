@@ -31,11 +31,23 @@ export function applyMatchResultOnce(result: {
   const applied = loadAppliedResultIds();
   if (applied.includes(result.resultId)) return user;
 
+  const nextUser = applyMatchProgress(user, result);
+  saveUserProfile(nextUser);
+  saveAppliedResultIds([...applied, result.resultId].slice(-50));
+  return nextUser;
+}
+
+export function applyMatchProgress(user: UserProfile, result: {
+  playMode?: PlayMode;
+  isWin: boolean;
+  xpGained: number;
+  lpChange: number;
+}): UserProfile {
   const nextXp = user.xp + result.xpGained;
   const nextLp = result.playMode === 'ranked'
     ? Math.max(0, user.lp + result.lpChange)
     : user.lp;
-  const nextUser: UserProfile = {
+  return {
     ...user,
     xp: nextXp,
     level: getLevelFromXP(nextXp),
@@ -47,10 +59,16 @@ export function applyMatchResultOnce(result: {
       ? (result.isWin ? user.winStreak + 1 : 0)
       : user.winStreak,
   };
+}
 
-  saveUserProfile(nextUser);
-  saveAppliedResultIds([...applied, result.resultId].slice(-50));
-  return nextUser;
+export function hasAppliedResult(resultId: string) {
+  return loadAppliedResultIds().includes(resultId);
+}
+
+export function markResultApplied(resultId: string) {
+  const applied = loadAppliedResultIds();
+  if (applied.includes(resultId)) return;
+  saveAppliedResultIds([...applied, resultId].slice(-50));
 }
 
 function loadAppliedResultIds(): string[] {

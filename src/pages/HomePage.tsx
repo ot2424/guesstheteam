@@ -5,7 +5,7 @@ import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
 import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
-import { loadUserProfile } from '../lib/localUser';
+import { useAuth } from '../lib/useAuth';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
 
 const DIFFICULTIES = [
@@ -58,7 +58,7 @@ const item = {
 export function HomePage() {
   const navigate = useNavigate();
   const [savedGame, setSavedGame] = useState<SavedGame | null>(() => loadSavedGame());
-  const [user] = useState(() => loadUserProfile());
+  const { user } = useAuth();
   const rankedUnlocked = isRankedUnlocked(user.level);
 
   const startNewGame = (url: string) => {

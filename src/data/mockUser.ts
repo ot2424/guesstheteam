@@ -83,6 +83,9 @@ export function getRankFromLP(lp: number): Rank {
 export const MOCK_USER: UserProfile = {
   id: 'user-1',
   username: 'FootballFan99',
+  firstName: 'Demo',
+  lastName: 'Player',
+  email: 'demo@footyguesser.local',
   xp: 1340,
   level: 3,
   lp: 610,

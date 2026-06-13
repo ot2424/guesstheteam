@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../ui/RankBadge';
-import { loadUserProfile } from '../../lib/localUser';
+import { useAuth } from '../../lib/useAuth';
 
 const NAV_LINKS = [
   { to: '/',        label: 'Home'    },
@@ -11,7 +11,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const { pathname } = useLocation();
-  const user = loadUserProfile();
+  const { user, isAuthenticated, signOut } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-800 bg-[#0A0E1A]/90 backdrop-blur-sm">
@@ -56,6 +56,18 @@ export function Navbar() {
             </div>
             <span className="text-sm text-gray-300 hidden sm:block">{user.username}</span>
           </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={() => void signOut()}
+              className="hidden sm:block rounded border border-gray-700 px-2 py-1 text-xs text-gray-400 hover:text-gray-200"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="rounded border border-green-800 px-2 py-1 text-xs text-green-300 hover:border-green-600">
+              Login
+            </Link>
+          )}
         </div>
       </div>
     </nav>

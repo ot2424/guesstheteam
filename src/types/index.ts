@@ -68,6 +68,9 @@ export interface GameSession {
 export interface UserProfile {
   id: string;
   username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   avatarUrl?: string;
   xp: number;
   level: number;

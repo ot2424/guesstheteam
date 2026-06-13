@@ -1,12 +1,15 @@
 import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
+import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getAccessToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
   });
@@ -17,6 +20,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function getAccessToken() {
+  if (!supabase) return null;
+
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
 }
 
 export interface StartGameResponse {

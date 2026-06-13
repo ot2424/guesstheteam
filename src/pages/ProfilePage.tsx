@@ -3,13 +3,13 @@ import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
 import { MOCK_MATCH_HISTORY, BADGES, RANKS, getNextUnlock, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS, isRankedUnlocked } from '../data/mockUser';
-import { loadUserProfile } from '../lib/localUser';
+import { useAuth } from '../lib/useAuth';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 export function ProfilePage() {
-  const user = loadUserProfile();
+  const { user, isAuthenticated } = useAuth();
   const winRate = user.matchesPlayed > 0
     ? Math.round((user.matchesWon / user.matchesPlayed) * 100)
     : 0;
@@ -45,6 +45,7 @@ export function ProfilePage() {
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <RankBadge rank={rank} size="md" />
                 <span className="text-xs text-gray-500">Level {user.level}</span>
+                <span className="text-xs text-gray-600">{isAuthenticated ? 'Gespeichert' : 'Lokal'}</span>
                 {user.winStreak >= 3 && (
                   <span className="text-xs text-orange-400">🔥 {user.winStreak}er-Serie</span>
                 )}
