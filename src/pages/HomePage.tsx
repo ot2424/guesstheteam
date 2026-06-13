@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
 import { MOCK_USER } from '../data/mockUser';
+import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
 
 const DIFFICULTIES = [
   {
@@ -54,6 +56,13 @@ const item = {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const [savedGame, setSavedGame] = useState<SavedGame | null>(() => loadSavedGame());
+
+  const startNewGame = (url: string) => {
+    clearSavedGame();
+    setSavedGame(null);
+    navigate(url);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--night)' }}>
@@ -115,6 +124,26 @@ export function HomePage() {
             <span className="text-gray-600 group-hover:text-gray-400 transition-colors">→</span>
           </motion.button>
 
+          {savedGame && (
+            <motion.button
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              onClick={() => navigate(getSavedGameUrl(savedGame))}
+              className="w-full mb-4 flex items-center gap-4 rounded-xl border border-green-700 p-4 hover:border-green-500 transition-all group"
+              style={{ background: 'rgba(34,197,94,0.08)' }}
+            >
+              <span className="text-2xl">▶</span>
+              <div className="text-left flex-1">
+                <div className="text-green-300 font-semibold">Spiel fortsetzen</div>
+                <div className="text-xs text-gray-500">
+                  {savedGame.team.name} · {savedGame.team.season} · {Object.values(savedGame.guesses).filter(guess => guess.solved).length}/{savedGame.team.players.length}
+                </div>
+              </div>
+              <span className="text-gray-600 group-hover:text-gray-400 transition-colors">→</span>
+            </motion.button>
+          )}
+
           {/* Game modes */}
           <motion.div
             variants={container}
@@ -132,7 +161,7 @@ export function HomePage() {
                 {DIFFICULTIES.map(d => (
                   <button
                     key={d.id}
-                    onClick={() => navigate(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=L1`)}
+                    onClick={() => startNewGame(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=L1`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >
@@ -162,7 +191,7 @@ export function HomePage() {
                 {MATCH_TYPES.map(match => (
                   <button
                     key={match.id}
-                    onClick={() => navigate(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(MOCK_USER.rank)}`)}
+                    onClick={() => startNewGame(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(MOCK_USER.rank)}`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >

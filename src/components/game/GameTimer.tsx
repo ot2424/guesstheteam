@@ -7,7 +7,7 @@ interface Props {
 }
 
 export function GameTimer({ startedAt, active, onTick }: Props) {
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(() => Math.max(0, Math.floor((Date.now() - startedAt) / 1000)));
 
   useEffect(() => {
     if (!active) return;

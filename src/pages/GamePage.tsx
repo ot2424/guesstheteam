@@ -9,6 +9,7 @@ import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
+import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
 import { getPositionLabel } from '../utils/footballDisplay';
 
@@ -24,7 +25,7 @@ export function GamePage() {
   const rank = (params.get('rank') ?? 'Bronze 3') as Rank;
   const leagueId = params.get('leagueId') ?? undefined;
 
-  const [startedAt] = useState(() => Date.now());
+  const [startedAt, setStartedAt] = useState(() => Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
   const [finished, setFinished] = useState(false);
@@ -42,6 +43,16 @@ export function GamePage() {
       try {
         setLoading(true);
         setError(null);
+        const saved = loadSavedGame();
+
+        if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, leagueId })) {
+          setSessionId(saved.sessionId);
+          setTeam(saved.team);
+          setGuesses(saved.guesses);
+          setStartedAt(saved.startedAt);
+          return;
+        }
+
         const response = await startGame({
           playMode,
           matchType,
@@ -52,8 +63,10 @@ export function GamePage() {
 
         if (controller.signal.aborted) return;
 
+        const nextStartedAt = Date.now();
         setSessionId(response.sessionId);
         setTeam(response.team);
+        setStartedAt(nextStartedAt);
         setGuesses(Object.fromEntries(
           response.team.players.map((player) => [
             player.id,
@@ -74,6 +87,23 @@ export function GamePage() {
     return () => controller.abort();
   }, [difficulty, leagueId, matchType, playMode, rank]);
 
+  useEffect(() => {
+    if (!sessionId || !team || finished || loading) return;
+
+    saveGame({
+      sessionId,
+      team,
+      guesses,
+      startedAt,
+      playMode,
+      matchType,
+      difficulty,
+      rank,
+      leagueId,
+      savedAt: Date.now(),
+    });
+  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team]);
+
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
     [guesses]
@@ -89,6 +119,7 @@ export function GamePage() {
     : null;
 
   const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
+    clearSavedGame();
     navigate('/result', {
       state: {
         teamName: currentTeam.name,
@@ -148,6 +179,7 @@ export function GamePage() {
     }
     } catch (err) {
       setLastResult('wrong');
+      if (err instanceof Error && err.message.includes('Session not found')) clearSavedGame();
       setError(err instanceof Error ? err.message : 'Antwort konnte nicht geprüft werden.');
     }
 
@@ -232,7 +264,7 @@ export function GamePage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <GameTimer startedAt={startedAt} active={!finished} />
+              <GameTimer key={startedAt} startedAt={startedAt} active={!finished} />
               <div className="flex gap-2 text-xs text-gray-500">
                 <span className="px-2 py-1 rounded bg-gray-800 capitalize">
                   {difficulty === 'easy' ? '🟢' : difficulty === 'medium' ? '🟡' : '🔴'} {difficulty}
