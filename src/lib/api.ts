@@ -40,7 +40,7 @@ export interface GuessResponse {
 }
 
 export interface FinishGameResponse {
-  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin'>;
+  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio'>;
   progression: {
     xpGained: number;
     lpChange: number;
@@ -72,7 +72,7 @@ export function submitGuess(payload: { sessionId: string; input: string }) {
   });
 }
 
-export function finishGame(payload: { sessionId: string }) {
+export function finishGame(payload: { sessionId: string; reason?: 'complete' | 'surrender' }) {
   return request<FinishGameResponse>('/game/finish', {
     method: 'POST',
     body: JSON.stringify(payload),

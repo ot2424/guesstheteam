@@ -13,7 +13,7 @@ export function ResultPage() {
     return null;
   }
 
-  const { teamName, teamLogo, season, solved, total, durationSec, isWin, xpGained, lpChange } = result;
+  const { teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = result;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
   const accuracy = Math.round((solved / total) * 100);
@@ -43,13 +43,13 @@ export function ResultPage() {
             transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
             className="text-5xl"
           >
-            {isWin ? '🏆' : '😔'}
+            {isPerfect ? '🏆' : isWin ? '✓' : '😔'}
           </motion.div>
           <h1
             className="bebas text-3xl tracking-widest"
             style={{ color: isWin ? '#22C55E' : '#EF4444' }}
           >
-            {isWin ? 'Gewonnen!' : 'Niederlage'}
+            {isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
           </h1>
           <div className="flex items-center gap-2">
             <img
@@ -79,6 +79,14 @@ export function ResultPage() {
             <div className="text-xs text-gray-500 mt-0.5">Genauigkeit</div>
           </div>
         </div>
+
+        {isWin && (
+          <div className="px-6 py-3 border-b border-gray-800 text-center">
+            <div className="text-xs font-semibold text-green-300">
+              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
+            </div>
+          </div>
+        )}
 
         {/* Progression changes */}
         <div className="px-6 py-4 flex justify-around border-b border-gray-800">

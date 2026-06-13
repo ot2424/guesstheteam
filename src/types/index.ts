@@ -87,6 +87,8 @@ export interface MatchResult {
   total: number;
   durationSec: number;
   isWin: boolean;
+  isPerfect?: boolean;
+  completionRatio?: number;
   xpGained: number;
   lpChange: number;
 }

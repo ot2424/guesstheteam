@@ -11,6 +11,8 @@ import { finishGame, startGame, submitGuess } from '../lib/api';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
 import { getLeagueLabel, getPositionLabel } from '../utils/footballDisplay';
 
+const COMPLETION_THRESHOLD = 0.8;
+
 function getClubInitials(name: string) {
   const parts = name
     .replace(/\b(FC|CF|SC|SV|VfB|VfL|TSG|RB)\b/g, '')
@@ -41,6 +43,7 @@ export function GamePage() {
   const [guesses, setGuesses] = useState<Record<string, GuessState>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showSurrenderModal, setShowSurrenderModal] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -86,11 +89,32 @@ export function GamePage() {
     [guesses]
   );
   const total = team?.players.length ?? 0;
+  const completionRatio = total > 0 ? solved / total : 0;
+  const canCompleteLevel = completionRatio >= COMPLETION_THRESHOLD && solved < total && !finished;
+  const rankedLossText = difficulty === 'easy' ? '-10 LP' : difficulty === 'medium' ? '-15 LP' : '-20 LP';
 
   // Active tip player object
   const activeTipPlayer: PlayerCard | null = activeTipId
     ? (team?.players.find(p => p.id === activeTipId) ?? null)
     : null;
+
+  const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
+    navigate('/result', {
+      state: {
+        teamName: currentTeam.name,
+        teamLogo: currentTeam.logoUrl,
+        season: currentTeam.season,
+        solved: finish.result.solved,
+        total: finish.result.total,
+        durationSec: finish.result.durationSec,
+        isWin: finish.result.isWin,
+        isPerfect: finish.result.isPerfect,
+        completionRatio: finish.result.completionRatio,
+        xpGained: finish.progression.xpGained,
+        lpChange: finish.progression.lpChange,
+      },
+    });
+  }, [navigate]);
 
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {
@@ -118,21 +142,7 @@ export function GamePage() {
         if (allSolved) {
           setFinished(true);
           window.setTimeout(() => {
-            void finishGame({ sessionId }).then((finish) => {
-              navigate('/result', {
-                state: {
-                  teamName: team.name,
-                  teamLogo: team.logoUrl,
-                  season: team.season,
-                  solved: finish.result.solved,
-                  total: finish.result.total,
-                  durationSec: finish.result.durationSec,
-                  isWin: finish.result.isWin,
-                  xpGained: finish.progression.xpGained,
-                  lpChange: finish.progression.lpChange,
-                }
-              });
-            });
+            void finishGame({ sessionId, reason: 'complete' }).then((finish) => goToResult(finish, team));
           }, 900);
         }
         return next;
@@ -153,7 +163,21 @@ export function GamePage() {
 
     // Reset lastResult after flash
     window.setTimeout(() => setLastResult(null), 700);
-  }, [activeTipId, finished, navigate, sessionId, team]);
+  }, [activeTipId, finished, goToResult, sessionId, team]);
+
+  const handleCompleteLevel = useCallback(async () => {
+    if (!sessionId || !team || finished || !canCompleteLevel) return;
+
+    setFinished(true);
+
+    try {
+      const finish = await finishGame({ sessionId, reason: 'complete' });
+      goToResult(finish, team);
+    } catch (err) {
+      setFinished(false);
+      setError(err instanceof Error ? err.message : 'Level konnte nicht abgeschlossen werden.');
+    }
+  }, [canCompleteLevel, finished, goToResult, sessionId, team]);
 
   const handleSurrender = useCallback(async () => {
     if (!sessionId || !team || finished) {
@@ -164,24 +188,12 @@ export function GamePage() {
     setFinished(true);
 
     try {
-      const finish = await finishGame({ sessionId });
-      navigate('/result', {
-        state: {
-          teamName: team.name,
-          teamLogo: team.logoUrl,
-          season: team.season,
-          solved: finish.result.solved,
-          total: finish.result.total,
-          durationSec: finish.result.durationSec,
-          isWin: finish.result.isWin,
-          xpGained: finish.progression.xpGained,
-          lpChange: finish.progression.lpChange,
-        },
-      });
+      const finish = await finishGame({ sessionId, reason: 'surrender' });
+      goToResult(finish, team);
     } catch {
       navigate('/');
     }
-  }, [finished, navigate, sessionId, team]);
+  }, [finished, goToResult, navigate, sessionId, team]);
 
   const handleTipClick = useCallback((playerId: string) => {
     setActiveTipId(prev => prev === playerId ? null : playerId);
@@ -250,7 +262,7 @@ export function GamePage() {
                 </span>
               </div>
               <button
-                onClick={() => void handleSurrender()}
+                onClick={() => setShowSurrenderModal(true)}
                 className="text-xs text-gray-600 hover:text-gray-400 px-3 py-1.5 rounded border border-gray-800 hover:border-gray-700 transition-colors"
               >
                 ✕ Aufgeben
@@ -268,6 +280,16 @@ export function GamePage() {
               disabled={finished}
               lastResult={lastResult}
             />
+            {canCompleteLevel && (
+              <div className="mt-2 flex justify-center">
+                <button
+                  onClick={() => void handleCompleteLevel()}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold border border-green-500/40 bg-green-500/10 text-green-300 hover:bg-green-500/15 transition-colors"
+                >
+                  Level abschließen · {Math.round(completionRatio * 100)}%
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ─── Formation (desktop) / List (mobile) ─── */}
@@ -333,6 +355,38 @@ export function GamePage() {
           onClose={() => setActiveTipId(null)}
         />
       </div>
+
+      {showSurrenderModal && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.62)' }}>
+          <div className="w-full max-w-sm rounded-xl border border-gray-700 p-5" style={{ background: '#111827' }}>
+            <div className="bebas text-2xl tracking-wider text-white">Wirklich aufgeben?</div>
+            <p className="mt-2 text-sm text-gray-400">
+              Dein aktueller Fortschritt wird beendet.
+              {playMode === 'ranked'
+                ? ` Im Ranked-Modus verlierst du dadurch ${rankedLossText}.`
+                : ' Im Freizeit-Modus verlierst du keine LP.'}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setShowSurrenderModal(false)}
+                className="flex-1 rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-300 hover:bg-gray-800 transition-colors"
+              >
+                Weiterspielen
+              </button>
+              <button
+                onClick={() => {
+                  setShowSurrenderModal(false);
+                  void handleSurrender();
+                }}
+                className="flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                style={{ background: '#DC2626' }}
+              >
+                Aufgeben
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

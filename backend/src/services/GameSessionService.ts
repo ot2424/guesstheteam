@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto';
 import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
 import { ProgressionService } from './ProgressionService';
 
+export type FinishReason = 'complete' | 'surrender';
+const WIN_THRESHOLD = 0.8;
+
 export class GameSessionService {
   private sessions = new Map<string, GameSession>();
   private progressionService = new ProgressionService();
@@ -68,14 +71,15 @@ export class GameSessionService {
     }
   }
 
-  finish(sessionId: string) {
+  finish(sessionId: string, reason: FinishReason = 'complete') {
     const session = this.get(sessionId);
     if (!session) return null;
 
     const solved = Object.values(session.players).filter((player) => player.solved).length;
     const total = Object.keys(session.players).length;
     const durationSec = Math.floor((Date.now() - session.startedAt) / 1000);
-    const isWin = solved === total;
+    const completionRatio = total > 0 ? solved / total : 0;
+    const isWin = reason !== 'surrender' && completionRatio >= WIN_THRESHOLD;
     const xpGained = this.progressionService.calcXP({
       difficulty: session.difficulty,
       solved,
@@ -96,6 +100,8 @@ export class GameSessionService {
         total,
         durationSec,
         isWin,
+        isPerfect: solved === total,
+        completionRatio,
       },
       progression: {
         xpGained,

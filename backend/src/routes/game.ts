@@ -24,6 +24,7 @@ const guessSchema = z.object({
 
 const finishSchema = z.object({
   sessionId: z.string().uuid(),
+  reason: z.enum(['complete', 'surrender']).default('complete'),
 });
 
 export function createGameRouter(
@@ -82,7 +83,7 @@ export function createGameRouter(
 
   router.post('/finish', requireAuth, (req, res) => {
     const payload = finishSchema.parse(req.body);
-    const result = sessionService.finish(payload.sessionId);
+    const result = sessionService.finish(payload.sessionId, payload.reason);
     if (!result) throw new HttpError(404, 'Session not found');
 
     res.json(result);
