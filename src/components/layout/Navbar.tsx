@@ -12,6 +12,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const { pathname } = useLocation();
   const { user, isAuthenticated, signOut } = useAuth();
+  const navLinks = isAuthenticated ? NAV_LINKS : NAV_LINKS.filter((link) => link.to === '/');
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-800 bg-[#0A0E1A]/90 backdrop-blur-sm">
@@ -24,7 +25,7 @@ export function Navbar() {
 
         {/* Nav links */}
         <div className="flex gap-1 flex-1">
-          {NAV_LINKS.map(({ to, label }) => {
+          {navLinks.map(({ to, label }) => {
             const active = pathname === to || (to !== '/' && pathname.startsWith(to));
             return (
               <Link
@@ -49,20 +50,22 @@ export function Navbar() {
 
         {/* User info */}
         <div className="flex items-center gap-3">
-          <RankBadge rank={user.rank} size="sm" />
-          <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="w-8 h-8 rounded-full bg-green-900 border border-green-700 flex items-center justify-center text-green-300 text-sm font-semibold">
-              {user.username[0]}
-            </div>
-            <span className="text-sm text-gray-300 hidden sm:block">{user.username}</span>
-          </Link>
           {isAuthenticated ? (
-            <button
-              onClick={() => void signOut()}
-              className="hidden sm:block rounded border border-gray-700 px-2 py-1 text-xs text-gray-400 hover:text-gray-200"
-            >
-              Logout
-            </button>
+            <>
+              <RankBadge rank={user.rank} size="sm" />
+              <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 rounded-full bg-green-900 border border-green-700 flex items-center justify-center text-green-300 text-sm font-semibold">
+                  {user.username[0]}
+                </div>
+                <span className="text-sm text-gray-300 hidden sm:block">{user.username}</span>
+              </Link>
+              <button
+                onClick={() => void signOut()}
+                className="hidden sm:block rounded border border-gray-700 px-2 py-1 text-xs text-gray-400 hover:text-gray-200"
+              >
+                Logout
+              </button>
+            </>
           ) : (
             <Link to="/login" className="rounded border border-green-800 px-2 py-1 text-xs text-green-300 hover:border-green-600">
               Login
