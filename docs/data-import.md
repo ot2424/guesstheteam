@@ -23,7 +23,18 @@ We use `dcaribou/transfermarkt-datasets` as the upstream source, but we do not c
      --max-season 2026
    ```
 
-3. The generated JSON is intentionally ignored by git. It is local runtime data.
+   By default, the importer enriches team logos via TheSportsDB's free V1 endpoint and caches lookups in `data/cache/thesportsdb-team-logos.json`.
+
+   To disable remote logo enrichment:
+
+   ```sh
+   npm run data:import:transfermarkt -- \
+     --source data/transfermarkt \
+     --out data/seeds/footyguesser-seed.json \
+     --logos none
+   ```
+
+3. The generated JSON and API cache are intentionally ignored by git. They are local runtime data.
 
 ## Why This Shape
 

@@ -17,5 +17,6 @@ pnpm-debug.log*
 
 # Local data imports. Keep large upstream datasets out of git.
 data/transfermarkt/
+data/cache/
 data/seeds/*.json
 !data/seeds/.gitkeep

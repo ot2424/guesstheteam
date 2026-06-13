@@ -1,5 +1,5 @@
 import { createReadStream, existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createGunzip } from 'node:zlib';
 import { createInterface } from 'node:readline';
@@ -73,9 +73,38 @@ interface Args {
   minSeason: number;
   maxSeason: number;
   competitions: Set<string>;
+  logos: 'thesportsdb' | 'none';
+  logoCache: string;
+  logoDelayMs: number;
 }
 
 const DEFAULT_COMPETITIONS = ['L1', 'GB1', 'ES1', 'IT1', 'FR1', 'CL'];
+const THESPORTSDB_SEARCH_URL = 'https://www.thesportsdb.com/api/v1/json/123/searchteams.php';
+const SPORTSDB_QUERY_ALIASES: Record<string, string> = {
+  'Association Football Club Bournemouth': 'Bournemouth',
+  'Associazione Calcio Milan': 'AC Milan',
+  'Associazione Sportiva Roma': 'Roma',
+  'Athletic Club Bilbao': 'Athletic Bilbao',
+  'Bayern Muenchen': 'Bayern Munich',
+  'Calcio Como': 'Como',
+  'Chelsea FC': 'Chelsea',
+  'Crystal Palace FC': 'Crystal Palace',
+  'Football Club Lorient-Bretagne Sud': 'Lorient',
+  'Football Club de Metz': 'Metz',
+  'Futbol Club Barcelona': 'Barcelona',
+  'Leeds United Association FC': 'Leeds',
+  'Newcastle United FC': 'Newcastle',
+  "Olympique Gymnaste Club Nice Côte d'Azur": 'Nice',
+  'Olympique de Marseille': 'Marseille',
+  'Paris Saint-Germain FC': 'PSG',
+  'Real Betis Balompié': 'Real Betis',
+  'Real Madrid Club de Fútbol': 'Real Madrid',
+  'Società Sportiva Calcio Napoli': 'Napoli',
+  'Società Sportiva Lazio S.p.A.': 'Lazio',
+  'Torino Calcio': 'Torino',
+  'Unione Sportiva Lecce': 'Lecce',
+  'Verona Hellas FC': 'Hellas Verona',
+};
 const CLUB_NAME_ALIASES: Record<string, string> = {
   '3': '1. FC Koeln',
   '4': '1. FC Nuernberg',
@@ -122,14 +151,28 @@ const games = await readGames(args);
 const lineups = await readLineups(args, new Set(games.map((game) => game.gameId)));
 const selectedTeams = selectTeams({ args, clubs, players, games, lineups });
 const careers = await readCareers(args, new Set(selectedTeams.flatMap((team) => team.players.map((player) => player.id))), clubs);
+const logoLookup = args.logos === 'thesportsdb'
+  ? await createTheSportsDbLogoLookup(args.logoCache)
+  : null;
+const teamLogos = new Map<string, string>();
+
+if (logoLookup) {
+  for (const teamName of new Set(selectedTeams.map((team) => team.name))) {
+    teamLogos.set(teamName, await logoLookup.getBadge(teamName));
+    if (args.logoDelayMs > 0) await delay(args.logoDelayMs);
+  }
+}
 
 const teams = selectedTeams.map((team) => ({
   ...team,
+  logoUrl: teamLogos.get(team.name) ?? team.logoUrl,
   players: team.players.map((player) => ({
     ...player,
     career: careers.get(player.id) ?? player.career,
   })),
 }));
+
+await logoLookup?.save();
 
 await mkdir(path.dirname(args.out), { recursive: true });
 await writeFile(
@@ -141,6 +184,7 @@ await writeFile(
       minSeason: args.minSeason,
       maxSeason: args.maxSeason,
       competitions: [...args.competitions],
+      logos: args.logos,
     },
     teams,
     players: [...new Map(teams.flatMap((team) => team.players).map((player) => [player.id, {
@@ -172,6 +216,9 @@ function parseArgs(argv: string[]): Args {
     minSeason: Number(values.get('min-season') ?? 2018),
     maxSeason: Number(values.get('max-season') ?? 2026),
     competitions: new Set((values.get('competitions') ?? DEFAULT_COMPETITIONS.join(',')).split(',').map((value) => value.trim()).filter(Boolean)),
+    logos: values.get('logos') === 'none' ? 'none' : 'thesportsdb',
+    logoCache: values.get('logo-cache') ?? 'data/cache/thesportsdb-team-logos.json',
+    logoDelayMs: Number(values.get('logo-delay-ms') ?? 300),
   };
 }
 
@@ -437,6 +484,97 @@ function getNationalities(row: Row) {
 
 function isUsableCountry(country: string) {
   return !['CSSR', 'UdSSR', 'Jugoslawien (SFR)', 'East Germany (GDR)', 'Unknown'].includes(country);
+}
+
+async function createTheSportsDbLogoLookup(cachePath: string) {
+  let cache: Record<string, string | null> = {};
+
+  try {
+    cache = JSON.parse(await readFile(cachePath, 'utf8')) as Record<string, string | null>;
+  } catch {
+    cache = {};
+  }
+
+  return {
+    async getBadge(teamName: string) {
+    const query = getSportsDbQuery(teamName);
+      if (!query) return '';
+      if (query in cache) return cache[query] ?? '';
+
+      try {
+        const url = `${THESPORTSDB_SEARCH_URL}?t=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`TheSportsDB returned ${response.status}`);
+
+        const text = await response.text();
+        if (text.includes('error code: 1015')) throw new Error('TheSportsDB rate limited the request');
+
+        const body = JSON.parse(text) as { teams?: SportsDbTeam[] | null };
+        const badge = selectSportsDbBadge(body.teams ?? [], query);
+        cache[query] = badge || null;
+        return badge;
+      } catch {
+        return '';
+      }
+    },
+
+    async save() {
+      await mkdir(path.dirname(cachePath), { recursive: true });
+      await writeFile(cachePath, `${JSON.stringify(cache, null, 2)}\n`);
+    },
+  };
+}
+
+interface SportsDbTeam {
+  strTeam?: string;
+  strTeamAlternate?: string;
+  strSport?: string;
+  strGender?: string;
+  strBadge?: string;
+}
+
+function selectSportsDbBadge(teams: SportsDbTeam[], query: string) {
+  const soccerTeams = teams.filter((team) => team.strSport === 'Soccer' && team.strBadge);
+  const maleTeams = soccerTeams.filter((team) => team.strGender !== 'Female');
+  const pool = maleTeams.length > 0 ? maleTeams : soccerTeams;
+  const normalizedQuery = normalizeTeamName(query);
+
+  const exact = pool.find((team) => [
+    team.strTeam,
+    ...(team.strTeamAlternate?.split(',') ?? []),
+  ].some((name) => normalizeTeamName(name ?? '') === normalizedQuery));
+
+  return exact?.strBadge ?? pool[0]?.strBadge ?? '';
+}
+
+function getSportsDbQuery(teamName: string) {
+  if (SPORTSDB_QUERY_ALIASES[teamName]) return SPORTSDB_QUERY_ALIASES[teamName];
+
+  return teamName
+    .replace(/\bFC\b$/i, '')
+    .replace(/\bCF\b$/i, '')
+    .replace(/\bS\.?p\.?A\.?$/i, '')
+    .replace(/\bS\.?p\.?a\.?$/i, '')
+    .replace(/\bCalcio\b$/i, '')
+    .replace(/\bFootball Club\b$/i, '')
+    .replace(/\bFutbol Club\b$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function normalizeTeamName(name: string) {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/\b(fc|cf|football club|futbol club|calcio)\b/gi, '')
+    .replace(/[^a-z0-9]/gi, '')
+    .toLowerCase();
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {
