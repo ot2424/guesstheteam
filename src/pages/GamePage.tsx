@@ -277,7 +277,6 @@ export function GamePage() {
             <FormationGrid
               players={team.players}
               guesses={guesses}
-              formation={team.formation}
               onTipClick={handleTipClick}
               activeTipId={activeTipId}
             />

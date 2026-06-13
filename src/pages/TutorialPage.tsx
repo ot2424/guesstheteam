@@ -125,7 +125,6 @@ export function TutorialPage() {
           <FormationGrid
             players={team.players}
             guesses={guesses}
-            formation={team.formation}
             onTipClick={(id) => {
               setActiveTipId(prev => prev === id ? null : id);
               if (showTips && tipIndex === 1) setTipIndex(2);

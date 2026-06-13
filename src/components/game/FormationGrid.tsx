@@ -5,12 +5,11 @@ import { getPositionGroup, type PositionGroup } from '../../utils/footballDispla
 interface Props {
   players: PlayerCardType[];
   guesses: Record<string, GuessState>;
-  formation: string;
   onTipClick: (playerId: string) => void;
   activeTipId: string | null;
 }
 
-export function FormationGrid({ players, guesses, formation, onTipClick, activeTipId }: Props) {
+export function FormationGrid({ players, guesses, onTipClick, activeTipId }: Props) {
   const cards = getRoleLayout(players);
 
   return (
@@ -18,7 +17,7 @@ export function FormationGrid({ players, guesses, formation, onTipClick, activeT
       className="relative w-full rounded-xl overflow-hidden select-none"
       style={{
         background: 'linear-gradient(180deg, #064e3b 0%, #065f46 30%, #047857 60%, #065f46 80%, #064e3b 100%)',
-        minHeight: '400px',
+        minHeight: '520px',
         border: '2px solid #047857',
       }}
     >
@@ -40,7 +39,7 @@ export function FormationGrid({ players, guesses, formation, onTipClick, activeT
       </svg>
 
       {/* Cards */}
-      <div className="relative w-full" style={{ minHeight: '400px' }}>
+      <div className="relative w-full" style={{ minHeight: '520px' }}>
         {cards.map(({ player, x, y }, index) => {
           const guess = guesses[player.id] ?? { playerId: player.id, solved: false, attempts: 0, revealed: false };
 
@@ -61,32 +60,27 @@ export function FormationGrid({ players, guesses, formation, onTipClick, activeT
           );
         })}
       </div>
-
-      {/* Formation label */}
-      <div className="absolute bottom-2 right-3 text-white/30 text-xs bebas tracking-wider">
-        {formation}
-      </div>
     </div>
   );
 }
 
 const ROW_Y: Record<PositionGroup, number> = {
+  attacker: 16,
+  midfielder: 40,
+  defender: 64,
   goalkeeper: 88,
-  defender: 70,
-  midfielder: 48,
-  attacker: 24,
 };
 
-const ROLE_ORDER: PositionGroup[] = ['goalkeeper', 'defender', 'midfielder', 'attacker'];
+const ROLE_ORDER: PositionGroup[] = ['attacker', 'midfielder', 'defender', 'goalkeeper'];
 
 function getRoleLayout(players: PlayerCardType[]) {
   return ROLE_ORDER.flatMap((role) => {
     const rowPlayers = players.filter((player) => getPositionGroup(player.position) === role);
-    const spacing = 70 / Math.max(rowPlayers.length, 1);
+    const spacing = 78 / Math.max(rowPlayers.length, 1);
 
     return rowPlayers.map((player, index) => ({
       player,
-      x: 15 + spacing / 2 + spacing * index,
+      x: 11 + spacing / 2 + spacing * index,
       y: ROW_Y[role],
     }));
   });
