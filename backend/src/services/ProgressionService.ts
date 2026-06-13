@@ -27,16 +27,26 @@ export class ProgressionService {
     return base + solvedBonus + perfectBonus + speedBonus;
   }
 
-  calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean }): number {
+  calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean; winStreak?: number }): number {
     if (opts.playMode === 'casual') return 0;
 
     const base = this.getRankedLpBase(opts.difficulty, opts.isWin);
-    return opts.matchType === 'series' ? Math.trunc(base * 1.5) : base;
+    const streakBonus = opts.isWin ? this.getWinStreakBonus((opts.winStreak ?? 0) + 1) : 0;
+    const total = base + streakBonus;
+    return opts.matchType === 'series' ? Math.trunc(total * 1.5) : total;
   }
 
   private getRankedLpBase(difficulty: Difficulty, isWin: boolean): number {
-    if (difficulty === 'easy') return isWin ? 20 : -10;
-    if (difficulty === 'medium') return isWin ? 20 : -15;
-    return isWin ? 20 : -20;
+    if (difficulty === 'easy') return isWin ? 14 : -10;
+    if (difficulty === 'medium') return isWin ? 16 : -14;
+    return isWin ? 18 : -18;
+  }
+
+  private getWinStreakBonus(nextWinStreak: number): number {
+    if (nextWinStreak >= 5) return 8;
+    if (nextWinStreak === 4) return 6;
+    if (nextWinStreak === 3) return 4;
+    if (nextWinStreak === 2) return 2;
+    return 0;
   }
 }

@@ -14,6 +14,7 @@ const startSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   rank: z.enum(['Bronze 3', 'Bronze 2', 'Bronze 1', 'Silver 3', 'Silver 2', 'Silver 1', 'Gold 3', 'Gold 2', 'Gold 1', 'Platinum 3', 'Platinum 2', 'Platinum 1']).default('Bronze 3'),
   leagueId: z.string().optional(),
+  winStreak: z.number().int().min(0).max(50).default(0),
   mode: z.enum(['tutorial', 'single', 'series']).optional(),
 });
 
@@ -53,6 +54,7 @@ export function createGameRouter(
       matchType,
       difficulty,
       rank,
+      winStreak: payload.winStreak,
     });
 
     res.status(201).json({
@@ -61,6 +63,7 @@ export function createGameRouter(
       matchType: session.matchType,
       difficulty: session.difficulty,
       rank: session.rank,
+      winStreak: session.winStreak,
       selection: getSelectionDescriptor(session.playMode, session.difficulty, payload.leagueId),
       team: session.team,
     });

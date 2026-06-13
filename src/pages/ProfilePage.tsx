@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
-import { MOCK_USER, MOCK_MATCH_HISTORY, BADGES, RANKS, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { MOCK_USER, MOCK_MATCH_HISTORY, BADGES, RANKS, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS } from '../data/mockUser';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
@@ -13,9 +13,10 @@ export function ProfilePage() {
     ? Math.round((user.matchesWon / user.matchesPlayed) * 100)
     : 0;
 
-  const currentRankIndex = RANKS.indexOf(user.rank);
   const lp = user.lp;
-  const lpInTier = lp % 100;
+  const rank = getRankFromLP(lp);
+  const currentRankIndex = RANKS.indexOf(rank);
+  const rankProgress = getRankProgress(lp, rank);
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--night)' }}>
@@ -39,7 +40,7 @@ export function ProfilePage() {
             <div className="flex-1 min-w-0">
               <h1 className="bebas text-3xl tracking-wider text-white">{user.username}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <RankBadge rank={user.rank} size="md" />
+                <RankBadge rank={rank} size="md" />
                 <span className="text-xs text-gray-500">Level {user.level}</span>
                 {user.winStreak >= 3 && (
                   <span className="text-xs text-orange-400">🔥 {user.winStreak}er-Serie</span>
@@ -87,20 +88,20 @@ export function ProfilePage() {
           >
             <h2 className="bebas text-lg tracking-wider text-white mb-4">Rang-Fortschritt</h2>
             <div className="flex items-center gap-4 mb-3">
-              <RankBadge rank={user.rank} size="lg" />
+              <RankBadge rank={rank} size="lg" />
               <div className="flex-1">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>{lpInTier} LP</span>
-                  <span>100 LP</span>
+                  <span>{rankProgress.current} LP</span>
+                  <span>{rankProgress.needed} LP</span>
                 </div>
                 <div className="h-2 rounded-full bg-gray-800 overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{
-                      background: `linear-gradient(90deg, ${RANK_COLORS[getRankTier(user.rank)].border}80, ${RANK_COLORS[getRankTier(user.rank)].border})`,
+                      background: `linear-gradient(90deg, ${RANK_COLORS[getRankTier(rank)].border}80, ${RANK_COLORS[getRankTier(rank)].border})`,
                     }}
                     initial={{ width: 0 }}
-                    animate={{ width: `${lpInTier}%` }}
+                    animate={{ width: `${rankProgress.percent}%` }}
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </div>
@@ -110,7 +111,7 @@ export function ProfilePage() {
               )}
             </div>
             <p className="text-xs text-gray-600">
-              Sieg: +25 LP · Niederlage: −20 LP · Abstieg möglich
+              Sieg: +14 bis +18 LP · Streak-Bonus bis +8 LP · Divisionen brauchen mehr LP
             </p>
           </motion.div>
 

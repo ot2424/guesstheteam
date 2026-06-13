@@ -15,15 +15,29 @@ import { getPositionLabel } from '../utils/footballDisplay';
 
 const COMPLETION_THRESHOLD = 0.8;
 
+function getDifficultyForRank(rank: Rank): Difficulty {
+  if (rank.startsWith('Bronze')) return 'easy';
+  if (rank.startsWith('Silver')) return 'medium';
+  return 'hard';
+}
+
+function getNumberParam(value: string | null, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : fallback;
+}
+
 export function GamePage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const legacyMode = params.get('mode');
   const playMode = (params.get('playMode') ?? 'casual') as PlayMode;
   const matchType = (params.get('matchType') ?? legacyMode ?? 'single') as MatchType;
-  const difficulty = (params.get('difficulty') ?? 'easy') as Difficulty;
   const rank = (params.get('rank') ?? 'Bronze 3') as Rank;
+  const difficulty = playMode === 'ranked'
+    ? getDifficultyForRank(rank)
+    : (params.get('difficulty') ?? 'easy') as Difficulty;
   const leagueId = params.get('leagueId') ?? undefined;
+  const winStreak = getNumberParam(params.get('winStreak'), 0);
 
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -45,7 +59,7 @@ export function GamePage() {
         setError(null);
         const saved = loadSavedGame();
 
-        if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, leagueId })) {
+        if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, winStreak, leagueId })) {
           setSessionId(saved.sessionId);
           setTeam(saved.team);
           setGuesses(saved.guesses);
@@ -59,6 +73,7 @@ export function GamePage() {
           difficulty,
           rank,
           leagueId,
+          winStreak,
         });
 
         if (controller.signal.aborted) return;
@@ -85,7 +100,7 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, leagueId, matchType, playMode, rank]);
+  }, [difficulty, leagueId, matchType, playMode, rank, winStreak]);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
@@ -99,10 +114,11 @@ export function GamePage() {
       matchType,
       difficulty,
       rank,
+      winStreak,
       leagueId,
       savedAt: Date.now(),
     });
-  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team]);
+  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team, winStreak]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
@@ -111,7 +127,7 @@ export function GamePage() {
   const total = team?.players.length ?? 0;
   const completionRatio = total > 0 ? solved / total : 0;
   const canCompleteLevel = completionRatio >= COMPLETION_THRESHOLD && solved < total && !finished;
-  const rankedLossText = difficulty === 'easy' ? '-10 LP' : difficulty === 'medium' ? '-15 LP' : '-20 LP';
+  const rankedLossText = difficulty === 'easy' ? '-10 LP' : difficulty === 'medium' ? '-14 LP' : '-18 LP';
 
   // Active tip player object
   const activeTipPlayer: PlayerCard | null = activeTipId

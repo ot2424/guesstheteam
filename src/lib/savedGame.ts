@@ -11,6 +11,7 @@ export interface SavedGame {
   matchType: MatchType;
   difficulty: Difficulty;
   rank: Rank;
+  winStreak: number;
   leagueId?: string;
   savedAt: number;
 }
@@ -23,7 +24,7 @@ export function loadSavedGame(): SavedGame | null {
     const value = JSON.parse(raw) as Partial<SavedGame>;
     if (!value.sessionId || !value.team || !value.guesses || !value.startedAt) return null;
 
-    return value as SavedGame;
+    return { ...value, winStreak: value.winStreak ?? 0 } as SavedGame;
   } catch {
     return null;
   }
@@ -39,12 +40,13 @@ export function clearSavedGame() {
 
 export function matchesSavedGame(
   saved: SavedGame,
-  opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; leagueId?: string },
+  opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number; leagueId?: string },
 ) {
   return saved.playMode === opts.playMode
     && saved.matchType === opts.matchType
     && saved.difficulty === opts.difficulty
     && saved.rank === opts.rank
+    && saved.winStreak === opts.winStreak
     && (saved.leagueId ?? '') === (opts.leagueId ?? '');
 }
 
@@ -54,6 +56,7 @@ export function getSavedGameUrl(saved: SavedGame) {
     matchType: saved.matchType,
     difficulty: saved.difficulty,
     rank: saved.rank,
+    winStreak: String(saved.winStreak),
   });
 
   if (saved.leagueId) params.set('leagueId', saved.leagueId);

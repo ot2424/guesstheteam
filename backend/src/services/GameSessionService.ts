@@ -9,7 +9,7 @@ export class GameSessionService {
   private sessions = new Map<string, GameSession>();
   private progressionService = new ProgressionService();
 
-  create(userId: string, team: TeamData, opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank }): GameSession {
+  create(userId: string, team: TeamData, opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number }): GameSession {
     const sessionId = randomUUID();
     const publicPlayers: PublicPlayer[] = team.players.map((player) => ({
       id: player.id,
@@ -27,6 +27,7 @@ export class GameSessionService {
       matchType: opts.matchType,
       difficulty: opts.difficulty,
       rank: opts.rank,
+      winStreak: opts.winStreak,
       startedAt: Date.now(),
       team: {
         id: team.id,
@@ -92,6 +93,7 @@ export class GameSessionService {
       difficulty: session.difficulty,
       matchType: session.matchType,
       isWin,
+      winStreak: session.winStreak,
     });
 
     return {

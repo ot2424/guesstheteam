@@ -18,6 +18,33 @@ export function getRankTier(rank: Rank) {
   return rank.split(' ')[0] as keyof typeof RANK_COLORS;
 }
 
+export function getRankStepSize(rank: Rank): number {
+  const tier = getRankTier(rank);
+  if (tier === 'Bronze') return 180;
+  if (tier === 'Silver') return 240;
+  if (tier === 'Gold') return 320;
+  return 420;
+}
+
+export function getRankLowerBound(rank: Rank): number {
+  const rankIndex = RANKS.indexOf(rank);
+  if (rankIndex <= 0) return 0;
+
+  return RANKS
+    .slice(0, rankIndex)
+    .reduce((total, currentRank) => total + getRankStepSize(currentRank), 0);
+}
+
+export function getRankProgress(lp: number, rank = getRankFromLP(lp)): { current: number; needed: number; percent: number } {
+  const needed = getRankStepSize(rank);
+  const current = Math.max(0, Math.min(lp - getRankLowerBound(rank), needed));
+  return {
+    current,
+    needed,
+    percent: needed > 0 ? Math.round((current / needed) * 100) : 0,
+  };
+}
+
 export function getLevelFromXP(xp: number): number {
   // Every 500 XP = 1 level
   return Math.floor(xp / 500) + 1;
@@ -28,8 +55,11 @@ export function getXPToNextLevel(xp: number): { current: number; needed: number 
 }
 
 export function getRankFromLP(lp: number): Rank {
-  const index = Math.min(Math.floor(lp / 100), RANKS.length - 1);
-  return RANKS[Math.max(0, index)];
+  const safeLp = Math.max(0, lp);
+  for (let i = RANKS.length - 1; i >= 0; i -= 1) {
+    if (safeLp >= getRankLowerBound(RANKS[i])) return RANKS[i];
+  }
+  return RANKS[0];
 }
 
 export const MOCK_USER: UserProfile = {
@@ -37,7 +67,7 @@ export const MOCK_USER: UserProfile = {
   username: 'FootballFan99',
   xp: 1340,
   level: 3,
-  lp: 285,
+  lp: 610,
   rank: 'Silver 3',
   badges: ['first_win', 'speed_demon', 'hat_trick'],
   matchesPlayed: 24,

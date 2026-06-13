@@ -25,6 +25,7 @@ export interface StartGameResponse {
   matchType: MatchType;
   difficulty: Difficulty;
   rank: Rank;
+  winStreak: number;
   selection: {
     pool: string;
     leagueId?: string;
@@ -58,6 +59,7 @@ export function startGame(payload: {
   difficulty?: Difficulty;
   rank?: Rank;
   leagueId?: string;
+  winStreak?: number;
 }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',

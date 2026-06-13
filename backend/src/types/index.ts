@@ -56,6 +56,7 @@ export interface GameSession {
   matchType: MatchType;
   difficulty: Difficulty;
   rank: Rank;
+  winStreak: number;
   startedAt: number;
   team: Omit<TeamData, 'players'> & { players: PublicPlayer[] };
   players: Record<string, SessionPlayer>;

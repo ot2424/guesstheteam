@@ -186,12 +186,12 @@ export function HomePage() {
               </div>
               <div className="p-4 flex flex-col gap-3">
                 <p className="text-xs text-gray-500">
-                  Deine Schwierigkeit wird automatisch aus deinem Rang bestimmt. Siege und Niederlagen veraendern LP und XP.
+                  Deine Schwierigkeit wird automatisch aus deinem Rang bestimmt. Divisionen brauchen mehr LP, Siegesserien geben Bonus-LP.
                 </p>
                 {MATCH_TYPES.map(match => (
                   <button
                     key={match.id}
-                    onClick={() => startNewGame(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(MOCK_USER.rank)}`)}
+                    onClick={() => startNewGame(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(MOCK_USER.rank)}&winStreak=${MOCK_USER.winStreak}`)}
                     className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-700 hover:border-gray-500 transition-all text-left group"
                     style={{ background: '#1F2937' }}
                   >
@@ -201,7 +201,7 @@ export function HomePage() {
                       <div className="text-xs text-gray-500">{match.desc}</div>
                     </div>
                     <span className="text-xs tabular-nums text-green-400">
-                      {match.id === 'series' ? 'LP x1.5' : '+/- LP'}
+                      {match.id === 'series' ? 'LP x1.5' : 'Streak-Bonus'}
                     </span>
                   </button>
                 ))}
