@@ -80,6 +80,9 @@ export interface UserProfile {
 }
 
 export interface MatchResult {
+  resultId?: string;
+  playMode?: PlayMode;
+  matchType?: MatchType;
   teamName: string;
   teamLogo: string;
   season: string;

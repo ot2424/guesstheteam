@@ -2,13 +2,14 @@ import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { AdSlot } from '../components/ui/AdSlot';
-import { MOCK_USER, MOCK_MATCH_HISTORY, BADGES, RANKS, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { MOCK_MATCH_HISTORY, BADGES, RANKS, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { loadUserProfile } from '../lib/localUser';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 export function ProfilePage() {
-  const user = MOCK_USER;
+  const user = loadUserProfile();
   const winRate = user.matchesPlayed > 0
     ? Math.round((user.matchesWon / user.matchesPlayed) * 100)
     : 0;

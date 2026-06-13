@@ -138,6 +138,9 @@ export function GamePage() {
     clearSavedGame();
     navigate('/result', {
       state: {
+        resultId: sessionId,
+        playMode,
+        matchType,
         teamName: currentTeam.name,
         teamLogo: currentTeam.logoUrl,
         season: currentTeam.season,
@@ -151,7 +154,7 @@ export function GamePage() {
         lpChange: finish.progression.lpChange,
       },
     });
-  }, [navigate]);
+  }, [matchType, navigate, playMode, sessionId]);
 
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {

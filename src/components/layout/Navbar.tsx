@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../ui/RankBadge';
-import { MOCK_USER } from '../../data/mockUser';
+import { loadUserProfile } from '../../lib/localUser';
 
 const NAV_LINKS = [
   { to: '/',        label: 'Home'    },
@@ -11,6 +11,7 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const { pathname } = useLocation();
+  const user = loadUserProfile();
 
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-800 bg-[#0A0E1A]/90 backdrop-blur-sm">
@@ -48,12 +49,12 @@ export function Navbar() {
 
         {/* User info */}
         <div className="flex items-center gap-3">
-          <RankBadge rank={MOCK_USER.rank} size="sm" />
+          <RankBadge rank={user.rank} size="sm" />
           <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="w-8 h-8 rounded-full bg-green-900 border border-green-700 flex items-center justify-center text-green-300 text-sm font-semibold">
-              {MOCK_USER.username[0]}
+              {user.username[0]}
             </div>
-            <span className="text-sm text-gray-300 hidden sm:block">{MOCK_USER.username}</span>
+            <span className="text-sm text-gray-300 hidden sm:block">{user.username}</span>
           </Link>
         </div>
       </div>

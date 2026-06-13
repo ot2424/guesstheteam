@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
+import { applyRankedResultOnce, loadUserProfile } from '../lib/localUser';
 import type { MatchResult } from '../types';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
@@ -34,16 +36,55 @@ export function ResultPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const result = state as MatchResult | null;
-
-  if (!result) {
-    navigate('/');
-    return null;
-  }
-
-  const { teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = result;
+  const safeResult = result ?? {
+    teamName: '',
+    teamLogo: '',
+    season: '',
+    solved: 0,
+    total: 1,
+    durationSec: 0,
+    isWin: false,
+    xpGained: 0,
+    lpChange: 0,
+  };
+  const { resultId, playMode, matchType, teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
   const accuracy = Math.round((solved / total) * 100);
+
+  useEffect(() => {
+    if (!result) {
+      navigate('/');
+      return;
+    }
+
+    applyRankedResultOnce({
+      resultId: resultId ?? `${teamName}-${season}-${durationSec}-${solved}-${lpChange}`,
+      playMode,
+      matchType,
+      isWin,
+      xpGained,
+      lpChange,
+    });
+  }, [durationSec, isWin, lpChange, matchType, navigate, playMode, result, resultId, season, solved, teamName, xpGained]);
+
+  if (!result) return null;
+
+  const replay = () => {
+    if (playMode !== 'ranked') {
+      navigate('/play');
+      return;
+    }
+
+    const user = loadUserProfile();
+    const replayParams = new URLSearchParams({
+      playMode: 'ranked',
+      matchType: matchType ?? 'single',
+      rank: user.rank,
+      winStreak: String(user.winStreak),
+    });
+    navigate(`/play?${replayParams.toString()}`);
+  };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10" style={{ background: 'var(--night)' }}>
@@ -147,7 +188,7 @@ export function ResultPage() {
         {/* Actions */}
         <div className="px-6 py-5 flex flex-col gap-3">
           <button
-            onClick={() => navigate('/play')}
+            onClick={replay}
             className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
             style={{ background: '#22C55E', color: '#0A0E1A' }}
           >
