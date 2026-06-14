@@ -4,5 +4,5 @@ import { createApp } from './app';
 const app = createApp();
 
 app.listen(env.PORT, () => {
-  console.log(`FootyGuesser API listening on http://localhost:${env.PORT}`);
+  console.log(`GuessTheTeam API listening on http://localhost:${env.PORT}`);
 });

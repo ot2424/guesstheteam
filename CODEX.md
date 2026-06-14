@@ -1,4 +1,4 @@
-# FootyGuesser – Backend & Infrastruktur Spezifikation für Codex
+# GuessTheTeam – Backend & Infrastruktur Spezifikation für Codex
 
 > **Scope dieses Dokuments:** Alles außerhalb des React-Frontends – Backend-Server, Datenbank-Schema, Auth, Caching, API-Integration und Deployment.
 

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
@@ -20,7 +20,8 @@ interface TeamSelectionOptions {
   excludeTeamIds?: string[];
 }
 
-const DEFAULT_SEED_PATH = path.resolve(process.cwd(), 'data/seeds/footyguesser-seed.json');
+const DEFAULT_SEED_PATH = path.resolve(process.cwd(), 'data/seeds/guesstheteam-seed.json');
+const LEGACY_SEED_PATH = path.resolve(process.cwd(), 'data/seeds/footyguesser-seed.json');
 const CLUB_NAME_ALIASES: Record<string, string> = {
   '3': '1. FC Koeln',
   '4': '1. FC Nuernberg',
@@ -46,7 +47,7 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
 export class TeamSeedService {
   private seed: SeedFile | null | undefined;
 
-  constructor(private seedPath = process.env.FOOTYGUESSER_SEED_PATH ?? DEFAULT_SEED_PATH) {}
+  constructor(private seedPath = process.env.GUESSTHETEAM_SEED_PATH ?? process.env.FOOTYGUESSER_SEED_PATH ?? getDefaultSeedPath()) {}
 
   selectTeam(options: TeamSelectionOptions): TeamData {
     const teams = this.getTeams();
@@ -121,6 +122,10 @@ export class TeamSeedService {
       })),
     };
   }
+}
+
+function getDefaultSeedPath() {
+  return existsSync(DEFAULT_SEED_PATH) ? DEFAULT_SEED_PATH : LEGACY_SEED_PATH;
 }
 
 function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {

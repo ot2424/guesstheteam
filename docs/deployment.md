@@ -1,6 +1,6 @@
-# Deployment Notes
+# GuessTheTeam Deployment Notes
 
-FootyGuesser uses two separate runtime targets:
+GuessTheTeam uses two separate runtime targets:
 
 - Frontend: Vite/React app
 - Game API: Express backend
@@ -25,15 +25,15 @@ SUPABASE_ANON_KEY=YOUR_ANON_KEY
 
 ## Production URLs
 
-Example with a custom domain:
+Production with the domain `guesstheteam.de`:
 
 ```env
-VITE_API_BASE_URL=https://api.your-domain.com/api/v1
+VITE_API_BASE_URL=https://api.guesstheteam.de/api/v1
 VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=YOUR_ANON_KEY
 
 PORT=4000
-CORS_ORIGIN=https://your-domain.com
+CORS_ORIGIN=https://guesstheteam.de
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_ANON_KEY=YOUR_ANON_KEY
 NODE_ENV=production
@@ -63,9 +63,9 @@ In Supabase Dashboard:
 
 Set:
 
-- Site URL: `https://your-domain.com`
+- Site URL: `https://guesstheteam.de`
 - Redirect URLs:
-  - `https://your-domain.com/*`
+  - `https://guesstheteam.de/*`
   - `http://localhost:5173/*`
 
 ## Deployment Order
@@ -76,5 +76,5 @@ Set:
 4. Deploy frontend.
 5. Set frontend env vars.
 6. Point domain DNS to the frontend host.
-7. Point `api.your-domain.com` DNS to the backend host.
+7. Point `api.guesstheteam.de` DNS to the backend host.
 8. Update Supabase Auth URLs.

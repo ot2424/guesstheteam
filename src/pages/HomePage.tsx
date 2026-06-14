@@ -72,7 +72,7 @@ export function HomePage() {
         <main className="max-w-6xl mx-auto px-4 py-10">
           <section className="grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-8 items-center mb-10">
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="text-xs uppercase tracking-[0.3em] text-green-400 mb-3">FootyGuesser</div>
+              <div className="text-xs uppercase tracking-[0.3em] text-green-400 mb-3">GuessTheTeam</div>
               <h1 className="bebas text-5xl sm:text-7xl tracking-wider text-white leading-none mb-4">
                 Erkenne die Elf
               </h1>
@@ -103,7 +103,7 @@ export function HomePage() {
               className="overflow-hidden rounded-xl border border-gray-800"
               style={{ background: '#111827' }}
             >
-              <img src={heroImage} alt="FootyGuesser Gameplay" className="h-72 w-full object-cover" />
+              <img src={heroImage} alt="GuessTheTeam Gameplay" className="h-72 w-full object-cover" />
               <div className="border-t border-gray-800 p-4">
                 <div className="text-sm font-semibold text-white">Gameplay-Vorschau</div>
                 <div className="text-xs text-gray-500 mt-1">Karriere lesen, Namen suchen, Elf vervollständigen.</div>

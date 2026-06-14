@@ -17,7 +17,7 @@ We use `dcaribou/transfermarkt-datasets` as the upstream source, but we do not c
    ```sh
    npm run data:import:transfermarkt -- \
      --source data/transfermarkt \
-     --out data/seeds/footyguesser-seed.json \
+     --out data/seeds/guesstheteam-seed.json \
      --limit 80 \
      --min-season 2018 \
      --max-season 2026
@@ -30,7 +30,7 @@ We use `dcaribou/transfermarkt-datasets` as the upstream source, but we do not c
    ```sh
    npm run data:import:transfermarkt -- \
      --source data/transfermarkt \
-     --out data/seeds/footyguesser-seed.json \
+     --out data/seeds/guesstheteam-seed.json \
      --logos none
    ```
 

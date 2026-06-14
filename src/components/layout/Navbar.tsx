@@ -20,7 +20,7 @@ export function Navbar() {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 mr-4">
           <span className="text-2xl">⚽</span>
-          <span className="bebas text-xl tracking-widest text-green-400">FootyGuesser</span>
+          <span className="bebas text-xl tracking-widest text-green-400">GuessTheTeam</span>
         </Link>
 
         {/* Nav links */}

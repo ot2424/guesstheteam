@@ -85,7 +85,7 @@ export const MOCK_USER: UserProfile = {
   username: 'FootballFan99',
   firstName: 'Demo',
   lastName: 'Player',
-  email: 'demo@footyguesser.local',
+  email: 'demo@guesstheteam.local',
   xp: 1340,
   level: 3,
   lp: 610,

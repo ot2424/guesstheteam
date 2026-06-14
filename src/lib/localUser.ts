@@ -1,12 +1,14 @@
 import { getLevelFromXP, getRankFromLP, MOCK_USER } from '../data/mockUser';
 import type { MatchType, PlayMode, SeriesProgress, UserProfile } from '../types';
 
-const USER_STORAGE_KEY = 'footyguesser.user.v1';
-const APPLIED_RESULTS_KEY = 'footyguesser.appliedResults.v1';
+const USER_STORAGE_KEY = 'guesstheteam.user.v1';
+const LEGACY_USER_STORAGE_KEY = 'footyguesser.user.v1';
+const APPLIED_RESULTS_KEY = 'guesstheteam.appliedResults.v1';
+const LEGACY_APPLIED_RESULTS_KEY = 'footyguesser.appliedResults.v1';
 
 export function loadUserProfile(): UserProfile {
   try {
-    const raw = window.localStorage.getItem(USER_STORAGE_KEY);
+    const raw = window.localStorage.getItem(USER_STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_USER_STORAGE_KEY);
     if (!raw) return MOCK_USER;
 
     return { ...MOCK_USER, ...JSON.parse(raw) } as UserProfile;
@@ -97,7 +99,7 @@ export function markResultApplied(resultId: string) {
 
 function loadAppliedResultIds(): string[] {
   try {
-    const raw = window.localStorage.getItem(APPLIED_RESULTS_KEY);
+    const raw = window.localStorage.getItem(APPLIED_RESULTS_KEY) ?? window.localStorage.getItem(LEGACY_APPLIED_RESULTS_KEY);
     const value = raw ? JSON.parse(raw) : [];
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
   } catch {

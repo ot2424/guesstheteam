@@ -1,9 +1,10 @@
-const STORAGE_KEY = 'footyguesser.recentTeams.v1';
+const STORAGE_KEY = 'guesstheteam.recentTeams.v1';
+const LEGACY_STORAGE_KEY = 'footyguesser.recentTeams.v1';
 const MAX_RECENT_TEAMS = 5;
 
 export function loadRecentTeamIds(userId: string): string[] {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
     const value = raw ? JSON.parse(raw) : {};
     const ids = value?.[userId];
     return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === 'string') : [];

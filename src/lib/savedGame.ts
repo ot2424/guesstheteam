@@ -1,6 +1,7 @@
 import type { Difficulty, GuessState, MatchType, PlayMode, Rank, SeriesProgress, Team } from '../types';
 
-const STORAGE_KEY = 'footyguesser.activeGame.v1';
+const STORAGE_KEY = 'guesstheteam.activeGame.v1';
+const LEGACY_STORAGE_KEY = 'footyguesser.activeGame.v1';
 
 export interface SavedGame {
   userId?: string;
@@ -20,7 +21,7 @@ export interface SavedGame {
 
 export function loadSavedGame(): SavedGame | null {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(STORAGE_KEY) ?? window.localStorage.getItem(LEGACY_STORAGE_KEY);
     if (!raw) return null;
 
     const value = JSON.parse(raw) as Partial<SavedGame>;
@@ -38,6 +39,7 @@ export function saveGame(game: SavedGame) {
 
 export function clearSavedGame() {
   window.localStorage.removeItem(STORAGE_KEY);
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
 }
 
 export function matchesSavedGame(

@@ -211,7 +211,7 @@ function parseArgs(argv: string[]): Args {
 
   return {
     source: values.get('source') ?? 'data/transfermarkt',
-    out: values.get('out') ?? 'data/seeds/footyguesser-seed.json',
+    out: values.get('out') ?? 'data/seeds/guesstheteam-seed.json',
     limit: Number(values.get('limit') ?? 80),
     minSeason: Number(values.get('min-season') ?? 2018),
     maxSeason: Number(values.get('max-season') ?? 2026),
