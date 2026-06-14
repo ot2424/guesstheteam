@@ -17,7 +17,7 @@ const startSchema = z.object({
   leagueId: z.string().optional(),
   winStreak: z.number().int().min(0).max(50).default(0),
   seriesId: z.string().uuid().optional(),
-  seriesRound: z.number().int().min(1).max(3).default(1),
+  seriesRound: z.number().int().min(0).max(3).default(1),
   seriesWins: z.number().int().min(0).max(2).default(0),
   seriesPlayed: z.number().int().min(0).max(2).default(0),
   mode: z.enum(['tutorial', 'single', 'series']).optional(),
@@ -70,7 +70,7 @@ export function createGameRouter(
       series: matchType === 'series'
         ? {
             seriesId: payload.seriesId,
-            round: payload.seriesRound,
+            round: Math.max(1, payload.seriesRound),
             wins: payload.seriesWins,
             played: payload.seriesPlayed,
           }

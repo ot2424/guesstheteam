@@ -86,10 +86,9 @@ export function GamePage() {
           rank,
           leagueId,
           winStreak,
-          seriesId,
-          seriesRound,
-          seriesWins,
-          seriesPlayed,
+          ...(matchType === 'series'
+            ? { seriesId, seriesRound, seriesWins, seriesPlayed }
+            : {}),
         });
 
         if (controller.signal.aborted) return;
