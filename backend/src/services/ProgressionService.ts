@@ -15,8 +15,7 @@ export class ProgressionService {
     const solvedRatio = opts.total > 0 ? opts.solved / opts.total : 0;
 
     if (!opts.isWin) {
-      const consolation = opts.difficulty === 'easy' ? 25 : opts.difficulty === 'medium' ? 40 : 60;
-      return consolation + Math.round(solvedRatio * 50);
+      return 0;
     }
 
     const base = opts.difficulty === 'easy' ? 100 : opts.difficulty === 'medium' ? 150 : 250;
