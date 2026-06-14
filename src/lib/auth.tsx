@@ -46,14 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const nextUser = data
       ? mapProfileRow(data)
-      : {
-          ...MOCK_USER,
-          id: nextSession.user.id,
-          email: nextSession.user.email ?? '',
-          username: String(nextSession.user.user_metadata.username ?? nextSession.user.email?.split('@')[0] ?? 'Player'),
-          firstName: String(nextSession.user.user_metadata.first_name ?? ''),
-          lastName: String(nextSession.user.user_metadata.last_name ?? ''),
-        };
+      : await createMissingProfile(nextSession);
 
     saveUserProfile(nextUser);
     setUser(nextUser);
@@ -189,6 +182,23 @@ function mapProfileRow(row: ProfileRow): UserProfile {
     matchesWon: row.matches_won,
     winStreak: row.win_streak,
   };
+}
+
+async function createMissingProfile(session: Session): Promise<UserProfile> {
+  const profile: UserProfile = {
+    ...MOCK_USER,
+    id: session.user.id,
+    username: String(session.user.user_metadata.username ?? session.user.email?.split('@')[0] ?? 'Player'),
+    firstName: String(session.user.user_metadata.first_name ?? ''),
+    lastName: String(session.user.user_metadata.last_name ?? ''),
+    email: session.user.email ?? '',
+  };
+
+  if (!supabase) return profile;
+
+  const { error } = await supabase.from('profiles').upsert(mapUserToProfileRow(profile));
+  if (error) throw error;
+  return profile;
 }
 
 function mapUserToProfileRow(user: UserProfile) {
