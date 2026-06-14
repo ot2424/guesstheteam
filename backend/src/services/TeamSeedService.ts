@@ -17,6 +17,7 @@ interface TeamSelectionOptions {
   playMode: PlayMode;
   difficulty: Difficulty;
   leagueId?: string;
+  excludeTeamIds?: string[];
 }
 
 const DEFAULT_SEED_PATH = path.resolve(process.cwd(), 'data/seeds/footyguesser-seed.json');
@@ -52,7 +53,15 @@ export class TeamSeedService {
     if (teams.length === 0) return REAL_MADRID_2223;
 
     const filtered = this.filterTeams(teams, options);
-    const pool = filtered.length > 0 ? filtered : teams;
+    const filteredWithoutRecent = excludeTeams(filtered, options.excludeTeamIds ?? []);
+    const allWithoutRecent = excludeTeams(teams, options.excludeTeamIds ?? []);
+    const pool = filteredWithoutRecent.length > 0
+      ? filteredWithoutRecent
+      : filtered.length > 0
+        ? filtered
+        : allWithoutRecent.length > 0
+          ? allWithoutRecent
+          : teams;
     const index = Math.floor(Math.random() * pool.length);
 
     return this.toDisplayTeam(pool[index]);
@@ -112,6 +121,12 @@ export class TeamSeedService {
       })),
     };
   }
+}
+
+function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {
+  if (excludeTeamIds.length === 0) return teams;
+  const excluded = new Set(excludeTeamIds);
+  return teams.filter((team) => !excluded.has(team.id));
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {

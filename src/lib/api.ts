@@ -92,6 +92,7 @@ export function startGame(payload: {
   seriesRound?: number;
   seriesWins?: number;
   seriesPlayed?: number;
+  excludeTeamIds?: string[];
 }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',

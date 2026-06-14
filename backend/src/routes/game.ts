@@ -20,6 +20,7 @@ const startSchema = z.object({
   seriesRound: z.number().int().min(0).max(3).default(1),
   seriesWins: z.number().int().min(0).max(2).default(0),
   seriesPlayed: z.number().int().min(0).max(2).default(0),
+  excludeTeamIds: z.array(z.string()).max(10).default([]),
   mode: z.enum(['tutorial', 'single', 'series']).optional(),
 });
 
@@ -60,6 +61,7 @@ export function createGameRouter(
       playMode,
       difficulty,
       leagueId: payload.leagueId,
+      excludeTeamIds: payload.excludeTeamIds,
     });
     const session = sessionService.create(req.user?.id ?? 'dev-user', team, {
       playMode,

@@ -8,6 +8,7 @@ import { GameTimer } from '../components/game/GameTimer';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
+import { loadRecentTeamIds, rememberRecentTeamId } from '../lib/recentTeams';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import { useAuth } from '../lib/useAuth';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, SeriesProgress, Team } from '../types';
@@ -86,6 +87,7 @@ export function GamePage() {
           rank,
           leagueId,
           winStreak,
+          excludeTeamIds: loadRecentTeamIds(user.id),
           ...(matchType === 'series'
             ? { seriesId, seriesRound, seriesWins, seriesPlayed }
             : {}),
@@ -154,6 +156,7 @@ export function GamePage() {
 
   const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
     clearSavedGame();
+    rememberRecentTeamId(user.id, currentTeam.id);
 
     if (matchType === 'series' && finish.result.series && !finish.result.series.isComplete) {
       const nextParams = new URLSearchParams({
@@ -192,7 +195,7 @@ export function GamePage() {
         profile: finish.profile,
       },
     });
-  }, [difficulty, leagueId, matchType, navigate, playMode, rank, sessionId, winStreak]);
+  }, [difficulty, leagueId, matchType, navigate, playMode, rank, sessionId, user.id, winStreak]);
 
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {
