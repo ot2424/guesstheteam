@@ -1,9 +1,15 @@
 import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
 import { supabase } from './supabase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+const LOCAL_API_BASE_URL = 'http://localhost:4000/api/v1';
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const API_BASE_URL = resolveApiBaseUrl(configuredApiBaseUrl);
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (isSupabaseRestUrl(API_BASE_URL)) {
+    throw new Error('VITE_API_BASE_URL muss auf die Game API zeigen, nicht auf Supabase REST.');
+  }
+
   const token = await getAccessToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
@@ -20,6 +26,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+function resolveApiBaseUrl(value?: string) {
+  const url = (value ?? LOCAL_API_BASE_URL).replace(/\/+$/, '');
+  if (import.meta.env.DEV && isSupabaseRestUrl(url)) return LOCAL_API_BASE_URL;
+  return url;
+}
+
+function isSupabaseRestUrl(value: string) {
+  return /\.supabase\.co\/rest\/v1$/i.test(value.replace(/\/+$/, ''));
 }
 
 async function getAccessToken() {
