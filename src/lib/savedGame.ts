@@ -1,4 +1,4 @@
-import type { Difficulty, GuessState, MatchType, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, GuessState, MatchType, PlayMode, Rank, SeriesProgress, Team } from '../types';
 
 const STORAGE_KEY = 'footyguesser.activeGame.v1';
 
@@ -10,6 +10,7 @@ export interface SavedGame {
   startedAt: number;
   playMode: PlayMode;
   matchType: MatchType;
+  series?: SeriesProgress;
   difficulty: Difficulty;
   rank: Rank;
   winStreak: number;
@@ -41,11 +42,12 @@ export function clearSavedGame() {
 
 export function matchesSavedGame(
   saved: SavedGame,
-  opts: { userId: string; playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number; leagueId?: string },
+  opts: { userId: string; playMode: PlayMode; matchType: MatchType; seriesId?: string; difficulty: Difficulty; rank: Rank; winStreak: number; leagueId?: string },
 ) {
   return saved.userId === opts.userId
     && saved.playMode === opts.playMode
     && saved.matchType === opts.matchType
+    && (saved.series?.seriesId ?? '') === (opts.seriesId ?? '')
     && saved.difficulty === opts.difficulty
     && saved.rank === opts.rank
     && saved.winStreak === opts.winStreak
@@ -62,5 +64,11 @@ export function getSavedGameUrl(saved: SavedGame) {
   });
 
   if (saved.leagueId) params.set('leagueId', saved.leagueId);
+  if (saved.series) {
+    params.set('seriesId', saved.series.seriesId);
+    params.set('seriesRound', String(saved.series.round));
+    params.set('seriesWins', String(saved.series.wins));
+    params.set('seriesPlayed', String(saved.series.played));
+  }
   return `/play?${params.toString()}`;
 }

@@ -54,6 +54,14 @@ export interface GameSession {
   userId: string;
   playMode: PlayMode;
   matchType: MatchType;
+  series?: {
+    seriesId: string;
+    round: number;
+    wins: number;
+    played: number;
+    total: number;
+    neededWins: number;
+  };
   difficulty: Difficulty;
   rank: Rank;
   winStreak: number;
@@ -64,4 +72,5 @@ export interface GameSession {
 
 export interface AuthenticatedRequestUser {
   id: string;
+  accessToken?: string;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { MOCK_USER } from '../data/mockUser';
-import type { MatchType, PlayMode, Rank, UserProfile } from '../types';
+import type { MatchType, PlayMode, Rank, SeriesProgress, UserProfile } from '../types';
 import { AuthContext, type AuthContextValue } from './authContext';
 import { applyMatchProgress, hasAppliedResult, loadUserProfile, markResultApplied, saveUserProfile } from './localUser';
 import { isSupabaseConfigured, supabase } from './supabase';
@@ -125,10 +125,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(loadUserProfile());
   }, []);
 
+  const syncProfile = useCallback((profile: UserProfile) => {
+    saveUserProfile(profile);
+    setUser(profile);
+  }, []);
+
   const applyMatchResult = useCallback(async (result: {
     resultId: string;
     playMode?: PlayMode;
     matchType?: MatchType;
+    series?: SeriesProgress;
     isWin: boolean;
     xpGained: number;
     lpChange: number;
@@ -160,8 +166,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
+    syncProfile,
     applyMatchResult,
-  }), [applyMatchResult, loading, session, signIn, signOut, signUp, user]);
+  }), [applyMatchResult, loading, session, signIn, signOut, signUp, syncProfile, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -1,4 +1,4 @@
-import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, SeriesProgress, Team, UserProfile } from '../types';
 import { supabase } from './supabase';
 
 const LOCAL_API_BASE_URL = 'http://localhost:4000/api/v1';
@@ -52,6 +52,7 @@ export interface StartGameResponse {
   difficulty: Difficulty;
   rank: Rank;
   winStreak: number;
+  series?: SeriesProgress;
   selection: {
     pool: string;
     leagueId?: string;
@@ -67,12 +68,13 @@ export interface GuessResponse {
 }
 
 export interface FinishGameResponse {
-  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio'>;
+  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio' | 'series'>;
   progression: {
     xpGained: number;
     lpChange: number;
     newAchievements: string[];
   };
+  profile?: UserProfile | null;
 }
 
 export interface PlayerSearchResponse {
@@ -86,6 +88,10 @@ export function startGame(payload: {
   rank?: Rank;
   leagueId?: string;
   winStreak?: number;
+  seriesId?: string;
+  seriesRound?: number;
+  seriesWins?: number;
+  seriesPlayed?: number;
 }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',

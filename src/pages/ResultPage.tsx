@@ -35,7 +35,7 @@ function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean 
 export function ResultPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { applyMatchResult } = useAuth();
+  const { applyMatchResult, syncProfile } = useAuth();
   const result = state as MatchResult | null;
   const safeResult = result ?? {
     teamName: '',
@@ -48,7 +48,9 @@ export function ResultPage() {
     xpGained: 0,
     lpChange: 0,
   };
-  const { resultId, playMode, matchType, teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
+  const { resultId, playMode, matchType, profile, teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
+  const series = safeResult.series;
+  const displayWin = series?.isComplete ? Boolean(series.isWin) : isWin;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
   const accuracy = Math.round((solved / total) * 100);
@@ -59,15 +61,21 @@ export function ResultPage() {
       return;
     }
 
+    if (profile) {
+      syncProfile(profile);
+      return;
+    }
+
     void applyMatchResult({
       resultId: resultId ?? `${teamName}-${season}-${durationSec}-${solved}-${lpChange}`,
       playMode,
       matchType,
+      series,
       isWin,
       xpGained,
       lpChange,
     });
-  }, [applyMatchResult, durationSec, isWin, lpChange, matchType, navigate, playMode, result, resultId, season, solved, teamName, xpGained]);
+  }, [applyMatchResult, durationSec, isWin, lpChange, matchType, navigate, playMode, profile, result, resultId, season, series, solved, syncProfile, teamName, xpGained]);
 
   if (!result) return null;
 
@@ -97,14 +105,14 @@ export function ResultPage() {
         className="w-full max-w-sm rounded-2xl border overflow-hidden"
         style={{
           background: '#111827',
-          borderColor: isWin ? '#22C55E' : '#EF4444',
-          boxShadow: isWin ? '0 0 40px rgba(34,197,94,0.15)' : '0 0 40px rgba(239,68,68,0.15)',
+          borderColor: displayWin ? '#22C55E' : '#EF4444',
+          boxShadow: displayWin ? '0 0 40px rgba(34,197,94,0.15)' : '0 0 40px rgba(239,68,68,0.15)',
         }}
       >
         {/* Top banner */}
         <div
           className="px-6 py-5 flex flex-col items-center gap-2"
-          style={{ background: isWin ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)' }}
+          style={{ background: displayWin ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.1)' }}
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -112,13 +120,15 @@ export function ResultPage() {
             transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
             className="flex items-center justify-center"
           >
-            <ResultIcon isPerfect={isPerfect} isWin={isWin} />
+            <ResultIcon isPerfect={isPerfect} isWin={displayWin} />
           </motion.div>
           <h1
             className="bebas text-3xl tracking-widest"
-            style={{ color: isWin ? '#22C55E' : '#EF4444' }}
+            style={{ color: displayWin ? '#22C55E' : '#EF4444' }}
           >
-            {isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
+            {series?.isComplete
+              ? (displayWin ? 'Serie gewonnen!' : 'Serie verloren')
+              : isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
           </h1>
           <div className="flex items-center gap-2">
             <TeamBadge name={teamName} logoUrl={teamLogo} size={24} />
@@ -147,7 +157,9 @@ export function ResultPage() {
         {isWin && (
           <div className="px-6 py-3 border-b border-gray-800 text-center">
             <div className="text-xs font-semibold text-green-300">
-              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
+              {series?.isComplete
+                ? `${series.wins}/${series.total} Teams gewonnen.`
+                : isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
             </div>
           </div>
         )}

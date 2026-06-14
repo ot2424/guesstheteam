@@ -10,7 +10,7 @@ import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import { useAuth } from '../lib/useAuth';
-import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, SeriesProgress, Team } from '../types';
 import { getPositionLabel } from '../utils/footballDisplay';
 
 const COMPLETION_THRESHOLD = 0.8;
@@ -39,10 +39,15 @@ export function GamePage() {
     : (params.get('difficulty') ?? 'easy') as Difficulty;
   const leagueId = params.get('leagueId') ?? undefined;
   const winStreak = getNumberParam(params.get('winStreak'), 0);
+  const seriesId = params.get('seriesId') ?? undefined;
+  const seriesRound = getNumberParam(params.get('seriesRound'), 1);
+  const seriesWins = getNumberParam(params.get('seriesWins'), 0);
+  const seriesPlayed = getNumberParam(params.get('seriesPlayed'), 0);
 
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
+  const [series, setSeries] = useState<SeriesProgress | undefined>(undefined);
   const [finished, setFinished] = useState(false);
   const [activeTipId, setActiveTipId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(null);
@@ -65,9 +70,10 @@ export function GamePage() {
         setError(null);
         const saved = loadSavedGame();
 
-        if (saved && matchesSavedGame(saved, { userId: user.id, playMode, matchType, difficulty, rank, winStreak, leagueId })) {
+        if (saved && matchesSavedGame(saved, { userId: user.id, playMode, matchType, seriesId, difficulty, rank, winStreak, leagueId })) {
           setSessionId(saved.sessionId);
           setTeam(saved.team);
+          setSeries(saved.series);
           setGuesses(saved.guesses);
           setStartedAt(saved.startedAt);
           return;
@@ -80,6 +86,10 @@ export function GamePage() {
           rank,
           leagueId,
           winStreak,
+          seriesId,
+          seriesRound,
+          seriesWins,
+          seriesPlayed,
         });
 
         if (controller.signal.aborted) return;
@@ -87,6 +97,7 @@ export function GamePage() {
         const nextStartedAt = Date.now();
         setSessionId(response.sessionId);
         setTeam(response.team);
+        setSeries(response.series);
         setStartedAt(nextStartedAt);
         setGuesses(Object.fromEntries(
           response.team.players.map((player) => [
@@ -106,7 +117,7 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, isAuthenticated, leagueId, matchType, navigate, playMode, rank, user.id, winStreak]);
+  }, [difficulty, isAuthenticated, leagueId, matchType, navigate, playMode, rank, seriesId, seriesPlayed, seriesRound, seriesWins, user.id, winStreak]);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
@@ -119,13 +130,14 @@ export function GamePage() {
       startedAt,
       playMode,
       matchType,
+      series,
       difficulty,
       rank,
       winStreak,
       leagueId,
       savedAt: Date.now(),
     });
-  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, sessionId, startedAt, team, user.id, winStreak]);
+  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, series, sessionId, startedAt, team, user.id, winStreak]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
@@ -143,11 +155,30 @@ export function GamePage() {
 
   const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
     clearSavedGame();
+
+    if (matchType === 'series' && finish.result.series && !finish.result.series.isComplete) {
+      const nextParams = new URLSearchParams({
+        playMode,
+        matchType,
+        difficulty,
+        rank,
+        winStreak: String(winStreak),
+        seriesId: finish.result.series.seriesId,
+        seriesRound: String(finish.result.series.round + 1),
+        seriesWins: String(finish.result.series.wins),
+        seriesPlayed: String(finish.result.series.played),
+      });
+      if (leagueId) nextParams.set('leagueId', leagueId);
+      navigate(`/play?${nextParams.toString()}`);
+      return;
+    }
+
     navigate('/result', {
       state: {
         resultId: sessionId,
         playMode,
         matchType,
+        series: finish.result.series,
         teamName: currentTeam.name,
         teamLogo: currentTeam.logoUrl,
         season: currentTeam.season,
@@ -159,9 +190,10 @@ export function GamePage() {
         completionRatio: finish.result.completionRatio,
         xpGained: finish.progression.xpGained,
         lpChange: finish.progression.lpChange,
+        profile: finish.profile,
       },
     });
-  }, [matchType, navigate, playMode, sessionId]);
+  }, [difficulty, leagueId, matchType, navigate, playMode, rank, sessionId, winStreak]);
 
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {
@@ -298,6 +330,11 @@ export function GamePage() {
                 <span className="px-2 py-1 rounded bg-gray-800">
                   {playMode === 'ranked' ? 'Ranked' : 'Freizeit'} · {matchType === 'series' ? '3er-Serie' : 'Einzel'}
                 </span>
+                {series && (
+                  <span className="px-2 py-1 rounded bg-gray-800">
+                    Runde {series.round}/3 · {series.wins}/{series.neededWins}
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => setShowSurrenderModal(true)}

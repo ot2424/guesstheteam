@@ -9,7 +9,14 @@ export class GameSessionService {
   private sessions = new Map<string, GameSession>();
   private progressionService = new ProgressionService();
 
-  create(userId: string, team: TeamData, opts: { playMode: PlayMode; matchType: MatchType; difficulty: Difficulty; rank: Rank; winStreak: number }): GameSession {
+  create(userId: string, team: TeamData, opts: {
+    playMode: PlayMode;
+    matchType: MatchType;
+    difficulty: Difficulty;
+    rank: Rank;
+    winStreak: number;
+    series?: { seriesId?: string; round: number; wins: number; played: number };
+  }): GameSession {
     const sessionId = randomUUID();
     const publicPlayers: PublicPlayer[] = team.players.map((player) => ({
       id: player.id,
@@ -25,6 +32,16 @@ export class GameSessionService {
       userId,
       playMode: opts.playMode,
       matchType: opts.matchType,
+      series: opts.matchType === 'series'
+        ? {
+            seriesId: opts.series?.seriesId ?? randomUUID(),
+            round: opts.series?.round ?? 1,
+            wins: opts.series?.wins ?? 0,
+            played: opts.series?.played ?? 0,
+            total: 3,
+            neededWins: 2,
+          }
+        : undefined,
       difficulty: opts.difficulty,
       rank: opts.rank,
       winStreak: opts.winStreak,
@@ -81,6 +98,12 @@ export class GameSessionService {
     const durationSec = Math.floor((Date.now() - session.startedAt) / 1000);
     const completionRatio = total > 0 ? solved / total : 0;
     const isWin = reason !== 'surrender' && completionRatio >= WIN_THRESHOLD;
+    const series = session.series
+      ? getNextSeriesState(session.series, isWin)
+      : undefined;
+    const rankedOutcome = series
+      ? (series.isComplete ? series.isWin : null)
+      : isWin;
     const xpGained = this.progressionService.calcXP({
       difficulty: session.difficulty,
       solved,
@@ -92,8 +115,9 @@ export class GameSessionService {
       playMode: session.playMode,
       difficulty: session.difficulty,
       matchType: session.matchType,
-      isWin,
+      isWin: rankedOutcome ?? false,
       winStreak: session.winStreak,
+      isSeriesComplete: series?.isComplete ?? true,
     });
 
     return {
@@ -104,6 +128,7 @@ export class GameSessionService {
         isWin,
         isPerfect: solved === total,
         completionRatio,
+        series,
       },
       progression: {
         xpGained,
@@ -112,4 +137,27 @@ export class GameSessionService {
       },
     };
   }
+}
+
+function getNextSeriesState(
+  current: NonNullable<GameSession['series']>,
+  currentTeamWin: boolean,
+) {
+  const played = current.played + 1;
+  const wins = current.wins + (currentTeamWin ? 1 : 0);
+  const remaining = current.total - played;
+  const isComplete = played >= current.total
+    || wins >= current.neededWins
+    || wins + remaining < current.neededWins;
+
+  return {
+    seriesId: current.seriesId,
+    round: current.round,
+    played,
+    wins,
+    total: current.total,
+    neededWins: current.neededWins,
+    isComplete,
+    isWin: isComplete ? wins >= current.neededWins : false,
+  };
 }

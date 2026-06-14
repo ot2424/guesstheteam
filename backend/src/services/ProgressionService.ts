@@ -27,8 +27,9 @@ export class ProgressionService {
     return base + solvedBonus + perfectBonus + speedBonus;
   }
 
-  calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean; winStreak?: number }): number {
+  calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean; winStreak?: number; isSeriesComplete?: boolean }): number {
     if (opts.playMode === 'casual') return 0;
+    if (opts.matchType === 'series' && opts.isSeriesComplete === false) return 0;
 
     const base = this.getRankedLpBase(opts.difficulty, opts.isWin);
     const streakBonus = opts.isWin ? this.getWinStreakBonus((opts.winStreak ?? 0) + 1) : 0;

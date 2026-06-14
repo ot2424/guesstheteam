@@ -35,6 +35,6 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return res.status(401).json({ error: 'Invalid bearer token' });
   }
 
-  req.user = { id: data.user.id };
+  req.user = { id: data.user.id, accessToken: token };
   return next();
 }

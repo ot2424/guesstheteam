@@ -82,3 +82,41 @@ create trigger create_profile_on_auth_signup
   after insert on auth.users
   for each row
   execute function public.create_profile_for_new_user();
+
+create table if not exists public.match_results (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  session_id uuid not null,
+  team_id text not null,
+  team_name text not null,
+  season text not null,
+  league text not null,
+  play_mode text not null,
+  match_type text not null,
+  difficulty text not null,
+  rank_at_start text not null,
+  solved integer not null check (solved >= 0),
+  total integer not null check (total > 0),
+  duration_sec integer not null check (duration_sec >= 0),
+  completion_ratio numeric not null check (completion_ratio >= 0),
+  is_win boolean not null,
+  is_perfect boolean not null,
+  xp_gained integer not null default 0,
+  lp_change integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.match_results enable row level security;
+
+create index if not exists match_results_user_created_idx
+  on public.match_results (user_id, created_at desc);
+
+create policy "match_results_select_own"
+  on public.match_results
+  for select
+  using (auth.uid() = user_id);
+
+create policy "match_results_insert_own"
+  on public.match_results
+  for insert
+  with check (auth.uid() = user_id);

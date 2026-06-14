@@ -4,6 +4,7 @@ import { HttpError } from '../middleware/errorHandler';
 import { requireAuth } from '../middleware/auth';
 import { GameSessionService } from '../services/GameSessionService';
 import { PlayerMatchService } from '../services/PlayerMatchService';
+import { ProfileService } from '../services/ProfileService';
 import { ProgressionService } from '../services/ProgressionService';
 import { TeamSeedService } from '../services/TeamSeedService';
 import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
@@ -15,6 +16,10 @@ const startSchema = z.object({
   rank: z.enum(['Bronze 3', 'Bronze 2', 'Bronze 1', 'Silver 3', 'Silver 2', 'Silver 1', 'Gold 3', 'Gold 2', 'Gold 1', 'Platinum 3', 'Platinum 2', 'Platinum 1']).default('Bronze 3'),
   leagueId: z.string().optional(),
   winStreak: z.number().int().min(0).max(50).default(0),
+  seriesId: z.string().uuid().optional(),
+  seriesRound: z.number().int().min(1).max(3).default(1),
+  seriesWins: z.number().int().min(0).max(2).default(0),
+  seriesPlayed: z.number().int().min(0).max(2).default(0),
   mode: z.enum(['tutorial', 'single', 'series']).optional(),
 });
 
@@ -33,14 +38,21 @@ export function createGameRouter(
   matchService = new PlayerMatchService(),
   progressionService = new ProgressionService(),
   teamSeedService = new TeamSeedService(),
+  profileService = new ProfileService(),
 ) {
   const router = Router();
 
-  router.post('/start', requireAuth, (req, res) => {
+  router.post('/start', requireAuth, async (req, res) => {
     const payload = startSchema.parse(req.body);
     const matchType = (payload.mode && payload.mode !== 'tutorial' ? payload.mode : payload.matchType) as MatchType;
     const playMode = payload.playMode as PlayMode;
-    const rank = payload.rank as Rank;
+    const profile = await profileService.getProfile(req.user?.accessToken);
+    const rank = playMode === 'ranked'
+      ? profile?.rank ?? payload.rank as Rank
+      : payload.rank as Rank;
+    const winStreak = playMode === 'ranked'
+      ? profile?.winStreak ?? payload.winStreak
+      : payload.winStreak;
     const difficulty = playMode === 'ranked'
       ? progressionService.getDifficultyForRank(rank)
       : payload.difficulty ?? 'easy';
@@ -54,7 +66,15 @@ export function createGameRouter(
       matchType,
       difficulty,
       rank,
-      winStreak: payload.winStreak,
+      winStreak,
+      series: matchType === 'series'
+        ? {
+            seriesId: payload.seriesId,
+            round: payload.seriesRound,
+            wins: payload.seriesWins,
+            played: payload.seriesPlayed,
+          }
+        : undefined,
     });
 
     res.status(201).json({
@@ -64,6 +84,7 @@ export function createGameRouter(
       difficulty: session.difficulty,
       rank: session.rank,
       winStreak: session.winStreak,
+      series: session.series,
       selection: getSelectionDescriptor(session.playMode, session.difficulty, payload.leagueId),
       team: session.team,
     });
@@ -84,12 +105,24 @@ export function createGameRouter(
     return res.json({ correct: true, matchedPlayerId: match.playerId, name: match.name });
   });
 
-  router.post('/finish', requireAuth, (req, res) => {
+  router.post('/finish', requireAuth, async (req, res) => {
     const payload = finishSchema.parse(req.body);
+    const session = sessionService.get(payload.sessionId);
+    if (!session) throw new HttpError(404, 'Session not found');
+
     const result = sessionService.finish(payload.sessionId, payload.reason);
     if (!result) throw new HttpError(404, 'Session not found');
 
-    res.json(result);
+    const profile = await profileService.persistMatch(req.user?.accessToken, {
+      session,
+      result: result.result,
+      progression: result.progression,
+    });
+
+    res.json({
+      ...result,
+      profile,
+    });
   });
 
   return router;

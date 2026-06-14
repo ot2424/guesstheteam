@@ -1,5 +1,5 @@
 import { getLevelFromXP, getRankFromLP, MOCK_USER } from '../data/mockUser';
-import type { MatchType, PlayMode, UserProfile } from '../types';
+import type { MatchType, PlayMode, SeriesProgress, UserProfile } from '../types';
 
 const USER_STORAGE_KEY = 'footyguesser.user.v1';
 const APPLIED_RESULTS_KEY = 'footyguesser.appliedResults.v1';
@@ -23,6 +23,7 @@ export function applyMatchResultOnce(result: {
   resultId: string;
   playMode?: PlayMode;
   matchType?: MatchType;
+  series?: SeriesProgress;
   isWin: boolean;
   xpGained: number;
   lpChange: number;
@@ -39,6 +40,8 @@ export function applyMatchResultOnce(result: {
 
 export function applyMatchProgress(user: UserProfile, result: {
   playMode?: PlayMode;
+  matchType?: MatchType;
+  series?: SeriesProgress;
   isWin: boolean;
   xpGained: number;
   lpChange: number;
@@ -47,6 +50,12 @@ export function applyMatchProgress(user: UserProfile, result: {
   const nextLp = result.playMode === 'ranked'
     ? Math.max(0, user.lp + result.lpChange)
     : user.lp;
+  const rankedSeriesPending = result.playMode === 'ranked'
+    && result.matchType === 'series'
+    && result.series?.isComplete === false;
+  const rankedOutcome = result.matchType === 'series' && result.series?.isComplete
+    ? Boolean(result.series.isWin)
+    : result.isWin;
   return {
     ...user,
     xp: nextXp,
@@ -55,8 +64,8 @@ export function applyMatchProgress(user: UserProfile, result: {
     rank: getRankFromLP(nextLp),
     matchesPlayed: user.matchesPlayed + 1,
     matchesWon: user.matchesWon + (result.isWin ? 1 : 0),
-    winStreak: result.playMode === 'ranked'
-      ? (result.isWin ? user.winStreak + 1 : 0)
+    winStreak: result.playMode === 'ranked' && !rankedSeriesPending
+      ? (rankedOutcome ? user.winStreak + 1 : 0)
       : user.winStreak,
   };
 }

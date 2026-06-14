@@ -65,6 +65,17 @@ export interface GameSession {
   difficulty: Difficulty;
 }
 
+export interface SeriesProgress {
+  seriesId: string;
+  round: number;
+  played: number;
+  wins: number;
+  total: number;
+  neededWins: number;
+  isComplete?: boolean;
+  isWin?: boolean;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -86,6 +97,8 @@ export interface MatchResult {
   resultId?: string;
   playMode?: PlayMode;
   matchType?: MatchType;
+  series?: SeriesProgress;
+  profile?: UserProfile | null;
   teamName: string;
   teamLogo: string;
   season: string;
