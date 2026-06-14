@@ -19,6 +19,21 @@ export function saveUserProfile(user: UserProfile) {
   window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
 }
 
+export function createStarterProfile(profile: Pick<UserProfile, 'id' | 'username' | 'firstName' | 'lastName' | 'email'>): UserProfile {
+  return {
+    ...MOCK_USER,
+    ...profile,
+    xp: 0,
+    level: 1,
+    lp: 0,
+    rank: 'Bronze 3',
+    badges: [],
+    matchesPlayed: 0,
+    matchesWon: 0,
+    winStreak: 0,
+  };
+}
+
 export function applyMatchResultOnce(result: {
   resultId: string;
   playMode?: PlayMode;

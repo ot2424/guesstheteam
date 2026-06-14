@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { MOCK_USER } from '../data/mockUser';
 import type { MatchType, PlayMode, Rank, SeriesProgress, UserProfile } from '../types';
 import { AuthContext, type AuthContextValue } from './authContext';
-import { applyMatchProgress, hasAppliedResult, loadUserProfile, markResultApplied, saveUserProfile } from './localUser';
+import { applyMatchProgress, createStarterProfile, hasAppliedResult, loadUserProfile, markResultApplied, saveUserProfile } from './localUser';
 import { isSupabaseConfigured, supabase } from './supabase';
 
 type ProfileRow = {
@@ -94,14 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return 'Account erstellt. Bitte bestaetige deine Email, bevor du dich einloggst.';
     }
 
-    const profile = mapUserToProfileRow({
-      ...MOCK_USER,
+    const profile = mapUserToProfileRow(createStarterProfile({
       id: data.user.id,
       username: payload.username,
       firstName: payload.firstName,
       lastName: payload.lastName,
       email: payload.email,
-    });
+    }));
 
     const { error: profileError } = await supabase.from('profiles').upsert(profile);
     if (profileError) throw profileError;
@@ -186,12 +184,13 @@ function mapProfileRow(row: ProfileRow): UserProfile {
 
 async function createMissingProfile(session: Session): Promise<UserProfile> {
   const profile: UserProfile = {
-    ...MOCK_USER,
-    id: session.user.id,
-    username: String(session.user.user_metadata.username ?? session.user.email?.split('@')[0] ?? 'Player'),
-    firstName: String(session.user.user_metadata.first_name ?? ''),
-    lastName: String(session.user.user_metadata.last_name ?? ''),
-    email: session.user.email ?? '',
+    ...createStarterProfile({
+      id: session.user.id,
+      username: String(session.user.user_metadata.username ?? session.user.email?.split('@')[0] ?? 'Player'),
+      firstName: String(session.user.user_metadata.first_name ?? ''),
+      lastName: String(session.user.user_metadata.last_name ?? ''),
+      email: session.user.email ?? '',
+    }),
   };
 
   if (!supabase) return profile;
