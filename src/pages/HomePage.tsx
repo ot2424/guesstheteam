@@ -149,10 +149,10 @@ export function HomePage() {
             className="mb-8"
           >
             <h1 className="bebas text-5xl sm:text-6xl tracking-wider text-white mb-2">
-              Wer spielt hier?
+              Guess the Team
             </h1>
             <p className="text-gray-400 text-base max-w-lg">
-              Erkenne Fußballer anhand ihrer Karriere und Nationalität. Steige auf, sammle Ränge, schalte Inhalte frei.
+              Eine Saison, elf Karrieren, kein Spielername. Lies die Stationen, kombiniere Nationalität und Position und finde heraus, welche Elf vor dir steht.
             </p>
           </motion.div>
 
