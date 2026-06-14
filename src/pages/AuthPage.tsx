@@ -37,7 +37,7 @@ export function AuthPage() {
         navigate('/');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Anmeldung fehlgeschlagen.');
+      setError(getAuthErrorMessage(err, mode));
     } finally {
       setSubmitting(false);
     }
@@ -149,4 +149,38 @@ export function AuthPage() {
       </div>
     </div>
   );
+}
+
+function getAuthErrorMessage(error: unknown, mode: AuthMode) {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+
+  if (message.includes('invalid login credentials')) {
+    return 'Email oder Passwort ist falsch. Falls du noch keinen Account hast, registriere dich bitte zuerst.';
+  }
+
+  if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+    return 'Bitte bestaetige zuerst deine Email-Adresse und versuche es danach erneut.';
+  }
+
+  if (message.includes('user already registered') || message.includes('already registered') || message.includes('already exists')) {
+    return 'Mit dieser Email existiert bereits ein Account. Bitte logge dich ein.';
+  }
+
+  if (message.includes('signup disabled')) {
+    return 'Registrierung ist aktuell deaktiviert.';
+  }
+
+  if (message.includes('password')) {
+    return mode === 'register'
+      ? 'Das Passwort ist zu schwach oder zu kurz. Bitte nutze mindestens 6 Zeichen.'
+      : 'Das Passwort ist falsch.';
+  }
+
+  if (message.includes('email')) {
+    return 'Bitte pruefe die Email-Adresse.';
+  }
+
+  return mode === 'login'
+    ? 'Einloggen fehlgeschlagen. Bitte pruefe deine Daten.'
+    : 'Registrierung fehlgeschlagen. Bitte pruefe deine Angaben.';
 }
