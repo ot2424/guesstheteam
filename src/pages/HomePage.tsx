@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { AdSlot } from '../components/ui/AdSlot';
 import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
 import { useAuth } from '../lib/useAuth';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame } from '../lib/savedGame';
@@ -288,14 +287,7 @@ export function HomePage() {
             </motion.div>
           </motion.div>
 
-          {/* Rewarded Ad placeholder */}
-          <AdSlot type="rewarded" />
         </main>
-
-        {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col gap-4" style={{ width: '180px' }}>
-          <AdSlot type="sidebar" />
-        </aside>
       </div>
     </div>
   );

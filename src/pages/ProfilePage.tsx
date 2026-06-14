@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { AdSlot } from '../components/ui/AdSlot';
 import { MOCK_MATCH_HISTORY, BADGES, RANKS, getNextUnlock, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS, isRankedUnlocked } from '../data/mockUser';
 import { useAuth } from '../lib/useAuth';
 
@@ -229,11 +228,6 @@ export function ProfilePage() {
             </div>
           </motion.div>
         </main>
-
-        {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col gap-4 flex-shrink-0" style={{ width: '180px' }}>
-          <AdSlot type="sidebar" />
-        </aside>
       </div>
     </div>
   );

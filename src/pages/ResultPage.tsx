@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { useAuth } from '../lib/useAuth';
 import { loadUserProfile } from '../lib/localUser';
@@ -180,13 +179,6 @@ export function ResultPage() {
           </motion.div>
         </div>
 
-        {/* Rewarded ad offer (on loss) */}
-        {!isWin && (
-          <div className="px-6 py-3 border-b border-gray-800">
-            <AdSlot type="rewarded" className="text-xs" />
-          </div>
-        )}
-
         {/* Actions */}
         <div className="px-6 py-5 flex flex-col gap-3">
           <button
@@ -205,10 +197,6 @@ export function ResultPage() {
         </div>
       </motion.div>
 
-      {/* Leaderboard ad */}
-      <div className="mt-6 w-full max-w-lg">
-        <AdSlot type="leaderboard" />
-      </div>
     </div>
   );
 }

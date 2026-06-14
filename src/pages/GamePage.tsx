@@ -5,7 +5,6 @@ import { MobilePlayerList } from '../components/game/MobilePlayerList';
 import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
-import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
@@ -358,9 +357,6 @@ export function GamePage() {
             />
           </div>
 
-          <div className="mt-2">
-            <AdSlot type="leaderboard" />
-          </div>
         </main>
 
         {/* ─── Sidebar ─── */}
@@ -388,7 +384,6 @@ export function GamePage() {
               })}
             </div>
           </div>
-          <AdSlot type="sidebar" />
         </aside>
       </div>
 
