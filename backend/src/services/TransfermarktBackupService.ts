@@ -87,9 +87,25 @@ export class TransfermarktBackupService {
     const cached = this.clubDetailsCache.get(cacheKey);
     if (cached) return cached;
 
-    const details = await this.fetchClubDetails(clubId, clubName)
-      ?? await this.fetchClubDetails(await this.searchClubId(clubName), clubName)
-      ?? { name: getDisplayClubName(clubId, clubName), logoUrl: '' };
+    const directDetails = await this.fetchClubDetails(clubId, clubName);
+    const parentClub = getParentClubFallback(clubName);
+    const parentDetails = directDetails?.logoUrl
+      ? null
+      : await this.fetchClubDetails(parentClub?.clubId, parentClub?.clubName ?? clubName);
+    const searchDetails = directDetails?.logoUrl || parentDetails?.logoUrl
+      ? null
+      : await this.fetchClubDetails(await this.searchClubId(clubName), clubName);
+    const parentSearchDetails = directDetails?.logoUrl || parentDetails?.logoUrl || searchDetails?.logoUrl
+      ? null
+      : await this.fetchClubDetails(await this.searchClubId(parentClub?.clubName ?? ''), parentClub?.clubName ?? clubName);
+
+    const details = mergeClubDetails(
+      directDetails,
+      parentDetails,
+      searchDetails,
+      parentSearchDetails,
+      { name: getDisplayClubName(clubId, clubName), logoUrl: '' },
+    );
 
     this.clubDetailsCache.set(cacheKey, details);
     if (clubId) this.clubDetailsCache.set(clubId, details);
@@ -162,7 +178,7 @@ export class TransfermarktBackupService {
 
       return {
         ...club,
-        clubName: details.name,
+        clubName: getDisplayClubName(club.clubId, club.clubName),
         logoUrl: details.logoUrl,
       };
     }));
@@ -339,6 +355,13 @@ function isVirtualCareerClub(clubId: string) {
   return clubId === 'free-agent' || clubId === 'career-ended';
 }
 
+function mergeClubDetails(...details: Array<ClubDetails | null>) {
+  const availableDetails = details.filter((detail): detail is ClubDetails => Boolean(detail));
+  const name = availableDetails.find((detail) => detail.name)?.name ?? '';
+  const logoUrl = availableDetails.find((detail) => detail.logoUrl)?.logoUrl ?? '';
+  return { name, logoUrl };
+}
+
 const CLUB_NAME_ALIASES: Record<string, string> = {
   '46': 'Inter Milan',
   '5': 'AC Milan',
@@ -357,6 +380,37 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '762': 'Newcastle United',
   '148': 'Tottenham Hotspur',
 };
+
+const PARENT_CLUB_FALLBACKS: Array<{ pattern: RegExp; clubId: string; clubName: string }> = [
+  { pattern: /\bInter\b/i, clubId: '46', clubName: 'Inter Milan' },
+  { pattern: /\bAtalanta\b/i, clubId: '800', clubName: 'Atalanta' },
+  { pattern: /\bMilan\b/i, clubId: '5', clubName: 'AC Milan' },
+  { pattern: /\bJuventus\b|\bJuve\b/i, clubId: '506', clubName: 'Juventus' },
+  { pattern: /\bRoma\b/i, clubId: '12', clubName: 'Roma' },
+  { pattern: /\bLazio\b/i, clubId: '398', clubName: 'Lazio' },
+  { pattern: /\bNapoli\b/i, clubId: '6195', clubName: 'Napoli' },
+  { pattern: /\bBarcelona\b/i, clubId: '131', clubName: 'Barcelona' },
+  { pattern: /\bReal Madrid\b/i, clubId: '418', clubName: 'Real Madrid' },
+  { pattern: /\bAtletico\b|\bAtl[eé]tico\b/i, clubId: '13', clubName: 'Atletico Madrid' },
+  { pattern: /\bParis Saint-Germain\b|\bPSG\b/i, clubId: '583', clubName: 'Paris Saint-Germain' },
+  { pattern: /\bManchester City\b/i, clubId: '281', clubName: 'Manchester City' },
+  { pattern: /\bManchester United\b/i, clubId: '985', clubName: 'Manchester United' },
+  { pattern: /\bLiverpool\b/i, clubId: '31', clubName: 'Liverpool' },
+  { pattern: /\bArsenal\b/i, clubId: '11', clubName: 'Arsenal' },
+  { pattern: /\bChelsea\b/i, clubId: '631', clubName: 'Chelsea' },
+  { pattern: /\bTottenham\b/i, clubId: '148', clubName: 'Tottenham Hotspur' },
+  { pattern: /\bNewcastle\b/i, clubId: '762', clubName: 'Newcastle United' },
+  { pattern: /\bLeeds\b/i, clubId: '399', clubName: 'Leeds United' },
+];
+
+function getParentClubFallback(clubName: string) {
+  if (!isLikelyReserveOrYouthClub(clubName)) return null;
+  return PARENT_CLUB_FALLBACKS.find((fallback) => fallback.pattern.test(clubName)) ?? null;
+}
+
+function isLikelyReserveOrYouthClub(clubName: string) {
+  return /\b(Youth|Jugend|U\d{2}|Primavera|B|II|Reserves?)\b/i.test(clubName);
+}
 
 function getDisplayClubName(clubId: string | undefined, name: string) {
   if (clubId && CLUB_NAME_ALIASES[clubId]) return CLUB_NAME_ALIASES[clubId];
