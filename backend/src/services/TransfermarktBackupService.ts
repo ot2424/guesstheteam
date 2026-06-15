@@ -66,7 +66,7 @@ export class TransfermarktBackupService {
     if (!this.isEnabled()) return team;
 
     const seedTeam = team as TeamData & { clubId?: string };
-    const logoUrl = team.logoUrl || await this.getClubLogo(seedTeam.clubId, team.name);
+    const teamDetails = await this.getClubDetails(seedTeam.clubId, team.name);
     const players = await Promise.all(team.players.map(async (player) => ({
       ...player,
       career: await this.getCareer(player.id, player.name, player.career),
@@ -74,13 +74,10 @@ export class TransfermarktBackupService {
 
     return {
       ...team,
-      logoUrl: logoUrl || team.logoUrl,
+      name: teamDetails.name || getDisplayClubName(seedTeam.clubId, team.name),
+      logoUrl: team.logoUrl || teamDetails.logoUrl,
       players,
     };
-  }
-
-  private async getClubLogo(clubId: string | undefined, clubName: string) {
-    return (await this.getClubDetails(clubId, clubName)).logoUrl;
   }
 
   private async getClubDetails(clubId: string | undefined, clubName: string): Promise<ClubDetails> {
@@ -90,9 +87,7 @@ export class TransfermarktBackupService {
 
     const parentClub = getParentClubFallback(clubName);
     const directDetails = getDirectClubDetails(parentClub?.clubId ?? clubId, parentClub?.clubName ?? clubName);
-    const profileDetails = directDetails?.logoUrl
-      ? null
-      : await this.fetchClubDetails(clubId, clubName);
+    const profileDetails = await this.fetchClubDetails(clubId, clubName);
     const parentDetails = directDetails?.logoUrl || profileDetails?.logoUrl
       ? null
       : getDirectClubDetails(parentClub?.clubId, parentClub?.clubName ?? clubName)
@@ -105,8 +100,8 @@ export class TransfermarktBackupService {
       : await this.fetchClubDetails(await this.searchClubId(parentClub?.clubName ?? ''), parentClub?.clubName ?? clubName);
 
     const details = mergeClubDetails(
-      directDetails,
       profileDetails,
+      directDetails,
       parentDetails,
       searchDetails,
       parentSearchDetails,
@@ -176,16 +171,19 @@ export class TransfermarktBackupService {
 
   private async addClubLogos(career: CareerClub[]) {
     return Promise.all(career.map(async (club) => {
-      if (club.logoUrl || isVirtualCareerClub(club.clubId)) {
+      if (isVirtualCareerClub(club.clubId)) {
         return { ...club, clubName: getDisplayClubName(club.clubId, club.clubName) };
       }
 
       const details = await this.getClubDetails(club.clubId, club.clubName);
+      const clubName = isLikelyReserveOrYouthClub(club.clubName)
+        ? getDisplayClubName(club.clubId, club.clubName)
+        : details.name || getDisplayClubName(club.clubId, club.clubName);
 
       return {
         ...club,
-        clubName: getDisplayClubName(club.clubId, club.clubName),
-        logoUrl: details.logoUrl,
+        clubName,
+        logoUrl: club.logoUrl || details.logoUrl,
       };
     }));
   }
