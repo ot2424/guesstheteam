@@ -43,6 +43,14 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '167': 'FC Augsburg',
   '533': 'TSG Hoffenheim',
   '23826': 'RB Leipzig',
+  '46': 'Inter Milan',
+  '5': 'AC Milan',
+  '506': 'Juventus',
+  '131': 'Barcelona',
+  '418': 'Real Madrid',
+  '13': 'Atletico Madrid',
+  '583': 'Paris Saint-Germain',
+  '244': 'Marseille',
   '399': 'Leeds United',
   '985': 'Manchester United',
   '631': 'Chelsea',
@@ -152,6 +160,19 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
   return name
     .replace(/^1\.\s*Fussball-\s*und\s*Sportverein\s*/i, '')
     .replace(/^1\.\s*Fu\u00dfball-\s*und\s*Sportverein\s*/i, '')
+    .replace(/^Football\s+Club\s+Internazionale\s+Milano.*$/i, 'Inter Milan')
+    .replace(/^Associazione\s+Calcio\s+Milan.*$/i, 'AC Milan')
+    .replace(/^Associazione\s+Sportiva\s+Roma.*$/i, 'Roma')
+    .replace(/^Societ[aà]\s+Sportiva\s+Calcio\s+Napoli.*$/i, 'Napoli')
+    .replace(/^Societ[aà]\s+Sportiva\s+Lazio.*$/i, 'Lazio')
+    .replace(/^Unione\s+Sportiva\s+Cremonese.*$/i, 'Cremonese')
+    .replace(/^Atalanta\s+Bergamasca\s+Calcio.*$/i, 'Atalanta')
+    .replace(/^Calcio\s+Como.*$/i, 'Como')
+    .replace(/^Juventus\s+Football\s+Club.*$/i, 'Juventus')
+    .replace(/^Paris\s+Saint-Germain\s+Football\s+Club$/i, 'Paris Saint-Germain')
+    .replace(/^Olympique\s+de\s+Marseille$/i, 'Marseille')
+    .replace(/^Club\s+Atl[eé]tico\s+de\s+Madrid.*$/i, 'Atletico Madrid')
+    .replace(/^Real\s+Madrid\s+Club\s+de\s+F[uú]tbol$/i, 'Real Madrid')
     .replace(/^Sportverein\s+Werder\s+Bremen\s+von\s+1899$/i, 'Werder Bremen')
     .replace(/^Fussball-Club\s+Bayern\s+Muenchen.*$/i, 'Bayern Muenchen')
     .replace(/^Fu\u00dfball-Club\s+Bayern\s+M\u00fcnchen.*$/i, 'Bayern Muenchen')
@@ -168,6 +189,10 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
     .replace(/\s+Football Club$/i, ' FC')
     .replace(/\s+Futbol Club$/i, ' FC')
     .replace(/\s+Club de Futbol$/i, ' CF')
+    .replace(/^Associazione\s+Calcio\s+/i, '')
+    .replace(/^Unione\s+Sportiva\s+/i, '')
+    .replace(/^Societ[aà]\s+Sportiva\s+/i, '')
+    .replace(/\s+Calcio$/i, '')
     .replace(/\s+S\.?\s*A\.?\s*D\.?$/i, '')
     .replace(/\s+a\.?s\.?$/i, '')
     .replace(/\s+von\s+\d{4}$/i, '')

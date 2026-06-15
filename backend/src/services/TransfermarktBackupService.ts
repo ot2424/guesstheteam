@@ -11,6 +11,11 @@ interface ClubProfileResponse {
   image?: string;
 }
 
+interface ClubDetails {
+  name: string;
+  logoUrl: string;
+}
+
 interface PlayerProfileResponse {
   isRetired?: boolean;
   is_retired?: boolean;
@@ -49,7 +54,7 @@ const FREE_AGENT_NAMES = new Set([
 ]);
 
 export class TransfermarktBackupService {
-  private clubLogoCache = new Map<string, string>();
+  private clubDetailsCache = new Map<string, ClubDetails>();
   private playerCareerCache = new Map<string, CareerClub[]>();
 
   isEnabled() {
@@ -74,19 +79,34 @@ export class TransfermarktBackupService {
   }
 
   private async getClubLogo(clubId: string | undefined, clubName: string) {
+    return (await this.getClubDetails(clubId, clubName)).logoUrl;
+  }
+
+  private async getClubDetails(clubId: string | undefined, clubName: string): Promise<ClubDetails> {
     const cacheKey = clubId || normalizeName(clubName);
-    const cached = this.clubLogoCache.get(cacheKey);
-    if (cached !== undefined) return cached;
+    const cached = this.clubDetailsCache.get(cacheKey);
+    if (cached) return cached;
 
-    const resolvedClubId = clubId || await this.searchClubId(clubName);
-    const profile = resolvedClubId
-      ? await this.fetchJson<ClubProfileResponse>(`/clubs/${encodeURIComponent(resolvedClubId)}/profile`)
-      : null;
-    const logoUrl = typeof profile?.image === 'string' ? profile.image : '';
+    const details = await this.fetchClubDetails(clubId, clubName)
+      ?? await this.fetchClubDetails(await this.searchClubId(clubName), clubName)
+      ?? { name: getDisplayClubName(clubId, clubName), logoUrl: '' };
 
-    this.clubLogoCache.set(cacheKey, logoUrl);
-    if (resolvedClubId) this.clubLogoCache.set(resolvedClubId, logoUrl);
-    return logoUrl;
+    this.clubDetailsCache.set(cacheKey, details);
+    if (clubId) this.clubDetailsCache.set(clubId, details);
+    return details;
+  }
+
+  private async fetchClubDetails(clubId: string | null | undefined, fallbackName: string): Promise<ClubDetails | null> {
+    if (!clubId) return null;
+
+    const profile = await this.fetchJson<ClubProfileResponse>(`/clubs/${encodeURIComponent(clubId)}/profile`);
+    if (!profile) return null;
+
+    const name = profile.name ? getDisplayClubName(profile.id ?? clubId, profile.name) : getDisplayClubName(clubId, fallbackName);
+    const logoUrl = typeof profile.image === 'string' ? profile.image : '';
+
+    if (!name && !logoUrl) return null;
+    return { name: name || fallbackName, logoUrl };
   }
 
   private async getCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[]): Promise<CareerClub[]> {
@@ -134,15 +154,16 @@ export class TransfermarktBackupService {
 
   private async addClubLogos(career: CareerClub[]) {
     return Promise.all(career.map(async (club) => {
-      const clubName = getDisplayClubName(club.clubId, club.clubName);
       if (club.logoUrl || isVirtualCareerClub(club.clubId)) {
-        return { ...club, clubName };
+        return { ...club, clubName: getDisplayClubName(club.clubId, club.clubName) };
       }
+
+      const details = await this.getClubDetails(club.clubId, club.clubName);
 
       return {
         ...club,
-        clubName,
-        logoUrl: await this.getClubLogo(club.clubId, clubName),
+        clubName: details.name,
+        logoUrl: details.logoUrl,
       };
     }));
   }
@@ -319,6 +340,14 @@ function isVirtualCareerClub(clubId: string) {
 }
 
 const CLUB_NAME_ALIASES: Record<string, string> = {
+  '46': 'Inter Milan',
+  '5': 'AC Milan',
+  '506': 'Juventus',
+  '131': 'Barcelona',
+  '418': 'Real Madrid',
+  '13': 'Atletico Madrid',
+  '583': 'Paris Saint-Germain',
+  '244': 'Marseille',
   '399': 'Leeds United',
   '985': 'Manchester United',
   '631': 'Chelsea',
@@ -333,6 +362,19 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
   if (clubId && CLUB_NAME_ALIASES[clubId]) return CLUB_NAME_ALIASES[clubId];
 
   return name
+    .replace(/^Football\s+Club\s+Internazionale\s+Milano.*$/i, 'Inter Milan')
+    .replace(/^Associazione\s+Calcio\s+Milan.*$/i, 'AC Milan')
+    .replace(/^Associazione\s+Sportiva\s+Roma.*$/i, 'Roma')
+    .replace(/^Societ[aà]\s+Sportiva\s+Calcio\s+Napoli.*$/i, 'Napoli')
+    .replace(/^Societ[aà]\s+Sportiva\s+Lazio.*$/i, 'Lazio')
+    .replace(/^Unione\s+Sportiva\s+Cremonese.*$/i, 'Cremonese')
+    .replace(/^Atalanta\s+Bergamasca\s+Calcio.*$/i, 'Atalanta')
+    .replace(/^Calcio\s+Como.*$/i, 'Como')
+    .replace(/^Juventus\s+Football\s+Club.*$/i, 'Juventus')
+    .replace(/^Paris\s+Saint-Germain\s+Football\s+Club$/i, 'Paris Saint-Germain')
+    .replace(/^Olympique\s+de\s+Marseille$/i, 'Marseille')
+    .replace(/^Club\s+Atl[eé]tico\s+de\s+Madrid.*$/i, 'Atletico Madrid')
+    .replace(/^Real\s+Madrid\s+Club\s+de\s+F[uú]tbol$/i, 'Real Madrid')
     .replace(/^Leeds\s+United\s+Association\s+FC$/i, 'Leeds United')
     .replace(/^Newcastle\s+United\s+FC$/i, 'Newcastle United')
     .replace(/^Manchester\s+United\s+Football\s+Club$/i, 'Manchester United')
@@ -344,7 +386,14 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
     .replace(/\s+Football Club$/i, '')
     .replace(/\s+Futbol Club$/i, '')
     .replace(/\s+Club de Futbol$/i, '')
+    .replace(/^Associazione\s+Calcio\s+/i, '')
+    .replace(/^Unione\s+Sportiva\s+/i, '')
+    .replace(/^Societ[aà]\s+Sportiva\s+/i, '')
+    .replace(/\s+Calcio$/i, '')
     .replace(/\s+FC$/i, '')
+    .replace(/\s+S\.?\s*p\.?\s*A\.?$/i, '')
+    .replace(/\s+S\.?\s*A\.?\s*D\.?$/i, '')
+    .replace(/\s+a\.?s\.?$/i, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
