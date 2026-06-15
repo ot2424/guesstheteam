@@ -102,6 +102,7 @@ export interface MatchResult {
   teamName: string;
   teamLogo: string;
   season: string;
+  league?: string;
   solved: number;
   total: number;
   durationSec: number;

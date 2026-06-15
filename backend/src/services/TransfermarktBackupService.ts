@@ -90,11 +90,8 @@ export class TransfermarktBackupService {
     const transfers = await this.fetchJson<PlayerTransfersResponse>(`/players/${encodeURIComponent(playerId)}/transfers`);
     const profile = await this.fetchJson<PlayerProfileResponse>(`/players/${encodeURIComponent(playerId)}/profile`);
     const career = buildCareerFromApi(transfers, profile);
-    const enrichedCareer = career.length > 0 ? career : fallbackCareer;
 
-    this.playerCareerCache.set(playerId, enrichedCareer);
-
-    if (enrichedCareer === fallbackCareer) {
+    if (career.length === 0) {
       const searchedPlayerId = await this.searchPlayerId(playerName);
       if (searchedPlayerId && searchedPlayerId !== playerId) {
         const searchedCareer: CareerClub[] = await this.getCareer(searchedPlayerId, playerName, fallbackCareer);
@@ -102,6 +99,9 @@ export class TransfermarktBackupService {
         return searchedCareer;
       }
     }
+
+    const enrichedCareer = await this.addClubLogos(career.length > 0 ? career : fallbackCareer);
+    this.playerCareerCache.set(playerId, enrichedCareer);
 
     return enrichedCareer;
   }
@@ -122,6 +122,21 @@ export class TransfermarktBackupService {
     return response?.results?.find((club) => normalizeName(club.name ?? '') === normalized)?.id
       ?? response?.results?.[0]?.id
       ?? null;
+  }
+
+  private async addClubLogos(career: CareerClub[]) {
+    return Promise.all(career.map(async (club) => {
+      const clubName = getDisplayClubName(club.clubId, club.clubName);
+      if (club.logoUrl || isVirtualCareerClub(club.clubId)) {
+        return { ...club, clubName };
+      }
+
+      return {
+        ...club,
+        clubName,
+        logoUrl: await this.getClubLogo(club.clubId, clubName),
+      };
+    }));
   }
 
   private async fetchJson<T>(path: string): Promise<T | null> {
@@ -268,6 +283,41 @@ function getYear(value: string | null | undefined) {
 
 function isFreeAgentName(name: string) {
   return FREE_AGENT_NAMES.has(name.trim().toLowerCase());
+}
+
+function isVirtualCareerClub(clubId: string) {
+  return clubId === 'free-agent' || clubId === 'career-ended';
+}
+
+const CLUB_NAME_ALIASES: Record<string, string> = {
+  '399': 'Leeds United',
+  '985': 'Manchester United',
+  '631': 'Chelsea',
+  '31': 'Liverpool',
+  '11': 'Arsenal',
+  '281': 'Manchester City',
+  '762': 'Newcastle United',
+  '148': 'Tottenham Hotspur',
+};
+
+function getDisplayClubName(clubId: string | undefined, name: string) {
+  if (clubId && CLUB_NAME_ALIASES[clubId]) return CLUB_NAME_ALIASES[clubId];
+
+  return name
+    .replace(/^Leeds\s+United\s+Association\s+FC$/i, 'Leeds United')
+    .replace(/^Newcastle\s+United\s+FC$/i, 'Newcastle United')
+    .replace(/^Manchester\s+United\s+Football\s+Club$/i, 'Manchester United')
+    .replace(/^Manchester\s+City\s+Football\s+Club$/i, 'Manchester City')
+    .replace(/^Chelsea\s+Football\s+Club$/i, 'Chelsea')
+    .replace(/^Liverpool\s+Football\s+Club$/i, 'Liverpool')
+    .replace(/^Arsenal\s+Football\s+Club$/i, 'Arsenal')
+    .replace(/\s+Association\s+FC$/i, '')
+    .replace(/\s+Football Club$/i, '')
+    .replace(/\s+Futbol Club$/i, '')
+    .replace(/\s+Club de Futbol$/i, '')
+    .replace(/\s+FC$/i, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function normalizeName(name: string) {

@@ -12,7 +12,7 @@ import { loadRecentTeamIds, rememberRecentTeamId } from '../lib/recentTeams';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import { useAuth } from '../lib/useAuth';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, SeriesProgress, Team } from '../types';
-import { getPositionLabel } from '../utils/footballDisplay';
+import { getLeagueLabel, getPositionLabel } from '../utils/footballDisplay';
 
 const COMPLETION_THRESHOLD = 0.8;
 
@@ -184,6 +184,7 @@ export function GamePage() {
         teamName: currentTeam.name,
         teamLogo: currentTeam.logoUrl,
         season: currentTeam.season,
+        league: currentTeam.league,
         solved: finish.result.solved,
         total: finish.result.total,
         durationSec: finish.result.durationSec,
@@ -320,7 +321,7 @@ export function GamePage() {
               <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
               <div>
                 <h1 className="bebas text-xl tracking-wider text-white leading-none">{team.name}</h1>
-                <div className="text-xs text-gray-500">{team.season}</div>
+                <div className="text-xs text-gray-500">{team.season} · {getLeagueLabel(team.league)}</div>
               </div>
             </div>
             <div className="flex items-center gap-4">

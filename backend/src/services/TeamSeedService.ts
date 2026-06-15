@@ -43,6 +43,14 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '167': 'FC Augsburg',
   '533': 'TSG Hoffenheim',
   '23826': 'RB Leipzig',
+  '399': 'Leeds United',
+  '985': 'Manchester United',
+  '631': 'Chelsea',
+  '31': 'Liverpool',
+  '11': 'Arsenal',
+  '281': 'Manchester City',
+  '762': 'Newcastle United',
+  '148': 'Tottenham Hotspur',
 };
 
 export class TeamSeedService {
@@ -149,6 +157,14 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
     .replace(/^Fu\u00dfball-Club\s+Bayern\s+M\u00fcnchen.*$/i, 'Bayern Muenchen')
     .replace(/^Ballspielverein\s+Borussia\s+09\s+Dortmund.*$/i, 'Borussia Dortmund')
     .replace(/^RasenBallsport\s+Leipzig.*$/i, 'RB Leipzig')
+    .replace(/^Leeds\s+United\s+Association\s+FC$/i, 'Leeds United')
+    .replace(/^Newcastle\s+United\s+FC$/i, 'Newcastle United')
+    .replace(/^Manchester\s+United\s+Football\s+Club$/i, 'Manchester United')
+    .replace(/^Manchester\s+City\s+Football\s+Club$/i, 'Manchester City')
+    .replace(/^Chelsea\s+Football\s+Club$/i, 'Chelsea')
+    .replace(/^Liverpool\s+Football\s+Club$/i, 'Liverpool')
+    .replace(/^Arsenal\s+Football\s+Club$/i, 'Arsenal')
+    .replace(/\s+Association\s+FC$/i, '')
     .replace(/\s+Football Club$/i, ' FC')
     .replace(/\s+Futbol Club$/i, ' FC')
     .replace(/\s+Club de Futbol$/i, ' CF')

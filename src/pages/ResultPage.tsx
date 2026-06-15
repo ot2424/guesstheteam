@@ -5,6 +5,7 @@ import { TeamBadge } from '../components/ui/TeamBadge';
 import { useAuth } from '../lib/useAuth';
 import { loadUserProfile } from '../lib/localUser';
 import type { MatchResult } from '../types';
+import { getLeagueLabel } from '../utils/footballDisplay';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
   if (isPerfect) {
@@ -41,6 +42,7 @@ export function ResultPage() {
     teamName: '',
     teamLogo: '',
     season: '',
+    league: '',
     solved: 0,
     total: 1,
     durationSec: 0,
@@ -48,7 +50,7 @@ export function ResultPage() {
     xpGained: 0,
     lpChange: 0,
   };
-  const { resultId, playMode, matchType, profile, teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
+  const { resultId, playMode, matchType, profile, teamName, teamLogo, season, league, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
   const series = safeResult.series;
   const displayWin = series?.isComplete ? Boolean(series.isWin) : isWin;
   const mins = Math.floor(durationSec / 60);
@@ -132,7 +134,7 @@ export function ResultPage() {
           </h1>
           <div className="flex items-center gap-2">
             <TeamBadge name={teamName} logoUrl={teamLogo} size={24} />
-            <span className="text-gray-300 text-sm">{teamName} · {season}</span>
+            <span className="text-gray-300 text-sm">{teamName} · {season}{league ? ` · ${getLeagueLabel(league)}` : ''}</span>
           </div>
         </div>
 
