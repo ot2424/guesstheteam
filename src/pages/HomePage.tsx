@@ -152,7 +152,7 @@ export function HomePage() {
               Guess the Team
             </h1>
             <p className="text-gray-400 text-base max-w-lg">
-              Eine Saison, elf Karrieren, kein Spielername. Lies die Stationen, kombiniere Nationalität und Position und finde heraus, welche Elf vor dir steht.
+              Elf Spieler, eine Saison, keine Namen. Nutze Vereinskarrieren, Nationalitäten und Positionen, um das gesuchte Team zu knacken.
             </p>
           </motion.div>
 
