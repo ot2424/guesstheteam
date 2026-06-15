@@ -48,6 +48,7 @@ type PlayerTransfer = NonNullable<PlayerTransfersResponse['transfers']>[number];
 const FREE_AGENT_NAMES = new Set([
   'without club',
   'no club',
+  'retired',
   'vereinslos',
   'unattached',
   '-',
@@ -87,20 +88,25 @@ export class TransfermarktBackupService {
     const cached = this.clubDetailsCache.get(cacheKey);
     if (cached) return cached;
 
-    const directDetails = await this.fetchClubDetails(clubId, clubName);
     const parentClub = getParentClubFallback(clubName);
-    const parentDetails = directDetails?.logoUrl
+    const directDetails = getDirectClubDetails(parentClub?.clubId ?? clubId, parentClub?.clubName ?? clubName);
+    const profileDetails = directDetails?.logoUrl
       ? null
-      : await this.fetchClubDetails(parentClub?.clubId, parentClub?.clubName ?? clubName);
-    const searchDetails = directDetails?.logoUrl || parentDetails?.logoUrl
+      : await this.fetchClubDetails(clubId, clubName);
+    const parentDetails = directDetails?.logoUrl || profileDetails?.logoUrl
+      ? null
+      : getDirectClubDetails(parentClub?.clubId, parentClub?.clubName ?? clubName)
+        ?? await this.fetchClubDetails(parentClub?.clubId, parentClub?.clubName ?? clubName);
+    const searchDetails = directDetails?.logoUrl || profileDetails?.logoUrl || parentDetails?.logoUrl
       ? null
       : await this.fetchClubDetails(await this.searchClubId(clubName), clubName);
-    const parentSearchDetails = directDetails?.logoUrl || parentDetails?.logoUrl || searchDetails?.logoUrl
+    const parentSearchDetails = directDetails?.logoUrl || profileDetails?.logoUrl || parentDetails?.logoUrl || searchDetails?.logoUrl
       ? null
       : await this.fetchClubDetails(await this.searchClubId(parentClub?.clubName ?? ''), parentClub?.clubName ?? clubName);
 
     const details = mergeClubDetails(
       directDetails,
+      profileDetails,
       parentDetails,
       searchDetails,
       parentSearchDetails,
@@ -119,7 +125,7 @@ export class TransfermarktBackupService {
     if (!profile) return null;
 
     const name = profile.name ? getDisplayClubName(profile.id ?? clubId, profile.name) : getDisplayClubName(clubId, fallbackName);
-    const logoUrl = typeof profile.image === 'string' ? profile.image : '';
+    const logoUrl = typeof profile.image === 'string' ? profile.image : getTransfermarktLogoUrl(profile.id ?? clubId);
 
     if (!name && !logoUrl) return null;
     return { name: name || fallbackName, logoUrl };
@@ -355,6 +361,21 @@ function isVirtualCareerClub(clubId: string) {
   return clubId === 'free-agent' || clubId === 'career-ended';
 }
 
+function getDirectClubDetails(clubId: string | null | undefined, clubName: string): ClubDetails | null {
+  const logoUrl = getTransfermarktLogoUrl(clubId);
+  if (!logoUrl) return null;
+
+  return {
+    name: getDisplayClubName(clubId ?? undefined, clubName),
+    logoUrl,
+  };
+}
+
+function getTransfermarktLogoUrl(clubId: string | null | undefined) {
+  if (!clubId || !/^\d+$/.test(clubId)) return '';
+  return `https://tmssl.akamaized.net/images/wappen/big/${clubId}.png`;
+}
+
 function mergeClubDetails(...details: Array<ClubDetails | null>) {
   const availableDetails = details.filter((detail): detail is ClubDetails => Boolean(detail));
   const name = availableDetails.find((detail) => detail.name)?.name ?? '';
@@ -363,6 +384,7 @@ function mergeClubDetails(...details: Array<ClubDetails | null>) {
 }
 
 const CLUB_NAME_ALIASES: Record<string, string> = {
+  '27': 'Bayern Munich',
   '46': 'Inter Milan',
   '5': 'AC Milan',
   '506': 'Juventus',
@@ -382,6 +404,8 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
 };
 
 const PARENT_CLUB_FALLBACKS: Array<{ pattern: RegExp; clubId: string; clubName: string }> = [
+  { pattern: /\bBarca\b|\bBarça\b|\bBarcelona\b/i, clubId: '131', clubName: 'Barcelona' },
+  { pattern: /\bBayern\b/i, clubId: '27', clubName: 'Bayern Munich' },
   { pattern: /\bInter\b/i, clubId: '46', clubName: 'Inter Milan' },
   { pattern: /\bAtalanta\b/i, clubId: '800', clubName: 'Atalanta' },
   { pattern: /\bMilan\b/i, clubId: '5', clubName: 'AC Milan' },
@@ -389,7 +413,6 @@ const PARENT_CLUB_FALLBACKS: Array<{ pattern: RegExp; clubId: string; clubName: 
   { pattern: /\bRoma\b/i, clubId: '12', clubName: 'Roma' },
   { pattern: /\bLazio\b/i, clubId: '398', clubName: 'Lazio' },
   { pattern: /\bNapoli\b/i, clubId: '6195', clubName: 'Napoli' },
-  { pattern: /\bBarcelona\b/i, clubId: '131', clubName: 'Barcelona' },
   { pattern: /\bReal Madrid\b/i, clubId: '418', clubName: 'Real Madrid' },
   { pattern: /\bAtletico\b|\bAtl[eé]tico\b/i, clubId: '13', clubName: 'Atletico Madrid' },
   { pattern: /\bParis Saint-Germain\b|\bPSG\b/i, clubId: '583', clubName: 'Paris Saint-Germain' },
@@ -409,7 +432,7 @@ function getParentClubFallback(clubName: string) {
 }
 
 function isLikelyReserveOrYouthClub(clubName: string) {
-  return /\b(Youth|Jugend|U\d{2}|Primavera|B|II|Reserves?)\b/i.test(clubName);
+  return /\b(Youth|Jugend|U\d{2}|Primavera|Atl[eè]tic|B|II|Reserves?)\b/i.test(clubName);
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {
@@ -429,6 +452,9 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
     .replace(/^Olympique\s+de\s+Marseille$/i, 'Marseille')
     .replace(/^Club\s+Atl[eé]tico\s+de\s+Madrid.*$/i, 'Atletico Madrid')
     .replace(/^Real\s+Madrid\s+Club\s+de\s+F[uú]tbol$/i, 'Real Madrid')
+    .replace(/^Fu[sß]ball-Club\s+Bayern\s+M[uü]nchen.*$/i, 'Bayern Munich')
+    .replace(/^Bayern\s+M[uü]nchen$/i, 'Bayern Munich')
+    .replace(/^Bar[cç]a\s+Atl[eè]tic$/i, 'Barca Atletic')
     .replace(/^Leeds\s+United\s+Association\s+FC$/i, 'Leeds United')
     .replace(/^Newcastle\s+United\s+FC$/i, 'Newcastle United')
     .replace(/^Manchester\s+United\s+Football\s+Club$/i, 'Manchester United')
