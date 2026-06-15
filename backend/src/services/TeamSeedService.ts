@@ -85,7 +85,10 @@ export class TeamSeedService {
           : teams;
     const index = Math.floor(Math.random() * pool.length);
 
-    return this.transfermarktBackup.enrichTeam(this.toDisplayTeam(pool[index]));
+    const team = this.toDisplayTeam(pool[index]);
+    if (!needsLiveEnrichment(team)) return team;
+
+    return this.transfermarktBackup.enrichTeam(team);
   }
 
   searchPlayers(query: string, limit: number) {
@@ -146,6 +149,17 @@ export class TeamSeedService {
 
 function getDefaultSeedPath() {
   return existsSync(DEFAULT_SEED_PATH) ? DEFAULT_SEED_PATH : LEGACY_SEED_PATH;
+}
+
+function needsLiveEnrichment(team: TeamData) {
+  if (!team.logoUrl) return true;
+
+  const playersWithThinCareers = team.players.filter((player) => player.career.length <= 1).length;
+  const careerClubs = team.players.flatMap((player) => player.career);
+  const realCareerClubs = careerClubs.filter((club) => club.clubId !== 'career-ended' && club.clubId !== 'free-agent');
+  const clubsMissingLogos = realCareerClubs.filter((club) => !club.logoUrl).length;
+
+  return playersWithThinCareers > 0 || clubsMissingLogos / Math.max(1, realCareerClubs.length) > 0.2;
 }
 
 function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {

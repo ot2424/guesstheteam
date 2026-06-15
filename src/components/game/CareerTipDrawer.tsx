@@ -19,6 +19,26 @@ function getClubInitials(name: string) {
   return source.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'FT';
 }
 
+function getCareerKind(clubName: string) {
+  if (/karriereende|retired/i.test(clubName)) return 'status';
+  if (/vereinslos|without club|unattached/i.test(clubName)) return 'free';
+  if (/\b(Youth|Jugend|U\d{2}|Primavera|Atl[eè]tic|B|II|Reserves?)\b/i.test(clubName)) return 'youth';
+  return 'club';
+}
+
+function getCareerLabel(kind: string) {
+  if (kind === 'youth') return 'Nachwuchs';
+  if (kind === 'free') return 'Status';
+  if (kind === 'status') return 'Ende';
+  return null;
+}
+
+function getStatusGlyph(kind: string) {
+  if (kind === 'status') return '✓';
+  if (kind === 'free') return '–';
+  return null;
+}
+
 export function CareerTipDrawer({ player, onClose }: Props) {
   return (
     <AnimatePresence>
@@ -75,54 +95,67 @@ export function CareerTipDrawer({ player, onClose }: Props) {
 
               {/* Timeline */}
               <div className="space-y-0">
-                {player.career.map((club, i) => (
-                  <motion.div
-                    key={club.clubId + i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.06 }}
-                    className="flex items-center gap-3 py-2"
-                  >
-                    {/* Timeline line + dot */}
-                    <div className="flex flex-col items-center flex-shrink-0" style={{ width: 14 }}>
-                      <div
-                        className="w-2.5 h-2.5 rounded-full border-2 flex-shrink-0"
-                        style={{
-                          borderColor: i === player.career.length - 1 ? '#22C55E' : '#4B5563',
-                          background:  i === player.career.length - 1 ? '#22C55E' : 'transparent',
-                        }}
-                      />
-                      {i < player.career.length - 1 && (
-                        <div className="w-px mt-1" style={{ background: '#374151', minHeight: 18 }} />
+                {player.career.map((club, i) => {
+                  const kind = getCareerKind(club.clubName);
+                  const label = getCareerLabel(kind);
+                  const glyph = getStatusGlyph(kind);
+
+                  return (
+                    <motion.div
+                      key={club.clubId + i}
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="flex items-center gap-3 py-1.5"
+                    >
+                      <div className="flex flex-col items-center flex-shrink-0" style={{ width: 14 }}>
+                        <div
+                          className="w-2.5 h-2.5 rounded-full border-2 flex-shrink-0"
+                          style={{
+                            borderColor: i === player.career.length - 1 ? '#22C55E' : '#4B5563',
+                            background:  i === player.career.length - 1 ? '#22C55E' : 'transparent',
+                          }}
+                        />
+                        {i < player.career.length - 1 && (
+                          <div className="w-px mt-1" style={{ background: '#374151', minHeight: 16 }} />
+                        )}
+                      </div>
+
+                      {glyph ? (
+                        <div className="w-7 h-7 rounded-full bg-gray-800 border border-gray-700 text-gray-400 flex-shrink-0 flex items-center justify-center text-xs font-bold">
+                          {glyph}
+                        </div>
+                      ) : club.logoUrl ? (
+                        <img
+                          src={club.logoUrl}
+                          alt={club.clubName}
+                          className="w-7 h-7 object-contain flex-shrink-0 rounded"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded bg-gray-800 border border-gray-700 text-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] font-bold">
+                          {getClubInitials(club.clubName)}
+                        </div>
                       )}
-                    </div>
 
-                    {/* Club logo */}
-                    {club.logoUrl ? (
-                      <img
-                        src={club.logoUrl}
-                        alt={club.clubName}
-                        className="w-7 h-7 object-contain flex-shrink-0 rounded"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234B5563'/%3E%3C/svg%3E";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-7 h-7 rounded bg-gray-800 border border-gray-700 text-gray-300 flex-shrink-0 flex items-center justify-center text-[10px] font-bold">
-                        {getClubInitials(club.clubName)}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="text-sm font-medium text-white truncate">{club.clubName}</div>
+                          {label && (
+                            <span className="text-[10px] uppercase tracking-wide text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0">
+                              {label}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {club.fromYear} – {club.toYear ?? 'heute'}
+                        </div>
                       </div>
-                    )}
-
-                    {/* Name + years */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-white truncate">{club.clubName}</div>
-                      <div className="text-xs text-gray-500">
-                        {club.fromYear} – {club.toYear ?? 'heute'}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
 
               <p className="text-xs text-gray-600 text-center mt-3">

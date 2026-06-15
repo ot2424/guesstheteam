@@ -8,6 +8,7 @@
     "backend:dev": "tsx watch backend/src/server.ts",
     "backend:build": "tsc --project tsconfig.backend.json",
     "data:import:transfermarkt": "tsx scripts/import-transfermarkt-seed.ts",
+    "data:enrich:transfermarkt": "tsx scripts/enrich-transfermarkt-seed.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

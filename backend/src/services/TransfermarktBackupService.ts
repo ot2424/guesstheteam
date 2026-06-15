@@ -65,6 +65,10 @@ export class TransfermarktBackupService {
   async enrichTeam(team: TeamData): Promise<TeamData> {
     if (!this.isEnabled()) return team;
 
+    return this.enrichTeamData(team);
+  }
+
+  async enrichTeamData(team: TeamData): Promise<TeamData> {
     const seedTeam = team as TeamData & { clubId?: string };
     const teamDetails = await this.getClubDetails(seedTeam.clubId, team.name);
     const players = await Promise.all(team.players.map(async (player) => ({
@@ -78,6 +82,14 @@ export class TransfermarktBackupService {
       logoUrl: team.logoUrl || teamDetails.logoUrl,
       players,
     };
+  }
+
+  async enrichCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[]): Promise<CareerClub[]> {
+    return this.getCareer(playerId, playerName, fallbackCareer);
+  }
+
+  async enrichClub(clubId: string | undefined, clubName: string): Promise<ClubDetails> {
+    return this.getClubDetails(clubId, clubName);
   }
 
   private async getClubDetails(clubId: string | undefined, clubName: string): Promise<ClubDetails> {

@@ -59,6 +59,18 @@ For production, prefer hosting your own copy of the Transfermarkt API and pointi
 `TRANSFERMARKT_API_BASE_URL` to it. The public Fly instance is intended for testing
 and may be rate-limited.
 
+To reduce live API calls during game start, enrich the local seed after importing:
+
+```bash
+npm run data:enrich:transfermarkt -- \
+  --input data/seeds/guesstheteam-seed.json \
+  --out data/seeds/guesstheteam-seed.json \
+  --concurrency 3
+```
+
+After this, the backend only calls the live backup when a selected team still has
+missing logos or very thin career data.
+
 ## Supabase Setup
 
 Run the SQL in:
