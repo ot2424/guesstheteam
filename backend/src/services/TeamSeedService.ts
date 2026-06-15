@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
+import { TransfermarktBackupService } from './TransfermarktBackupService';
 
 interface SeedFile {
   teams: SeedTeam[];
@@ -47,9 +48,12 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
 export class TeamSeedService {
   private seed: SeedFile | null | undefined;
 
-  constructor(private seedPath = process.env.GUESSTHETEAM_SEED_PATH ?? process.env.FOOTYGUESSER_SEED_PATH ?? getDefaultSeedPath()) {}
+  constructor(
+    private seedPath = process.env.GUESSTHETEAM_SEED_PATH ?? process.env.FOOTYGUESSER_SEED_PATH ?? getDefaultSeedPath(),
+    private transfermarktBackup = new TransfermarktBackupService(),
+  ) {}
 
-  selectTeam(options: TeamSelectionOptions): TeamData {
+  async selectTeam(options: TeamSelectionOptions): Promise<TeamData> {
     const teams = this.getTeams();
     if (teams.length === 0) return REAL_MADRID_2223;
 
@@ -65,7 +69,7 @@ export class TeamSeedService {
           : teams;
     const index = Math.floor(Math.random() * pool.length);
 
-    return this.toDisplayTeam(pool[index]);
+    return this.transfermarktBackup.enrichTeam(this.toDisplayTeam(pool[index]));
   }
 
   searchPlayers(query: string, limit: number) {

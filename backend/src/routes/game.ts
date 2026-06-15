@@ -57,7 +57,7 @@ export function createGameRouter(
     const difficulty = playMode === 'ranked'
       ? progressionService.getDifficultyForRank(rank)
       : payload.difficulty ?? 'easy';
-    const team = teamSeedService.selectTeam({
+    const team = await teamSeedService.selectTeam({
       playMode,
       difficulty,
       leagueId: payload.leagueId,

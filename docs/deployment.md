@@ -19,6 +19,8 @@ PORT=4000
 CORS_ORIGIN=http://localhost:5173
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_ANON_KEY=YOUR_ANON_KEY
+TRANSFERMARKT_BACKUP_ENABLED=false
+TRANSFERMARKT_API_BASE_URL=https://transfermarkt-api.fly.dev
 ```
 
 `VITE_API_BASE_URL` must point to the Game API, not to Supabase REST.
@@ -37,7 +39,25 @@ CORS_ORIGIN=https://guesstheteam.de
 SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 SUPABASE_ANON_KEY=YOUR_ANON_KEY
 NODE_ENV=production
+TRANSFERMARKT_BACKUP_ENABLED=false
+TRANSFERMARKT_API_BASE_URL=https://transfermarkt-api.fly.dev
 ```
+
+## Optional Transfermarkt Backup
+
+The game should still use the local seed as the primary source. You can enable the
+`felipeall/transfermarkt-api` service as a backup for missing club logos and short
+player careers:
+
+```env
+TRANSFERMARKT_BACKUP_ENABLED=true
+TRANSFERMARKT_API_BASE_URL=https://transfermarkt-api.fly.dev
+TRANSFERMARKT_API_TIMEOUT_MS=3500
+```
+
+For production, prefer hosting your own copy of the Transfermarkt API and pointing
+`TRANSFERMARKT_API_BASE_URL` to it. The public Fly instance is intended for testing
+and may be rate-limited.
 
 ## Supabase Setup
 
