@@ -64,7 +64,7 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
                       nationality2={player.nationality2}
                       size={22}
                       variant="inline"
-                      className="flex-shrink-0 min-w-[46px]"
+                      className="flex-shrink-0"
                     />
 
                     {/* Position badge */}
