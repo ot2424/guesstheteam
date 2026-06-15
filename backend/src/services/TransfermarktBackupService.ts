@@ -12,25 +12,33 @@ interface ClubProfileResponse {
 }
 
 interface PlayerProfileResponse {
+  isRetired?: boolean;
   is_retired?: boolean;
+  retiredSince?: string | null;
   retired_since?: string | null;
   club?: {
     id?: string | null;
     name?: string | null;
+    lastClubId?: string | null;
     last_club_id?: string | null;
+    lastClubName?: string | null;
     last_club_name?: string | null;
   };
 }
 
 interface PlayerTransfersResponse {
   transfers?: Array<{
+    clubFrom?: { id?: string; name?: string };
     club_from?: { id?: string; name?: string };
+    clubTo?: { id?: string; name?: string };
     club_to?: { id?: string; name?: string };
     date?: string;
     season?: string;
     upcoming?: boolean;
   }>;
 }
+
+type PlayerTransfer = NonNullable<PlayerTransfersResponse['transfers']>[number];
 
 const FREE_AGENT_NAMES = new Set([
   'without club',
@@ -170,14 +178,18 @@ function buildCareerFromApi(
 ) {
   const career: CareerClub[] = [];
 
-  for (const transfer of transferResponse?.transfers ?? []) {
+  const transfers = (transferResponse?.transfers ?? [])
+    .filter((transfer) => !transfer.upcoming)
+    .sort((a, b) => getTransferSortValue(a) - getTransferSortValue(b));
+
+  for (const transfer of transfers) {
     if (transfer.upcoming) continue;
 
     const year = getTransferYear(transfer.date, transfer.season);
     if (!year) continue;
 
-    const fromClub = transfer.club_from;
-    const toClub = transfer.club_to;
+    const fromClub = transfer.clubFrom ?? transfer.club_from;
+    const toClub = transfer.clubTo ?? transfer.club_to;
 
     if (fromClub?.id && fromClub.name && !isFreeAgentName(fromClub.name)) {
       career.push({
@@ -201,15 +213,26 @@ function buildCareerFromApi(
   }
 
   const compacted = compactCareer(career);
+  closeClubsBeforeNextMove(compacted);
   applyProfileStatus(compacted, profile);
   return compacted;
+}
+
+function closeClubsBeforeNextMove(career: CareerClub[]) {
+  for (let index = 0; index < career.length - 1; index += 1) {
+    const current = career[index];
+    const next = career[index + 1];
+    if (current.toYear === null || current.toYear > next.fromYear) {
+      current.toYear = next.fromYear;
+    }
+  }
 }
 
 function applyProfileStatus(career: CareerClub[], profile: PlayerProfileResponse | null) {
   if (!profile) return;
 
-  if (profile.is_retired) {
-    const retiredYear = getYear(profile.retired_since) ?? getLastYear(career);
+  if (profile.isRetired ?? profile.is_retired) {
+    const retiredYear = getYear(profile.retiredSince ?? profile.retired_since) ?? getLastYear(career);
     closeLastOpenClub(career, retiredYear);
 
     if (retiredYear) {
@@ -273,6 +296,12 @@ function getLastYear(career: CareerClub[]) {
 
 function getTransferYear(date: string | undefined, season: string | undefined) {
   return getYear(date) ?? (Number(season?.match(/\d{4}/)?.[0]) || null);
+}
+
+function getTransferSortValue(transfer: PlayerTransfer) {
+  const dateValue = transfer.date ? Date.parse(transfer.date) : Number.NaN;
+  if (Number.isFinite(dateValue)) return dateValue;
+  return (getTransferYear(transfer.date, transfer.season) ?? 0) * 1000;
 }
 
 function getYear(value: string | null | undefined) {
