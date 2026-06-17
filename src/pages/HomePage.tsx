@@ -317,18 +317,22 @@ function HeroCareerTip() {
       className="hidden lg:block"
     >
       <motion.div
-        animate={{ y: [0, -10, 0], opacity: [0.92, 1, 0.92] }}
+        animate={{ y: [0, -8, 0], opacity: [0.88, 1, 0.88] }}
         transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative overflow-hidden rounded-3xl border p-5"
+        className="relative pl-5"
         style={{
-          background: 'linear-gradient(180deg, rgba(17,24,39,0.94), rgba(8,12,20,0.9))',
-          borderColor: 'rgba(90,140,255,0.34)',
-          boxShadow: '0 28px 90px rgba(0,0,0,0.52), 0 0 42px rgba(90,140,255,0.18)',
-          backdropFilter: 'blur(10px)',
+          filter: 'drop-shadow(0 26px 58px rgba(0,0,0,0.52))',
         }}
       >
-        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(70% 70% at 20% 10%, rgba(34,197,94,0.13), transparent 65%)' }} />
-        <div className="relative flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="absolute left-0 top-8 bottom-8 w-px bg-gradient-to-b from-transparent via-green-400/50 to-transparent" />
+        <div
+          className="relative rounded-2xl px-4 py-4"
+          style={{
+            background: 'linear-gradient(90deg, rgba(12,17,25,0.72), rgba(12,17,25,0.36))',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+        <div className="relative flex items-start justify-between gap-4 pb-3">
           <div className="flex items-center gap-3">
             <div className="relative flex h-11 w-16 items-center">
               <span className="absolute left-0 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-red-700 text-lg">🇩🇪</span>
@@ -351,10 +355,10 @@ function HeroCareerTip() {
               initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.45 + index * 0.13, duration: 0.45 }}
-              className="flex items-center gap-3 rounded-2xl border px-3 py-3"
+              className="flex items-center gap-3 rounded-2xl px-3 py-3"
               style={{
-                background: club.mark ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.045)',
-                borderColor: club.mark ? 'rgba(34,197,94,0.38)' : 'rgba(255,255,255,0.08)',
+                background: club.mark ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.055)',
+                boxShadow: club.mark ? 'inset 0 0 0 1px rgba(34,197,94,0.28)' : 'inset 0 0 0 1px rgba(255,255,255,0.065)',
               }}
             >
               <div className="flex flex-col items-center">
@@ -383,9 +387,10 @@ function HeroCareerTip() {
           ))}
         </div>
 
-        <div className="relative mt-4 flex items-center gap-3 rounded-2xl border border-green-500/30 bg-green-500/10 px-4 py-3">
+        <div className="relative mt-4 flex items-center gap-3 rounded-2xl bg-green-500/10 px-4 py-3">
           <span className="text-lg">↳</span>
-          <div className="text-sm font-semibold text-green-200">Nutze die Stationen, um den Spieler zu erkennen.</div>
+          <div className="text-sm font-semibold text-green-200">Erkenne ihn anhand der Karriere des gesuchten Spielers.</div>
+        </div>
         </div>
       </motion.div>
     </motion.div>
