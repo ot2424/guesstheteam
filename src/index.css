@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
 @import "tailwindcss";
 
@@ -25,6 +25,8 @@ body {
 }
 
 .bebas { font-family: 'Bebas Neue', sans-serif; }
+.anton { font-family: 'Anton', sans-serif; }
+.mono { font-family: 'JetBrains Mono', monospace; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }

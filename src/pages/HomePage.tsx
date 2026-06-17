@@ -5,7 +5,7 @@ import { XPBar } from '../components/ui/XPBar';
 import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
 import { useAuth } from '../lib/useAuth';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame } from '../lib/savedGame';
-import heroImage from '../assets/hero.png';
+import { GameplayPreview } from '../components/ui/GameplayPreview';
 
 const DIFFICULTIES = [
   {
@@ -41,7 +41,7 @@ const MATCH_TYPES = [
 
 function getRankedDifficultyLabel(rank: string) {
   if (rank.startsWith('Bronze')) return 'Leicht';
-  if (rank.startsWith('Silver')) return 'Mittel';
+  if (rank.startsWith('Silber') || rank.startsWith('Silver')) return 'Mittel';
   return 'Schwer / Nostalgie';
 }
 
@@ -51,7 +51,7 @@ const container = {
 };
 const item = {
   hidden: { opacity: 0, y: 20 },
-  show:   { opacity: 1, y: 0 },
+  show: { opacity: 1, y: 0 },
 };
 
 export function HomePage() {
@@ -68,7 +68,7 @@ export function HomePage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen" style={{ background: 'var(--night)' }}>
+      <div className="min-h-screen bg-[radial-gradient(circle_at_20%_0%,rgba(34,197,94,0.13),transparent_34%),var(--night)]">
         <main className="max-w-6xl mx-auto px-4 py-10">
           <section className="grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-8 items-center mb-10">
             <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
@@ -103,7 +103,7 @@ export function HomePage() {
               className="overflow-hidden rounded-xl border border-gray-800"
               style={{ background: '#111827' }}
             >
-              <img src={heroImage} alt="GuessTheTeam Gameplay" className="h-72 w-full object-cover" />
+              <GameplayPreview ctaText="Account erstellen" ctaHeadline="ERKENNE DIE ELF" />
               <div className="border-t border-gray-800 p-4">
                 <div className="text-sm font-semibold text-white">Gameplay-Vorschau</div>
                 <div className="text-xs text-gray-500 mt-1">Karriere lesen, Namen suchen, Elf vervollständigen.</div>
@@ -137,11 +137,9 @@ export function HomePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--night)' }}>
-      <div className="max-w-6xl mx-auto px-4 py-8 flex gap-6">
-        {/* Main content */}
+    <div className="min-h-screen bg-[radial-gradient(circle_at_82%_0%,rgba(34,197,94,0.12),transparent_32%),var(--night)]">
+      <div className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6">
         <main className="flex-1 min-w-0">
-          {/* Hero */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -156,7 +154,6 @@ export function HomePage() {
             </p>
           </motion.div>
 
-          {/* User stats bar */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -170,7 +167,7 @@ export function HomePage() {
               </div>
               <div>
                 <div className="text-sm font-semibold text-white">{user.username}</div>
-                <div className="text-xs text-gray-500">{user.matchesPlayed} Matches · {user.winStreak}🔥 Serie</div>
+                <div className="text-xs text-gray-500">{user.matchesPlayed} Matches · {user.winStreak}er Serie</div>
               </div>
             </div>
             <RankBadge rank={user.rank} />
@@ -179,7 +176,6 @@ export function HomePage() {
             </div>
           </motion.div>
 
-          {/* Tutorial CTA */}
           <motion.button
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -216,7 +212,6 @@ export function HomePage() {
             </motion.button>
           )}
 
-          {/* Game modes */}
           <motion.div
             variants={container}
             initial="hidden"
@@ -288,6 +283,21 @@ export function HomePage() {
           </motion.div>
 
         </main>
+
+        <motion.aside
+          initial={{ opacity: 0, x: 18 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.18 }}
+          className="hidden lg:block"
+        >
+          <div className="sticky top-20 overflow-hidden rounded-xl border border-gray-800" style={{ background: '#111827' }}>
+            <GameplayPreview ctaText="Weiter spielen" ctaHeadline="DEINE ELF" />
+            <div className="border-t border-gray-800 p-4">
+              <div className="text-sm font-semibold text-white">Live-Vorschau</div>
+              <div className="text-xs text-gray-500 mt-1">So fühlt sich eine perfekte Runde an.</div>
+            </div>
+          </div>
+        </motion.aside>
       </div>
     </div>
   );

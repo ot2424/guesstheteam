@@ -26,19 +26,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile>(() => loadUserProfile());
   const [loading, setLoading] = useState(Boolean(supabase));
 
-  const loadProfile = useCallback(async (nextSession: Session | null) => {
-    setSession(nextSession);
+  const setSignedOutState = useCallback(() => {
+    setSession(null);
+    setUser(loadUserProfile());
+    setLoading(false);
+  }, []);
 
+  const loadProfile = useCallback(async (nextSession: Session | null) => {
     if (!supabase || !nextSession?.user) {
-      setUser(loadUserProfile());
-      setLoading(false);
+      setSignedOutState();
+      return;
+    }
+
+    const { data: authData, error: authError } = await supabase.auth.getUser(nextSession.access_token);
+    if (authError || !authData.user) {
+      await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+      setSignedOutState();
       return;
     }
 
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', nextSession.user.id)
+      .eq('id', authData.user.id)
       .maybeSingle<ProfileRow>();
 
     if (error) throw error;
@@ -48,9 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       : await createMissingProfile(nextSession);
 
     saveUserProfile(nextUser);
+    setSession(nextSession);
     setUser(nextUser);
     setLoading(false);
-  }, []);
+  }, [setSignedOutState]);
 
   useEffect(() => {
     if (!supabase) {
@@ -112,9 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
-    setSession(null);
-    setUser(loadUserProfile());
-  }, []);
+    setSignedOutState();
+  }, [setSignedOutState]);
 
   const syncProfile = useCallback((profile: UserProfile) => {
     saveUserProfile(profile);
