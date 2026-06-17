@@ -64,18 +64,18 @@ export function TutorialPage() {
   const tip = TIPS[tipIndex];
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--night)' }}>
-      <div className="max-w-3xl mx-auto px-4 py-4 flex flex-col gap-4">
+    <div className="min-h-screen" style={{ background: '#06090f' }}>
+      <div className="max-w-3xl mx-auto px-4 py-5 flex flex-col gap-4">
 
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <span className="bebas text-2xl tracking-wider text-green-400">Tutorial</span>
-            <span className="text-gray-600 text-sm ml-2">Real Madrid 2022/23</span>
+          <div className="flex items-baseline gap-2">
+            <span className="bebas text-2xl tracking-wider text-green-400">TUTORIAL</span>
+            <span className="text-gray-600 text-sm">Real Madrid 2022/23</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">{solved}/11</span>
-            <button onClick={() => navigate('/')} className="text-xs text-gray-600 hover:text-gray-400 px-3 py-1.5 rounded border border-gray-800 transition-colors">← Zurück</button>
+            <span className="text-sm text-gray-500 tabular-nums">{solved}/11</span>
+            <button onClick={() => navigate('/')} className="text-xs text-gray-500 hover:text-gray-300 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-colors">← Zurück</button>
           </div>
         </div>
 
@@ -87,8 +87,8 @@ export function TutorialPage() {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="rounded-xl border border-green-800 p-4 flex items-start gap-3"
-              style={{ background: 'rgba(34,197,94,0.06)' }}
+              className="rounded-2xl border p-4 flex items-start gap-3"
+              style={{ background: 'rgba(34,197,94,0.07)', borderColor: 'rgba(34,197,94,0.4)' }}
             >
               <span className="text-2xl flex-shrink-0">{tip.icon}</span>
               <div className="flex-1 min-w-0">
@@ -96,10 +96,10 @@ export function TutorialPage() {
                 <div className="text-gray-400 text-sm mt-0.5">{tip.body}</div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <span className="text-xs text-gray-600">{tipIndex + 1}/{TIPS.length}</span>
+                <span className="text-xs text-gray-600 tabular-nums">{tipIndex + 1}/{TIPS.length}</span>
                 <button
                   onClick={nextTip}
-                  className="text-xs px-3 py-1.5 rounded-lg font-medium active:scale-95 transition-all"
+                  className="text-xs px-4 py-1.5 rounded-lg font-bold active:scale-95 transition-all"
                   style={{ background: '#22C55E', color: '#0A0E1A' }}
                 >
                   {tipIndex < TIPS.length - 1 ? 'Weiter →' : 'Los!'}
@@ -111,7 +111,7 @@ export function TutorialPage() {
 
         {/* Search field */}
         <div className="sticky top-14 z-30 py-2 -mx-4 px-4 sm:static sm:p-0 sm:mx-0"
-             style={{ background: 'rgba(10,14,26,0.95)', backdropFilter: 'blur(8px)' }}>
+             style={{ background: 'rgba(6,9,15,0.95)', backdropFilter: 'blur(8px)' }}>
           <CentralSearchField
             onGuess={handleGuess}
             solvedCount={solved}
@@ -152,16 +152,16 @@ export function TutorialPage() {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="rounded-xl p-5 text-center border border-green-700"
-              style={{ background: 'rgba(34,197,94,0.1)' }}
+              className="rounded-2xl p-6 text-center border relative overflow-hidden"
+              style={{ background: 'linear-gradient(180deg, rgba(34,197,94,0.14), rgba(34,197,94,0.02))', borderColor: '#22C55E', boxShadow: '0 0 50px rgba(34,197,94,0.25)' }}
             >
-              <div className="text-3xl mb-2">🏆</div>
-              <div className="bebas text-2xl text-green-400 tracking-wider">Tutorial abgeschlossen!</div>
+              <div className="text-4xl mb-2" style={{ filter: 'drop-shadow(0 0 16px rgba(34,197,94,0.7))' }}>🏆</div>
+              <div className="bebas text-4xl text-green-400 tracking-wider" style={{ textShadow: '0 0 30px rgba(34,197,94,0.4)' }}>TUTORIAL ABGESCHLOSSEN!</div>
               <p className="text-gray-400 text-sm mt-1 mb-4">Jetzt bist du bereit für echte Matches.</p>
               <button
                 onClick={() => navigate('/')}
-                className="px-6 py-2.5 rounded-xl font-semibold text-sm active:scale-95 transition-all"
-                style={{ background: '#22C55E', color: '#0A0E1A' }}
+                className="px-7 py-3 rounded-xl font-extrabold text-sm active:scale-95 transition-all"
+                style={{ background: '#22C55E', color: '#0A0E1A', boxShadow: '0 12px 28px rgba(34,197,94,0.3)' }}
               >
                 Jetzt spielen
               </button>

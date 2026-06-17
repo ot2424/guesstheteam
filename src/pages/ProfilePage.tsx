@@ -7,6 +7,11 @@ import { useAuth } from '../lib/useAuth';
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
+// Unified premium surfaces (matches Homepage look)
+const CARD = 'rounded-2xl border';
+const cardStyle = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' } as const;
+const innerStyle = { background: '#161d29', borderColor: 'rgba(255,255,255,0.06)' } as const;
+
 export function ProfilePage() {
   const { user, isAuthenticated } = useAuth();
   const winRate = user.matchesPlayed > 0
@@ -21,25 +26,26 @@ export function ProfilePage() {
   const rankedUnlocked = isRankedUnlocked(user.level);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--night)' }}>
+    <div className="min-h-screen" style={{ background: '#06090f' }}>
       <div className="max-w-5xl mx-auto px-4 py-8 flex gap-6">
         <main className="flex-1 min-w-0">
           {/* Profile header */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-gray-800 p-6 mb-5 flex flex-wrap items-center gap-5"
-            style={{ background: '#111827' }}
+            className={`${CARD} p-6 mb-5 flex flex-wrap items-center gap-5 relative overflow-hidden`}
+            style={cardStyle}
           >
-            {/* Avatar */}
+            <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full pointer-events-none"
+                 style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.14), transparent 70%)' }} />
             <div
-              className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold border-2 border-green-700 flex-shrink-0"
-              style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E' }}
+              className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold border-2 flex-shrink-0 relative"
+              style={{ background: 'rgba(34,197,94,0.1)', color: '#22C55E', borderColor: '#15803d', boxShadow: '0 0 22px rgba(34,197,94,0.25)' }}
             >
               {user.username[0]}
             </div>
 
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative">
               <h1 className="bebas text-3xl tracking-wider text-white">{user.username}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
                 <RankBadge rank={rank} size="md" />
@@ -63,18 +69,18 @@ export function ProfilePage() {
             className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5"
           >
             {[
-              { label: 'Matches', value: user.matchesPlayed },
-              { label: 'Siege', value: user.matchesWon },
-              { label: 'Winrate', value: `${winRate}%` },
-              { label: 'Serie', value: `${user.winStreak}` },
-            ].map(({ label, value }) => (
+              { label: 'Matches', value: user.matchesPlayed, color: '#fff' },
+              { label: 'Siege', value: user.matchesWon, color: '#fff' },
+              { label: 'Winrate', value: `${winRate}%`, color: '#2bd46a' },
+              { label: 'Serie', value: user.winStreak, color: '#fff' },
+            ].map(({ label, value, color }) => (
               <motion.div
                 key={label}
                 variants={item}
-                className="rounded-xl p-4 text-center"
-                style={{ background: '#1F2937' }}
+                className="rounded-xl p-4 text-center border"
+                style={innerStyle}
               >
-                <div className="bebas text-2xl text-white">{value}</div>
+                <div className="bebas text-3xl" style={{ color }}>{value}</div>
                 <div className="text-xs text-gray-500 mt-0.5">{label}</div>
               </motion.div>
             ))}
@@ -86,10 +92,10 @@ export function ProfilePage() {
             initial="hidden"
             animate="show"
             transition={{ delay: 0.3 }}
-            className="rounded-xl border border-gray-800 p-5 mb-5"
-            style={{ background: '#111827' }}
+            className={`${CARD} p-5 mb-5`}
+            style={cardStyle}
           >
-            <h2 className="bebas text-lg tracking-wider text-white mb-4">Rang-Fortschritt</h2>
+            <div className="text-xs tracking-[0.22em] text-green-400 mb-3">RANG-FORTSCHRITT</div>
             <div className="flex items-center gap-4 mb-3">
               <RankBadge rank={rank} size="lg" />
               <div className="flex-1">
@@ -97,11 +103,12 @@ export function ProfilePage() {
                   <span>{rankProgress.current} LP</span>
                   <span>{rankProgress.needed} LP</span>
                 </div>
-                <div className="h-2 rounded-full bg-gray-800 overflow-hidden">
+                <div className="h-2.5 rounded-full bg-gray-800 overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{
                       background: `linear-gradient(90deg, ${RANK_COLORS[getRankTier(rank)].border}80, ${RANK_COLORS[getRankTier(rank)].border})`,
+                      boxShadow: `0 0 12px ${RANK_COLORS[getRankTier(rank)].border}99`,
                     }}
                     initial={{ width: 0 }}
                     animate={{ width: `${rankProgress.percent}%` }}
@@ -120,25 +127,22 @@ export function ProfilePage() {
             </p>
           </motion.div>
 
-          {/* Unlock progress */}
           <motion.div
             variants={item}
             initial="hidden"
             animate="show"
             transition={{ delay: 0.32 }}
-            className="rounded-xl border border-gray-800 p-5 mb-5"
-            style={{ background: '#111827' }}
+            className={`${CARD} p-5 mb-5`}
+            style={cardStyle}
           >
-            <h2 className="bebas text-lg tracking-wider text-white mb-4">Freischaltungen</h2>
+            <div className="text-xs tracking-[0.22em] text-green-400 mb-3">FREISCHALTUNGEN</div>
             {nextUnlock ? (
-              <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-800 p-4" style={{ background: '#1F2937' }}>
+              <div className="flex items-center justify-between gap-4 rounded-xl border p-4" style={innerStyle}>
                 <div>
                   <div className="text-sm font-semibold text-white">{nextUnlock.title}</div>
                   <div className="text-xs text-gray-500 mt-0.5">{nextUnlock.description}</div>
                 </div>
-                <div className="text-xs font-semibold text-green-300 whitespace-nowrap">
-                  Level {nextUnlock.level}
-                </div>
+                <div className="text-xs font-semibold text-green-300 whitespace-nowrap">Level {nextUnlock.level}</div>
               </div>
             ) : (
               <div className="rounded-xl border border-green-900/50 p-4 text-sm text-green-300" style={{ background: 'rgba(34,197,94,0.08)' }}>
@@ -152,10 +156,10 @@ export function ProfilePage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
-            className="rounded-xl border border-gray-800 p-5 mb-5"
-            style={{ background: '#111827' }}
+            className={`${CARD} p-5 mb-5`}
+            style={cardStyle}
           >
-            <h2 className="bebas text-lg tracking-wider text-white mb-4">Achievements & Badges</h2>
+            <div className="text-xs tracking-[0.22em] text-green-400 mb-4">ACHIEVEMENTS &amp; BADGES</div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Object.entries(BADGES).map(([key, badge]) => {
                 const unlocked = user.badges.includes(key);
@@ -164,8 +168,8 @@ export function ProfilePage() {
                     key={key}
                     className="flex items-center gap-3 p-3 rounded-xl border transition-all"
                     style={{
-                      background: unlocked ? 'rgba(245,158,11,0.08)' : '#1F2937',
-                      borderColor: unlocked ? '#F59E0B40' : '#374151',
+                      background: unlocked ? 'rgba(245,158,11,0.08)' : '#161d29',
+                      borderColor: unlocked ? '#F59E0B55' : 'rgba(255,255,255,0.06)',
                       opacity: unlocked ? 1 : 0.45,
                     }}
                   >
@@ -185,17 +189,17 @@ export function ProfilePage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="rounded-xl border border-gray-800 p-5"
-            style={{ background: '#111827' }}
+            className={`${CARD} p-5`}
+            style={cardStyle}
           >
-            <h2 className="bebas text-lg tracking-wider text-white mb-4">Match-Verlauf</h2>
+            <div className="text-xs tracking-[0.22em] text-green-400 mb-4">MATCH-VERLAUF</div>
             <div className="flex flex-col gap-3">
               {MOCK_MATCH_HISTORY.map((m, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-3 p-3 rounded-xl border"
                   style={{
-                    background: '#1F2937',
+                    background: '#161d29',
                     borderColor: m.isWin ? '#22C55E30' : '#EF444430',
                   }}
                 >
@@ -228,6 +232,7 @@ export function ProfilePage() {
             </div>
           </motion.div>
         </main>
+
       </div>
     </div>
   );

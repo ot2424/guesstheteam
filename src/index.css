@@ -1,14 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --night: #0A0E1A;
-  --night-2: #111827;
-  --night-3: #1F2937;
+  --night: #06090f;     /* tieferer Hintergrund (war #0A0E1A) */
+  --night-2: #0e141d;   /* Karten-Basis */
+  --night-3: #161d29;   /* erhöhte Flächen / Inputs */
   --green: #22C55E;
+  --green-bright: #2bd46a;
   --green-dim: #16A34A;
   --gold: #F59E0B;
+  --bronze: #cd7f32;
+  --silver: #c2cbd6;
+  --platinum: #67d6c9;
   --red: #EF4444;
   --text: #F9FAFB;
   --muted: #9CA3AF;
@@ -22,16 +26,16 @@ body {
   color: var(--text);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 .bebas { font-family: 'Bebas Neue', sans-serif; }
-.anton { font-family: 'Anton', sans-serif; }
-.mono { font-family: 'JetBrains Mono', monospace; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--night-2); }
 ::-webkit-scrollbar-thumb { background: var(--night-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #243042; }
 
 /* 3D Card flip */
 .perspective { perspective: 1000px; }

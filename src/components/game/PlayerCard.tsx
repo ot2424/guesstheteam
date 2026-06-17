@@ -38,20 +38,20 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
         title={isSolved ? displayName : 'Klicken für Karriere-Tipp'}
       >
         <div
-          className="relative rounded-xl border-2 transition-all duration-300"
+          className="relative rounded-2xl border-2 transition-all duration-300"
           style={{
             width: '72px', height: '96px',
             background: isSolved
-              ? 'linear-gradient(160deg, #14532d, #166534)'
+              ? 'linear-gradient(180deg, rgba(34,197,94,0.32), rgba(8,30,18,0.6))'
               : isActiveTip
-              ? 'linear-gradient(160deg, #1e3a5f, #1e40af)'
-              : 'linear-gradient(160deg, #1F2937, #111827)',
-            borderColor: isSolved ? '#22C55E' : isActiveTip ? '#3B82F6' : '#374151',
+              ? 'linear-gradient(180deg, rgba(90,140,255,0.32), rgba(10,18,40,0.62))'
+              : 'linear-gradient(180deg, rgba(20,27,38,0.92), rgba(7,10,16,0.94))',
+            borderColor: isSolved ? '#22C55E' : isActiveTip ? '#5a8cff' : 'rgba(255,255,255,0.08)',
             boxShadow: isSolved
-              ? '0 0 18px rgba(34,197,94,0.25)'
+              ? '0 0 22px rgba(34,197,94,0.4), inset 0 1px 0 rgba(255,255,255,0.08)'
               : isActiveTip
-              ? '0 0 14px rgba(59,130,246,0.3)'
-              : 'none',
+              ? '0 0 20px rgba(90,140,255,0.5), inset 0 1px 0 rgba(255,255,255,0.08)'
+              : '0 6px 16px rgba(0,0,0,0.4)',
             cursor: isSolved ? 'default' : 'pointer',
             transform: isActiveTip && !isSolved ? 'scale(1.08)' : undefined,
           }}
@@ -64,7 +64,7 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
           {/* Position badge */}
           <div
             className="absolute top-1.5 left-1/2 -translate-x-1/2 bebas text-[10px] px-1.5 py-0.5 rounded"
-            style={{ background: posColor + '25', color: posColor, border: `1px solid ${posColor}40` }}
+            style={{ background: posColor + '25', color: posColor, border: `1px solid ${posColor}55`, textShadow: `0 0 9px ${posColor}66` }}
           >
             {getPositionLabel(player.position)}
           </div>
@@ -80,10 +80,10 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 pt-5"
               >
                 <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={22} />
-                <span className="text-green-300 text-[9px] font-semibold text-center leading-tight px-0.5">
+                <span className="text-[9px] font-semibold text-center leading-tight px-0.5" style={{ color: '#eafff1' }}>
                   {displayName}
                 </span>
-                <span className="text-green-500 text-base leading-none">✓</span>
+                <span className="text-base leading-none" style={{ color: '#2bd46a', textShadow: '0 0 8px rgba(34,197,94,0.8)' }}>✓</span>
               </motion.div>
             ) : (
               <motion.div
@@ -92,7 +92,7 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
               >
                 <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={28} />
                 {!isSolved && (
-                  <span className="text-gray-600 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-gray-500 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">
                     💡 Tipp
                   </span>
                 )}

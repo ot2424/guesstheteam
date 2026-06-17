@@ -82,6 +82,29 @@ function ScaleStage({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Cover-skaliert die 1280×720-Bühne, sodass sie den Eltern-Container FÜLLT (für Hero-Hintergrund).
+function CoverStage({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [m, setM] = useState({ s: 1, w: 0, h: 0 });
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => { const w = el.clientWidth, h = el.clientHeight; setM({ s: Math.max(w / 1280, h / 720), w, h }); };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const left = (m.w - 1280 * m.s) / 2, top = (m.h - 720 * m.s) / 2;
+  return (
+    <div ref={ref} style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: '#0a0e16' }}>
+      <div style={{ position: 'absolute', left, top, width: 1280, height: 720, transformOrigin: 'top left', transform: `scale(${m.s})` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ── Design-Tokens ──────────────────────────────────────────────────────────
 const C = {
   bg: '#0a0e16', panel: '#11161f', panel2: '#161d29',
@@ -99,7 +122,7 @@ const POS: Record<PosKey, { label: string; short: string; color: string }> = {
   TOR: { label: 'TORWART', short: 'Torwart', color: C.orange },
 };
 
-const PITCH = { x: 48, y: 196, w: 1018, h: 545 };
+const PITCH = { x: 48, y: 238, w: 1018, h: 503 };
 const px = (fx: number) => PITCH.x + fx * PITCH.w;
 const py = (fy: number) => PITCH.y + fy * PITCH.h;
 
@@ -559,6 +582,17 @@ export function GameplayPreview({ ctaText = 'Jetzt kostenlos registrieren', ctaH
       <CTALayer time={time} ctaText={ctaText} ctaHeadline={ctaHeadline} />
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', boxShadow: 'inset 0 0 170px rgba(0,0,0,0.55)', zIndex: 70 }} />
     </ScaleStage>
+  );
+}
+
+// Ambient-Hintergrund: nur der Spielbrett-Loop (ohne Result/Ranked/CTA), nahtlos & cover-skaliert.
+// Ideal als Vollflächen-Hintergrund hinter Hero-Text.
+export function AmbientPreview() {
+  const time = useLoopTime(14.6); // Board blendet bei ~13.3s aus → sauberer Loop-Übergang
+  return (
+    <CoverStage>
+      <BoardLayer time={time} />
+    </CoverStage>
   );
 }
 

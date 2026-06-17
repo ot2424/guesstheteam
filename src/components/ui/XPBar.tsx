@@ -16,10 +16,10 @@ export function XPBar({ xp, level }: Props) {
         <span className="text-xs text-gray-400">Level {level}</span>
         <span className="text-xs text-gray-400">{current} / {needed} XP</span>
       </div>
-      <div className="h-2 rounded-full bg-gray-800 overflow-hidden">
+      <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
         <motion.div
           className="h-full rounded-full"
-          style={{ background: 'linear-gradient(90deg, #16A34A, #22C55E)' }}
+          style={{ background: 'linear-gradient(90deg, #16A34A, #2bd46a)', boxShadow: '0 0 12px rgba(34,197,94,0.6)' }}
           initial={{ width: 0 }}
           animate={{ width: `${pct}%` }}
           transition={{ duration: 1, ease: 'easeOut' }}

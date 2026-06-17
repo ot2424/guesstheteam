@@ -73,16 +73,15 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
               ? 'rgba(34,197,94,0.12)'
               : flash === 'red'
               ? 'rgba(239,68,68,0.1)'
-              : focused
-              ? '#1F2937'
               : '#111827',
             borderColor: flash === 'green'
               ? '#22C55E'
               : flash === 'red'
               ? '#EF4444'
               : focused
-              ? '#4B5563'
-              : '#374151',
+              ? 'rgba(34,197,94,0.55)'
+              : 'rgba(255,255,255,0.1)',
+            boxShadow: focused && !flash ? '0 0 0 3px rgba(34,197,94,0.12)' : 'none',
           }}
         >
           {/* Icon */}
@@ -108,8 +107,8 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
           <button
             onClick={() => submit(input)}
             disabled={!input.trim() || disabled}
-            className="flex-shrink-0 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all active:scale-95 disabled:opacity-30"
-            style={{ background: '#22C55E', color: '#0A0E1A' }}
+            className="flex-shrink-0 px-4 py-1.5 rounded-xl text-sm font-extrabold transition-all active:scale-95 disabled:opacity-30"
+            style={{ background: '#22C55E', color: '#04130a' }}
           >
             Raten
           </button>
@@ -122,22 +121,22 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-gray-700 overflow-hidden shadow-xl"
-              style={{ background: '#1F2937' }}
+              className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border overflow-hidden p-1.5"
+              style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.13)', boxShadow: '0 18px 40px rgba(0,0,0,0.55)' }}
             >
               {suggestions.map((s) => (
                 <li key={s}>
                   <button
-                    className="w-full text-left px-4 py-2.5 text-sm text-gray-200 hover:bg-gray-700 transition-colors flex items-center gap-2"
+                    className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-gray-200 hover:bg-white/5 transition-colors flex items-center gap-2.5"
                     onMouseDown={() => submit(s)}
                   >
                     {/* Anti-spoiler: name only */}
-                    <span className="text-gray-400 text-xs">👤</span>
+                    <span className="text-gray-500 text-xs">👤</span>
                     <span>{s}</span>
                   </button>
                 </li>
               ))}
-              <li className="px-4 py-1.5 text-xs text-gray-600 border-t border-gray-800">
+              <li className="px-3 py-1.5 text-xs text-gray-600 border-t mt-1" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                 Nur Namen – keine Vereinshinweise
               </li>
             </motion.ul>
@@ -147,10 +146,10 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
 
       {/* Progress bar under search field */}
       <div className="mt-2.5 flex items-center gap-3">
-        <div className="flex-1 h-1.5 rounded-full bg-gray-800 overflow-hidden">
+        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
           <motion.div
             className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, #16A34A, #22C55E)' }}
+            style={{ background: 'linear-gradient(90deg, #16A34A, #2bd46a)', boxShadow: '0 0 10px rgba(34,197,94,0.5)' }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.5 }}
           />

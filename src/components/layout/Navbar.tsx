@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../ui/RankBadge';
+import { JerseyIcon } from '../ui/JerseyIcon';
 import { useAuth } from '../../lib/useAuth';
 
 const NAV_LINKS = [
@@ -15,12 +16,13 @@ export function Navbar() {
   const navLinks = isAuthenticated ? NAV_LINKS : NAV_LINKS.filter((link) => link.to === '/');
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-800 bg-[#0A0E1A]/90 backdrop-blur-sm">
+    <nav className="sticky top-0 z-50 border-b backdrop-blur-md"
+         style={{ background: 'rgba(6,9,15,0.82)', borderColor: 'rgba(255,255,255,0.08)' }}>
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 mr-4">
-          <span className="text-2xl">⚽</span>
-          <span className="bebas text-xl tracking-widest text-green-400">GuessTheTeam</span>
+        {/* Logo — Trikot-Icon */}
+        <Link to="/" className="flex items-center gap-2.5 mr-4">
+          <JerseyIcon size={30} color="#22c55e" />
+          <span className="font-extrabold text-[15px] tracking-[0.14em] text-white">GUESSTHETEAM</span>
         </Link>
 
         {/* Nav links */}
@@ -31,15 +33,15 @@ export function Navbar() {
               <Link
                 key={to}
                 to={to}
-                className={`relative px-3 py-1.5 text-sm rounded transition-colors ${
+                className={`relative px-3.5 py-1.5 text-sm rounded-lg transition-colors ${
                   active ? 'text-white' : 'text-gray-400 hover:text-gray-200'
                 }`}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-indicator"
-                    className="absolute inset-0 bg-gray-800 rounded"
-                    style={{ zIndex: -1 }}
+                    className="absolute inset-0 rounded-lg"
+                    style={{ zIndex: -1, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' }}
                   />
                 )}
                 {label}
@@ -48,26 +50,31 @@ export function Navbar() {
           })}
         </div>
 
-        {/* User info */}
+        {/* User info (oben rechts) */}
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
               <RankBadge rank={user.rank} size="sm" />
               <Link to="/profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 rounded-full bg-green-900 border border-green-700 flex items-center justify-center text-green-300 text-sm font-semibold">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold"
+                     style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid #15803d', color: '#7ee2a8' }}>
                   {user.username[0]}
                 </div>
                 <span className="text-sm text-gray-300 hidden sm:block">{user.username}</span>
               </Link>
               <button
                 onClick={() => void signOut()}
-                className="hidden sm:block rounded border border-gray-700 px-2 py-1 text-xs text-gray-400 hover:text-gray-200"
+                className="hidden sm:block rounded-lg border border-white/10 px-2.5 py-1.5 text-xs text-gray-400 hover:text-gray-200 hover:border-white/20 transition-colors"
               >
                 Logout
               </button>
             </>
           ) : (
-            <Link to="/login" className="rounded border border-green-800 px-2 py-1 text-xs text-green-300 hover:border-green-600">
+            <Link
+              to="/login"
+              className="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{ borderColor: 'rgba(34,197,94,0.5)', color: '#7ee2a8' }}
+            >
               Login
             </Link>
           )}

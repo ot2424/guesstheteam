@@ -20,6 +20,7 @@ export default function App() {
           <Route path="/profile"  element={<ProfilePage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
           <Route path="/login"    element={<AuthPage />} />
+          <Route path="/auth"     element={<AuthPage />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

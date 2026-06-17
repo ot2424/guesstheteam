@@ -284,7 +284,7 @@ export function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--night)' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#06090f' }}>
         <div className="text-sm text-gray-500">Match wird vorbereitet...</div>
       </div>
     );
@@ -292,8 +292,8 @@ export function GamePage() {
 
   if (error || !team) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--night)' }}>
-        <div className="max-w-sm w-full rounded-xl border border-red-900/60 p-5 text-center" style={{ background: '#111827' }}>
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#06090f' }}>
+        <div className="max-w-sm w-full rounded-2xl border border-red-900/60 p-5 text-center" style={{ background: '#111827' }}>
           <div className="bebas text-2xl tracking-wider text-red-400">Start fehlgeschlagen</div>
           <p className="text-sm text-gray-400 mt-2">{error ?? 'Keine Teamdaten erhalten.'}</p>
           <button
@@ -309,14 +309,15 @@ export function GamePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--night)' }}>
+    <div className="min-h-screen" style={{ background: '#06090f' }}>
       <div className="max-w-6xl mx-auto px-4 py-4 flex gap-6">
 
         {/* ─── Main column ─── */}
         <main className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* Game header */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+               style={{ background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' }}>
             <div className="flex items-center gap-3">
               <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
               <div>
@@ -324,24 +325,27 @@ export function GamePage() {
                 <div className="text-xs text-gray-500">{team.season} · {getLeagueLabel(team.league)}</div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <GameTimer key={startedAt} startedAt={startedAt} active={!finished} />
-              <div className="flex gap-2 text-xs text-gray-500">
-                <span className="px-2 py-1 rounded bg-gray-800 capitalize">
+              <div className="flex gap-2 text-xs">
+                <span className="px-2.5 py-1 rounded-lg capitalize border" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#e5e9f0' }}>
                   {difficulty === 'easy' ? '🟢' : difficulty === 'medium' ? '🟡' : '🔴'} {difficulty}
                 </span>
-                <span className="px-2 py-1 rounded bg-gray-800">
+                <span className="px-2.5 py-1 rounded-lg border"
+                      style={ playMode === 'ranked'
+                        ? { background: 'rgba(34,197,94,0.12)', borderColor: 'rgba(34,197,94,0.4)', color: '#2bd46a' }
+                        : { background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#94a0b0' } }>
                   {playMode === 'ranked' ? 'Ranked' : 'Freizeit'} · {matchType === 'series' ? '3er-Serie' : 'Einzel'}
                 </span>
                 {series && (
-                  <span className="px-2 py-1 rounded bg-gray-800">
+                  <span className="px-2.5 py-1 rounded-lg border" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#94a0b0' }}>
                     Runde {series.round}/3 · {series.wins}/{series.neededWins}
                   </span>
                 )}
               </div>
               <button
                 onClick={() => setShowSurrenderModal(true)}
-                className="text-xs text-gray-600 hover:text-gray-400 px-3 py-1.5 rounded border border-gray-800 hover:border-gray-700 transition-colors"
+                className="text-xs text-gray-500 hover:text-gray-300 px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/20 transition-colors"
               >
                 ✕ Aufgeben
               </button>
@@ -350,7 +354,7 @@ export function GamePage() {
 
           {/* ─── Central search field — FIXED on mobile ─── */}
           <div className="sticky top-14 z-30 py-2 -mx-4 px-4 sm:static sm:p-0 sm:mx-0"
-               style={{ background: 'rgba(10,14,26,0.95)', backdropFilter: 'blur(8px)' }}>
+               style={{ background: 'rgba(6,9,15,0.95)', backdropFilter: 'blur(8px)' }}>
             <CentralSearchField
               onGuess={handleGuess}
               solvedCount={solved}
@@ -362,7 +366,8 @@ export function GamePage() {
               <div className="mt-2 flex justify-center">
                 <button
                   onClick={() => void handleCompleteLevel()}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold border border-green-500/40 bg-green-500/10 text-green-300 hover:bg-green-500/15 transition-colors"
+                  className="px-5 py-2.5 rounded-xl text-sm font-bold border border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/15 transition-colors"
+                  style={{ boxShadow: '0 0 18px rgba(34,197,94,0.2)' }}
                 >
                   Level abschließen · {Math.round(completionRatio * 100)}%
                 </button>
@@ -401,8 +406,8 @@ export function GamePage() {
 
         {/* ─── Sidebar ─── */}
         <aside className="hidden lg:flex flex-col gap-4 flex-shrink-0" style={{ width: '180px' }}>
-          <div className="rounded-xl border border-gray-800 p-4" style={{ background: '#111827' }}>
-            <div className="text-xs text-gray-500 mb-3 uppercase tracking-widest">Fortschritt</div>
+          <div className="rounded-2xl border p-4" style={{ background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' }}>
+            <div className="text-xs text-gray-500 mb-3 tracking-[0.18em]">FORTSCHRITT</div>
             <div className="space-y-2.5">
               {team.players.map(p => {
                 const g = guesses[p.id] as GuessState;
@@ -436,8 +441,8 @@ export function GamePage() {
       </div>
 
       {showSurrenderModal && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.62)' }}>
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 p-5" style={{ background: '#111827' }}>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
+          <div className="w-full max-w-sm rounded-2xl border border-white/12 p-5" style={{ background: '#111827' }}>
             <div className="bebas text-2xl tracking-wider text-white">Wirklich aufgeben?</div>
             <p className="mt-2 text-sm text-gray-400">
               Dein aktueller Fortschritt wird beendet.
@@ -448,7 +453,7 @@ export function GamePage() {
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setShowSurrenderModal(false)}
-                className="flex-1 rounded-lg border border-gray-700 px-4 py-2 text-sm font-semibold text-gray-300 hover:bg-gray-800 transition-colors"
+                className="flex-1 rounded-xl border border-white/12 px-4 py-2.5 text-sm font-semibold text-gray-300 hover:bg-white/5 transition-colors"
               >
                 Weiterspielen
               </button>
@@ -457,7 +462,7 @@ export function GamePage() {
                   setShowSurrenderModal(false);
                   void handleSurrender();
                 }}
-                className="flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors"
+                className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors"
                 style={{ background: '#DC2626' }}
               >
                 Aufgeben
