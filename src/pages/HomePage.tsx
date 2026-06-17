@@ -94,11 +94,6 @@ export function HomePage() {
                 style={{ background: '#22c55e', color: '#04130a', boxShadow: '0 14px 34px rgba(34,197,94,0.4)' }}>
                 Jetzt spielen <span className="text-lg">→</span>
               </button>
-              <button onClick={() => navigate('/tutorial')}
-                className="inline-flex items-center gap-2.5 font-bold text-base px-7 py-4 rounded-xl transition-colors"
-                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.16)', color: '#f3f6fa', backdropFilter: 'blur(6px)' }}>
-                <span className="text-sm">🎓</span> Tutorial
-              </button>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.24 }}
@@ -150,6 +145,24 @@ export function HomePage() {
                 Einloggen
               </button>
             </motion.div>
+          )}
+
+          {isAuthenticated && user.matchesPlayed === 0 && (
+            <motion.button
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.22 }}
+              onClick={() => navigate('/tutorial')}
+              className="w-full mb-5 flex items-center gap-4 rounded-2xl border p-4 text-left hover:border-green-500 transition-all group"
+              style={{ background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.45)' }}
+            >
+              <span className="text-2xl">🎓</span>
+              <div className="flex-1">
+                <div className="text-green-300 font-semibold">Starter-Tutorial abschließen</div>
+                <div className="text-xs text-gray-500 mt-0.5">Einmalige Einführung mit gutem XP-Bonus für deinen Start.</div>
+              </div>
+              <span className="text-gray-600 group-hover:text-gray-400 transition-colors">→</span>
+            </motion.button>
           )}
 
           {/* Resume saved game */}

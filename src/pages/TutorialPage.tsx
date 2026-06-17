@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormationGrid } from '../components/game/FormationGrid';
@@ -6,8 +6,11 @@ import { MobilePlayerList } from '../components/game/MobilePlayerList';
 import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { REAL_MADRID_2223 } from '../data/mockTeams';
+import { useAuth } from '../lib/useAuth';
 import { matchesPlayer } from '../utils/playerMatching';
 import type { GuessState, PlayerCard } from '../types';
+
+const TUTORIAL_XP_REWARD = 400;
 
 const TIPS = [
   { id: 'welcome', icon: '👋', title: 'Willkommen!',       body: 'Du siehst die Aufstellung von Real Madrid 2022/23. Alle Karten sind verdeckt – sichtbar sind nur Position und Nationalität.' },
@@ -19,9 +22,11 @@ const TIPS = [
 
 export function TutorialPage() {
   const navigate = useNavigate();
+  const { user, isAuthenticated, loading, applyMatchResult } = useAuth();
   const team = REAL_MADRID_2223;
   const [tipIndex, setTipIndex] = useState(0);
   const [showTips, setShowTips] = useState(true);
+  const rewardAppliedRef = useRef(false);
   const [activeTipId, setActiveTipId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(null);
   const [guesses, setGuesses] = useState<Record<string, GuessState>>(() =>
@@ -31,6 +36,26 @@ export function TutorialPage() {
   );
 
   const solved = Object.values(guesses).filter((g: GuessState) => g.solved).length;
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  useEffect(() => {
+    if (solved !== 11 || rewardAppliedRef.current || !isAuthenticated) return;
+
+    rewardAppliedRef.current = true;
+    void applyMatchResult({
+      resultId: `tutorial-complete-${user.id}`,
+      playMode: 'casual',
+      matchType: 'single',
+      isWin: true,
+      xpGained: TUTORIAL_XP_REWARD,
+      lpChange: 0,
+    });
+  }, [applyMatchResult, isAuthenticated, solved, user.id]);
 
   const handleGuess = useCallback((name: string) => {
     const matched = team.players.find(p => {
@@ -62,6 +87,14 @@ export function TutorialPage() {
     : null;
 
   const tip = TIPS[tipIndex];
+
+  if (loading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#06090f' }}>
+        <div className="text-sm text-gray-500">Tutorial wird vorbereitet...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: '#06090f' }}>
@@ -157,7 +190,8 @@ export function TutorialPage() {
             >
               <div className="text-4xl mb-2" style={{ filter: 'drop-shadow(0 0 16px rgba(34,197,94,0.7))' }}>🏆</div>
               <div className="bebas text-4xl text-green-400 tracking-wider" style={{ textShadow: '0 0 30px rgba(34,197,94,0.4)' }}>TUTORIAL ABGESCHLOSSEN!</div>
-              <p className="text-gray-400 text-sm mt-1 mb-4">Jetzt bist du bereit für echte Matches.</p>
+              <p className="text-gray-400 text-sm mt-1 mb-2">Jetzt bist du bereit für echte Matches.</p>
+              <div className="mb-4 text-sm font-bold text-green-300">+{TUTORIAL_XP_REWARD} XP erhalten</div>
               <button
                 onClick={() => navigate('/')}
                 className="px-7 py-3 rounded-xl font-extrabold text-sm active:scale-95 transition-all"
