@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { GameplayPreview, AmbientPreview } from '../components/GameplayPreview';
+import { AmbientPreview } from '../components/GameplayPreview';
 import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
 import { useAuth } from '../lib/useAuth';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame } from '../lib/savedGame';
@@ -64,46 +64,50 @@ export function HomePage() {
           <AmbientPreview />
         </div>
         {/* scrims */}
-        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(90deg, rgba(6,9,15,0.96) 0%, rgba(6,9,15,0.82) 38%, rgba(6,9,15,0.45) 70%, rgba(6,9,15,0.7) 100%)' }} />
-        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(180deg, rgba(6,9,15,0.7) 0%, transparent 26%, transparent 55%, #06090f 100%)' }} />
+        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(90deg, rgba(6,9,15,0.94) 0%, rgba(6,9,15,0.78) 34%, rgba(6,9,15,0.24) 68%, rgba(6,9,15,0.38) 100%)' }} />
+        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(180deg, rgba(6,9,15,0.42) 0%, transparent 28%, transparent 58%, #06090f 100%)' }} />
 
         <div className="relative z-[2] max-w-6xl mx-auto px-4 w-full flex items-center" style={{ minHeight: '74vh' }}>
-          <div className="max-w-2xl py-24">
-            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-              style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.35)' }}>
-              <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e', boxShadow: '0 0 10px #22c55e' }} />
-              <span className="text-xs font-bold tracking-[0.22em]" style={{ color: '#7ee2a8' }}>DAS FUSSBALL-RÄTSEL</span>
-            </motion.div>
+          <div className="grid w-full grid-cols-1 lg:grid-cols-[minmax(0,1fr)_430px] gap-8 items-center py-24">
+            <div className="max-w-2xl">
+              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.35)' }}>
+                <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e', boxShadow: '0 0 10px #22c55e' }} />
+                <span className="text-xs font-bold tracking-[0.22em]" style={{ color: '#7ee2a8' }}>DAS FUSSBALL-RÄTSEL</span>
+              </motion.div>
 
-            <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.06 }}
-              className="bebas text-white leading-[0.9] tracking-wide mb-5"
-              style={{ fontSize: 'clamp(64px, 9vw, 116px)', textShadow: '0 8px 60px rgba(0,0,0,0.7)' }}>
-              Erkenne<br />die <span style={{ color: '#22c55e', textShadow: '0 0 70px rgba(34,197,94,0.55)' }}>Elf</span>
-            </motion.h1>
+              <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.06 }}
+                className="bebas text-white leading-[0.9] tracking-wide mb-5"
+                style={{ fontSize: 'clamp(64px, 9vw, 116px)', textShadow: '0 8px 60px rgba(0,0,0,0.7)' }}>
+                Erkenne<br />die <span style={{ color: '#22c55e', textShadow: '0 0 70px rgba(34,197,94,0.55)' }}>Elf</span>
+              </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}
-              className="text-lg leading-relaxed mb-9 max-w-xl" style={{ color: '#aeb7c4' }}>
-              Errate komplette Mannschaften – nur aus Position, Nationalität und Karriere-Stationen. Sammle XP, steig in der Rangliste auf, werde zur Legende.
-            </motion.p>
+              <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}
+                className="text-lg leading-relaxed mb-9 max-w-xl" style={{ color: '#aeb7c4' }}>
+                Errate komplette Mannschaften – nur aus Position, Nationalität und Karriere-Stationen. Sammle XP, steig in der Rangliste auf, werde zur Legende.
+              </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.18 }}
-              className="flex flex-wrap gap-3.5 items-center">
-              <button onClick={scrollToModes}
-                className="inline-flex items-center gap-3 font-extrabold text-base px-8 py-4 rounded-xl active:scale-95 transition-transform"
-                style={{ background: '#22c55e', color: '#04130a', boxShadow: '0 14px 34px rgba(34,197,94,0.4)' }}>
-                Jetzt spielen <span className="text-lg">→</span>
-              </button>
-            </motion.div>
+              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.18 }}
+                className="flex flex-wrap gap-3.5 items-center">
+                <button onClick={scrollToModes}
+                  className="inline-flex items-center gap-3 font-extrabold text-base px-8 py-4 rounded-xl active:scale-95 transition-transform"
+                  style={{ background: '#22c55e', color: '#04130a', boxShadow: '0 14px 34px rgba(34,197,94,0.4)' }}>
+                  Jetzt spielen <span className="text-lg">→</span>
+                </button>
+              </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.24 }}
-              className="flex flex-wrap gap-7 mt-10">
-              {['Kostenlos spielbar', 'Freizeit & Ranked', 'Fortschritt speichern'].map((t) => (
-                <div key={t} className="flex items-center gap-2 text-sm" style={{ color: '#8b95a5' }}>
-                  <span style={{ color: '#22c55e' }}>✓</span> {t}
-                </div>
-              ))}
-            </motion.div>
+              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.24 }}
+                className="flex flex-wrap gap-7 mt-10">
+                {['Kostenlos spielbar', 'Freizeit & Ranked', 'Fortschritt speichern'].map((t) => (
+                  <div key={t} className="flex items-center gap-2 text-sm" style={{ color: '#8b95a5' }}>
+                    <span style={{ color: '#22c55e' }}>✓</span> {t}
+                  </div>
+                ))}
+              </motion.div>
+            </div>
+
+            <HeroCareerTip />
           </div>
         </div>
       </header>
@@ -292,18 +296,98 @@ export function HomePage() {
 
         </main>
 
-        {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col gap-4 flex-shrink-0" style={{ width: '300px' }}>
-          {/* Gameplay-Vorschau (volle Animation als Karte) */}
-          <div className="rounded-2xl border overflow-hidden" style={cardStyle}>
-            <GameplayPreview />
-            <div className="p-4">
-              <div className="text-sm font-semibold text-white">Gameplay-Vorschau</div>
-              <div className="text-xs text-gray-500 mt-1">Karriere lesen, Namen suchen, Elf vervollständigen.</div>
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
+  );
+}
+
+function HeroCareerTip() {
+  const clubs = [
+    { name: 'Hertha BSC Youth', years: '2002 – 2003', tag: 'Nachwuchs', mark: false },
+    { name: 'Hamburger SV', years: '2007 – 2010', tag: null, mark: false },
+    { name: 'Manchester City', years: '2010 – 2011', tag: null, mark: false },
+    { name: 'Bayern Munich', years: '2011 – heute', tag: 'Aktuell', mark: true },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 34, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ delay: 0.28, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+      className="hidden lg:block"
+    >
+      <motion.div
+        animate={{ y: [0, -10, 0], opacity: [0.92, 1, 0.92] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+        className="relative overflow-hidden rounded-3xl border p-5"
+        style={{
+          background: 'linear-gradient(180deg, rgba(17,24,39,0.94), rgba(8,12,20,0.9))',
+          borderColor: 'rgba(90,140,255,0.34)',
+          boxShadow: '0 28px 90px rgba(0,0,0,0.52), 0 0 42px rgba(90,140,255,0.18)',
+          backdropFilter: 'blur(10px)',
+        }}
+      >
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(70% 70% at 20% 10%, rgba(34,197,94,0.13), transparent 65%)' }} />
+        <div className="relative flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-11 w-16 items-center">
+              <span className="absolute left-0 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-red-700 text-lg">🇩🇪</span>
+              <span className="absolute left-7 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-black text-lg">🇬🇭</span>
+            </div>
+            <div>
+              <div className="text-sm font-extrabold text-blue-300">Karriere-Tipp</div>
+              <div className="text-xs text-gray-400">Deutschland / Ghana · Verteidiger</div>
+            </div>
+          </div>
+          <div className="rounded-full border border-green-500/40 bg-green-500/10 px-3 py-1 text-[11px] font-bold text-green-300">
+            Tipp offen
+          </div>
+        </div>
+
+        <div className="relative mt-4 space-y-3">
+          {clubs.map((club, index) => (
+            <motion.div
+              key={club.name}
+              initial={{ opacity: 0, x: 18 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.45 + index * 0.13, duration: 0.45 }}
+              className="flex items-center gap-3 rounded-2xl border px-3 py-3"
+              style={{
+                background: club.mark ? 'rgba(34,197,94,0.12)' : 'rgba(255,255,255,0.045)',
+                borderColor: club.mark ? 'rgba(34,197,94,0.38)' : 'rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex flex-col items-center">
+                <div
+                  className="h-3 w-3 rounded-full border-2"
+                  style={{
+                    borderColor: club.mark ? '#22C55E' : '#59626f',
+                    background: club.mark ? '#22C55E' : 'transparent',
+                    boxShadow: club.mark ? '0 0 12px rgba(34,197,94,0.8)' : 'none',
+                  }}
+                />
+              </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-gray-900 text-xs font-black text-gray-300">
+                {club.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('')}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold text-white">{club.name}</div>
+                <div className="text-xs text-gray-500">{club.years}</div>
+              </div>
+              {club.tag && (
+                <span className="rounded-lg bg-white/8 px-2 py-1 text-[10px] uppercase tracking-wider text-gray-400">
+                  {club.tag}
+                </span>
+              )}
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="relative mt-4 flex items-center gap-3 rounded-2xl border border-green-500/30 bg-green-500/10 px-4 py-3">
+          <span className="text-lg">↳</span>
+          <div className="text-sm font-semibold text-green-200">Nutze die Stationen, um den Spieler zu erkennen.</div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
