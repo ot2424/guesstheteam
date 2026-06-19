@@ -87,6 +87,7 @@ export function startGame(payload: {
   difficulty?: Difficulty;
   rank?: Rank;
   leagueId?: string;
+  excludeTeamIds?: string[];
 }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',

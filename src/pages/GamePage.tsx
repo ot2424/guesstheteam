@@ -9,6 +9,7 @@ import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess } from '../lib/api';
+import { DAILY_CASUAL_SKIP_LIMIT, consumeDailyCasualSkip, getDailyCasualSkipsRemaining } from '../lib/dailyCasualSkips';
 import { getRankedSurrenderLpChange } from '../lib/progression';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team, UserProfile } from '../types';
@@ -40,6 +41,8 @@ export function GamePage() {
   const [surrenderLpChange, setSurrenderLpChange] = useState<number | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [restartNonce, setRestartNonce] = useState(0);
+  const [excludedTeamIds, setExcludedTeamIds] = useState<string[]>([]);
+  const [casualSkipsRemaining, setCasualSkipsRemaining] = useState(() => getDailyCasualSkipsRemaining());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSurrenderModal, setShowSurrenderModal] = useState(false);
@@ -70,6 +73,7 @@ export function GamePage() {
           difficulty,
           rank,
           leagueId,
+          excludeTeamIds: excludedTeamIds,
         });
 
         if (controller.signal.aborted) return;
@@ -99,7 +103,7 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, leagueId, matchType, playMode, rank, restartNonce]);
+  }, [difficulty, excludedTeamIds, leagueId, matchType, playMode, rank, restartNonce]);
 
   useEffect(() => {
     if (playMode !== 'ranked') return;
@@ -247,12 +251,13 @@ export function GamePage() {
   }, [finished, goToResult, navigate, sessionId, team]);
 
   const handleSkipShield = useCallback(async () => {
-    if (!sessionId || playMode !== 'ranked' || inventory.skipShields <= 0 || finished) return;
+    if (!sessionId || !team || playMode !== 'ranked' || inventory.skipShields <= 0 || finished) return;
 
     try {
       const response = await skipRankedTeam({ sessionId });
       setProfile(response.profile);
       clearSavedGame();
+      setExcludedTeamIds((ids) => [team.id, ...ids.filter((id) => id !== team.id)].slice(0, 10));
       setLoading(true);
       setSessionId(null);
       setTeam(null);
@@ -263,7 +268,27 @@ export function GamePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Schild konnte nicht eingesetzt werden.');
     }
-  }, [finished, inventory.skipShields, playMode, sessionId]);
+  }, [finished, inventory.skipShields, playMode, sessionId, team]);
+
+  const handleCasualFreeSkip = useCallback(() => {
+    if (!team || playMode !== 'casual' || finished || casualSkipsRemaining <= 0) return;
+    if (!consumeDailyCasualSkip()) {
+      setCasualSkipsRemaining(0);
+      return;
+    }
+
+    setCasualSkipsRemaining(getDailyCasualSkipsRemaining());
+    clearSavedGame();
+    setExcludedTeamIds((ids) => [team.id, ...ids.filter((id) => id !== team.id)].slice(0, 10));
+    setLoading(true);
+    setSessionId(null);
+    setTeam(null);
+    setGuesses({});
+    setActiveTipId(null);
+    setFinished(false);
+    setError(null);
+    setRestartNonce((value) => value + 1);
+  }, [casualSkipsRemaining, finished, playMode, team]);
 
   const handleAutoSolve = useCallback(async () => {
     if (!sessionId || !activeTipId || playMode !== 'ranked' || inventory.autoSolveJokers <= 0 || finished) return;
@@ -405,6 +430,23 @@ export function GamePage() {
                   title="Löst genau die aktuell ausgewählte Karte. Keine Teiltipps."
                 >
                   Auto-Solve x{inventory.autoSolveJokers}
+                </button>
+              </div>
+            )}
+            {playMode === 'casual' && (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={handleCasualFreeSkip}
+                  disabled={finished || casualSkipsRemaining <= 0}
+                  className="rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'rgba(34,197,94,0.10)',
+                    borderColor: 'rgba(34,197,94,0.35)',
+                    color: '#86efac',
+                  }}
+                  title="Drei kostenlose Freizeit-Skips pro Tag. Kein XP, kein LP, keine Auswirkung."
+                >
+                  Free Skip {casualSkipsRemaining}/{DAILY_CASUAL_SKIP_LIMIT}
                 </button>
               </div>
             )}
