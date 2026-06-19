@@ -5,7 +5,6 @@ import { MobilePlayerList } from '../components/game/MobilePlayerList';
 import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
-import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess } from '../lib/api';
@@ -106,7 +105,6 @@ export function GamePage() {
   }, [difficulty, excludedTeamIds, leagueId, matchType, playMode, rank, restartNonce]);
 
   useEffect(() => {
-    if (playMode !== 'ranked') return;
     let active = true;
     getProfile()
       .then((response) => {
@@ -116,7 +114,7 @@ export function GamePage() {
         if (active) setProfile(null);
       });
     return () => { active = false; };
-  }, [playMode]);
+  }, []);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
@@ -166,6 +164,7 @@ export function GamePage() {
         completionRatio: finish.result.completionRatio,
         xpGained: finish.progression.xpGained,
         lpChange: finish.progression.lpChange,
+        profile: finish.profile,
       },
     });
   }, [navigate]);
@@ -493,9 +492,6 @@ export function GamePage() {
             />
           </div>
 
-          <div className="mt-2">
-            <AdSlot type="leaderboard" />
-          </div>
         </main>
 
         {/* ─── Sidebar ─── */}
@@ -528,7 +524,6 @@ export function GamePage() {
               })}
             </div>
           </div>
-          <AdSlot type="sidebar" />
         </aside>
       </div>
 

@@ -12,5 +12,10 @@ export function createProfileRouter(profileService = new ProfileService()) {
     res.json({ profile });
   });
 
+  router.get('/matches', requireAuth, async (req, res) => {
+    const matches = await profileService.getMatchHistory(req.user?.accessToken);
+    res.json({ matches });
+  });
+
   return router;
 }

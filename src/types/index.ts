@@ -117,4 +117,23 @@ export interface MatchResult {
   completionRatio?: number;
   xpGained: number;
   lpChange: number;
+  profile?: UserProfile | null;
+}
+
+export interface MatchHistoryItem {
+  id: string;
+  teamName: string;
+  teamLogo?: string;
+  season: string;
+  league: string;
+  playMode: PlayMode;
+  matchType: MatchType;
+  solved: number;
+  total: number;
+  durationSec: number;
+  isWin: boolean;
+  isPerfect: boolean;
+  xpGained: number;
+  lpChange: number;
+  createdAt: string;
 }

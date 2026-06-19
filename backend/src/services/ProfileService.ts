@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
-import type { GameSession, PlayMode, PrestigeVisual, ProgressionReward, Rank, UserInventory } from '../types';
+import type { GameSession, MatchHistoryItem, PlayMode, PrestigeVisual, ProgressionReward, Rank, UserInventory } from '../types';
 import { getInventoryRewardDelta, getPrestigeVisual, getUnlockedRewards } from './RewardService';
 
 type ProfileRow = {
@@ -19,6 +19,23 @@ type ProfileRow = {
   win_streak: number;
   skip_shields?: number | null;
   auto_solve_jokers?: number | null;
+};
+
+type MatchResultRow = {
+  id: string;
+  team_name: string;
+  season: string;
+  league: string;
+  play_mode: PlayMode;
+  match_type: GameSession['matchType'];
+  solved: number;
+  total: number;
+  duration_sec: number;
+  is_win: boolean;
+  is_perfect: boolean;
+  xp_gained: number;
+  lp_change: number;
+  created_at: string;
 };
 
 export type PublicProfile = {
@@ -133,6 +150,21 @@ export class ProfileService {
     return nextProfile;
   }
 
+  async getMatchHistory(accessToken?: string, limit = 12): Promise<MatchHistoryItem[]> {
+    const supabase = createUserClient(accessToken);
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('match_results')
+      .select('id, team_name, season, league, play_mode, match_type, solved, total, duration_sec, is_win, is_perfect, xp_gained, lp_change, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+      .returns<MatchResultRow[]>();
+
+    if (error || !data) return [];
+    return data.map(mapMatchHistoryItem);
+  }
+
   async consumeSkipShield(accessToken?: string): Promise<PublicProfile | null> {
     return this.consumeInventoryItem(accessToken, 'skipShields');
   }
@@ -167,6 +199,25 @@ export class ProfileService {
       inventory: nextInventory,
     };
   }
+}
+
+function mapMatchHistoryItem(row: MatchResultRow): MatchHistoryItem {
+  return {
+    id: row.id,
+    teamName: row.team_name,
+    season: row.season,
+    league: row.league,
+    playMode: row.play_mode,
+    matchType: row.match_type,
+    solved: row.solved,
+    total: row.total,
+    durationSec: row.duration_sec,
+    isWin: row.is_win,
+    isPerfect: row.is_perfect,
+    xpGained: row.xp_gained,
+    lpChange: row.lp_change,
+    createdAt: row.created_at,
+  };
 }
 
 function createUserClient(accessToken?: string): SupabaseClient | null {

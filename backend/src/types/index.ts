@@ -68,6 +68,24 @@ export interface PrestigeVisual {
   nameGlow: string | null;
 }
 
+export interface MatchHistoryItem {
+  id: string;
+  teamName: string;
+  teamLogo?: string;
+  season: string;
+  league: string;
+  playMode: PlayMode;
+  matchType: MatchType;
+  solved: number;
+  total: number;
+  durationSec: number;
+  isWin: boolean;
+  isPerfect: boolean;
+  xpGained: number;
+  lpChange: number;
+  createdAt: string;
+}
+
 export interface GameSession {
   sessionId: string;
   userId: string;

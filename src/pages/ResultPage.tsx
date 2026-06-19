@@ -1,7 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AdSlot } from '../components/ui/AdSlot';
+import { RankBadge } from '../components/ui/RankBadge';
 import { TeamBadge } from '../components/ui/TeamBadge';
+import { XPBar } from '../components/ui/XPBar';
+import { XP_REWARDS } from '../lib/rewards';
 import type { MatchResult } from '../types';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
@@ -40,11 +42,14 @@ export function ResultPage() {
     return null;
   }
 
-  const { teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = result;
+  const { teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange, profile } = result;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
   const accuracy = Math.round((solved / total) * 100);
   const accent = isWin ? '#22C55E' : '#EF4444';
+  const nextReward = profile
+    ? XP_REWARDS.find((reward) => reward.level > profile.level)
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden" style={{ background: '#06090f' }}>
@@ -143,10 +148,42 @@ export function ResultPage() {
           </motion.div>
         </div>
 
-        {/* Rewarded ad offer (on loss) */}
-        {!isWin && (
-          <div className="px-6 py-3 border-t border-white/5">
-            <AdSlot type="rewarded" className="text-xs" />
+        {profile && (
+          <div className="px-6 py-5 border-t border-white/5">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <div
+                  className="bebas text-2xl tracking-wider text-white"
+                  style={profile.prestige.nameGlow ? { textShadow: `0 0 18px ${profile.prestige.nameGlow}` } : undefined}
+                >
+                  Level {profile.level}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {profile.unlockedRewards.filter((reward) => reward.kind === 'user_title').at(-1)?.name ?? 'Kreisliga-Legende'}
+                </div>
+              </div>
+              <RankBadge rank={profile.rank} size="sm" />
+            </div>
+
+            <XPBar xp={profile.xp} level={profile.level} />
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-xl border px-3 py-2" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="text-[11px] text-gray-500">Schilde</div>
+                <div className="bebas text-xl text-blue-300">x{profile.inventory.skipShields}</div>
+              </div>
+              <div className="rounded-xl border px-3 py-2" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="text-[11px] text-gray-500">Auto-Solve</div>
+                <div className="bebas text-xl text-yellow-300">x{profile.inventory.autoSolveJokers}</div>
+              </div>
+            </div>
+
+            {nextReward && (
+              <div className="mt-3 rounded-xl border px-3 py-2" style={{ background: 'rgba(34,197,94,0.07)', borderColor: 'rgba(34,197,94,0.24)' }}>
+                <div className="text-[11px] text-green-300">Nächster Meilenstein · Level {nextReward.level}</div>
+                <div className="text-xs text-gray-300 mt-0.5">{nextReward.name}</div>
+              </div>
+            )}
           </div>
         )}
 
@@ -168,10 +205,6 @@ export function ResultPage() {
         </div>
       </motion.div>
 
-      {/* Leaderboard ad */}
-      <div className="mt-6 w-full max-w-lg relative">
-        <AdSlot type="leaderboard" />
-      </div>
     </div>
   );
 }

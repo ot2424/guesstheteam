@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { AdSlot } from '../components/ui/AdSlot';
-import { MOCK_USER, MOCK_MATCH_HISTORY, BADGES, RANKS, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { BADGES, RANKS, getRankTier, RANK_COLORS } from '../data/mockUser';
+import { getMatchHistory, getProfile } from '../lib/api';
+import { useAuth } from '../lib/useAuth';
+import type { MatchHistoryItem, UserProfile } from '../types';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
@@ -13,7 +17,61 @@ const cardStyle = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borde
 const innerStyle = { background: '#161d29', borderColor: 'rgba(255,255,255,0.06)' } as const;
 
 export function ProfilePage() {
-  const user = MOCK_USER;
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [matches, setMatches] = useState<MatchHistoryItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) return;
+
+    let active = true;
+    Promise.all([getProfile(), getMatchHistory()])
+      .then(([profileResponse, matchResponse]) => {
+        if (!active) return;
+        setUser(profileResponse.profile);
+        setMatches(matchResponse.matches);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : 'Profil konnte nicht geladen werden.');
+      });
+
+    return () => { active = false; };
+  }, [authLoading, isAuthenticated]);
+
+  if (authLoading || (isAuthenticated && !user && !error)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#06090f' }}>
+        <div className="text-sm text-gray-500">Profil wird geladen...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#06090f' }}>
+        <div className={`${CARD} max-w-sm w-full p-6 text-center`} style={cardStyle}>
+          <div className="bebas text-3xl tracking-wider text-white">Login erforderlich</div>
+          <p className="mt-2 text-sm text-gray-500">Dein Profil, Inventar und Verlauf sind nur mit Account sichtbar.</p>
+          <Link to="/auth" className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-extrabold" style={{ background: '#22C55E', color: '#04130a' }}>
+            Einloggen
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#06090f' }}>
+        <div className={`${CARD} max-w-sm w-full p-6 text-center`} style={cardStyle}>
+          <div className="bebas text-3xl tracking-wider text-red-400">Profil fehlt</div>
+          <p className="mt-2 text-sm text-gray-500">{error ?? 'Für diesen Account wurde noch kein Profil angelegt.'}</p>
+        </div>
+      </div>
+    );
+  }
+
   const winRate = user.matchesPlayed > 0
     ? Math.round((user.matchesWon / user.matchesPlayed) * 100)
     : 0;
@@ -43,7 +101,12 @@ export function ProfilePage() {
             </div>
 
             <div className="flex-1 min-w-0 relative">
-              <h1 className="bebas text-3xl tracking-wider text-white">{user.username}</h1>
+              <h1
+                className="bebas text-3xl tracking-wider text-white"
+                style={user.prestige.nameGlow ? { textShadow: `0 0 18px ${user.prestige.nameGlow}` } : undefined}
+              >
+                {user.username}
+              </h1>
               {user.unlockedRewards.find((reward) => reward.kind === 'user_title') && (
                 <div className="text-xs text-green-300 mt-0.5">
                   {user.unlockedRewards.filter((reward) => reward.kind === 'user_title').at(-1)?.name}
@@ -200,25 +263,27 @@ export function ProfilePage() {
             style={cardStyle}
           >
             <div className="text-xs tracking-[0.22em] text-green-400 mb-4">MATCH-VERLAUF</div>
+            {matches.length === 0 ? (
+              <div className="rounded-xl border px-4 py-5 text-sm text-gray-500" style={innerStyle}>
+                Noch keine Matches gespielt. Starte ein Freizeit- oder Ranked-Match, dann erscheint hier dein Verlauf.
+              </div>
+            ) : (
             <div className="flex flex-col gap-3">
-              {MOCK_MATCH_HISTORY.map((m, i) => (
+              {matches.map((m) => (
                 <div
-                  key={i}
+                  key={m.id}
                   className="flex items-center gap-3 p-3 rounded-xl border"
                   style={{
                     background: '#161d29',
                     borderColor: m.isWin ? '#22C55E30' : '#EF444430',
                   }}
                 >
-                  <img
-                    src={m.teamLogo}
-                    alt={m.teamName}
-                    className="w-8 h-8 object-contain flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0" style={{ background: '#0f1722', color: '#9aa4b2', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    {m.teamName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-white">{m.teamName}</div>
-                    <div className="text-xs text-gray-500">{m.season} · {m.solved}/{m.total} Spieler</div>
+                    <div className="text-xs text-gray-500">{m.season} · {m.league} · {m.solved}/{m.total} Spieler</div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div
@@ -237,13 +302,9 @@ export function ProfilePage() {
                 </div>
               ))}
             </div>
+            )}
           </motion.div>
         </main>
-
-        {/* Sidebar */}
-        <aside className="hidden lg:flex flex-col gap-4 flex-shrink-0" style={{ width: '180px' }}>
-          <AdSlot type="sidebar" />
-        </aside>
       </div>
     </div>
   );

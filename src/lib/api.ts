@@ -1,4 +1,4 @@
-import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, MatchHistoryItem, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
 import type { UserProfile } from '../types';
 import { hasSupabase, supabase } from './supabase';
 
@@ -71,6 +71,7 @@ export interface FinishGameResponse {
     lpChange: number;
     newAchievements: string[];
   };
+  profile: UserProfile | null;
 }
 
 export interface ProfileResponse {
@@ -79,6 +80,10 @@ export interface ProfileResponse {
 
 export interface PlayerSearchResponse {
   results: Array<{ name: string }>;
+}
+
+export interface MatchHistoryResponse {
+  matches: MatchHistoryItem[];
 }
 
 export function startGame(payload: {
@@ -97,6 +102,10 @@ export function startGame(payload: {
 
 export function getProfile() {
   return request<ProfileResponse>('/profile/me');
+}
+
+export function getMatchHistory() {
+  return request<MatchHistoryResponse>('/profile/matches');
 }
 
 export function submitGuess(payload: { sessionId: string; input: string }) {

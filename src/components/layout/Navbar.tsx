@@ -1,10 +1,11 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { RankBadge } from '../ui/RankBadge';
 import { JerseyIcon } from '../ui/JerseyIcon';
 import { useAuth } from '../../lib/useAuth';
-import { MOCK_USER } from '../../data/mockUser';
+import { getProfile } from '../../lib/api';
+import type { UserProfile } from '../../types';
 
 const NAV_LINKS = [
   { to: '/',        label: 'Home'    },
@@ -15,8 +16,25 @@ const NAV_LINKS = [
 export function Navbar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, displayName, signOut } = useAuth();
+  const { user, isAuthenticated, displayName, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const activeProfile = profile?.id === user?.id ? profile : null;
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let active = true;
+    getProfile()
+      .then((response) => {
+        if (active) setProfile(response.profile);
+      })
+      .catch(() => {
+        if (active) setProfile(null);
+      });
+
+    return () => { active = false; };
+  }, [isAuthenticated, user?.id]);
 
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -62,7 +80,7 @@ export function Navbar() {
         {/* Rechts: eingeloggt → Avatar-Menü mit Logout · sonst → Einloggen */}
         {isAuthenticated ? (
           <div className="flex items-center gap-3 relative">
-            <RankBadge rank={MOCK_USER.rank} size="sm" />
+            {activeProfile && <RankBadge rank={activeProfile.rank} size="sm" />}
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -71,7 +89,12 @@ export function Navbar() {
                    style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid #15803d', color: '#7ee2a8' }}>
                 {displayName[0]?.toUpperCase()}
               </div>
-              <span className="text-sm text-gray-300 hidden sm:block">{displayName}</span>
+              <span
+                className="text-sm text-gray-300 hidden sm:block"
+                style={activeProfile?.prestige.nameGlow ? { textShadow: `0 0 14px ${activeProfile.prestige.nameGlow}` } : undefined}
+              >
+                {activeProfile?.username ?? displayName}
+              </span>
               <span className="text-gray-500 text-[10px] hidden sm:block">▼</span>
             </button>
 
@@ -86,7 +109,8 @@ export function Navbar() {
                   style={{ background: '#0e141d', borderColor: 'rgba(255,255,255,0.13)', boxShadow: '0 18px 40px rgba(0,0,0,0.55)' }}
                 >
                   <div className="px-3 py-2 text-xs text-gray-500 border-b mb-1" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                    Angemeldet als<br /><span className="text-gray-300 font-semibold">{displayName}</span>
+                    Angemeldet als<br /><span className="text-gray-300 font-semibold">{activeProfile?.username ?? displayName}</span>
+                    {activeProfile && <div className="mt-1 text-green-300">Level {activeProfile.level} · {activeProfile.rank}</div>}
                   </div>
                   <Link
                     to="/profile"
