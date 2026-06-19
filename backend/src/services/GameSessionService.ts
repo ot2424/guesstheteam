@@ -1,22 +1,28 @@
 import { randomUUID } from 'node:crypto';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { env } from '../config/env';
 import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
 import { ProgressionService } from './ProgressionService';
 
 export type FinishReason = 'complete' | 'surrender';
 const WIN_THRESHOLD = 0.8;
 
+type ActiveGameSessionRow = {
+  session: GameSession;
+};
+
 export class GameSessionService {
   private sessions = new Map<string, GameSession>();
   private progressionService = new ProgressionService();
 
-  create(userId: string, team: TeamData, opts: {
+  async create(userId: string, team: TeamData, opts: {
     playMode: PlayMode;
     matchType: MatchType;
     difficulty: Difficulty;
     rank: Rank;
     winStreak: number;
     series?: { seriesId?: string; round: number; wins: number; played: number };
-  }): GameSession {
+  }): Promise<GameSession> {
     const sessionId = randomUUID();
     const publicPlayers: PublicPlayer[] = team.players.map((player) => ({
       id: player.id,
@@ -63,36 +69,60 @@ export class GameSessionService {
       ),
     };
 
-    this.sessions.set(sessionId, session);
+    await this.persist(session);
     return session;
   }
 
-  get(sessionId: string): GameSession | null {
-    return this.sessions.get(sessionId) ?? null;
+  async get(sessionId: string, userId?: string): Promise<GameSession | null> {
+    const supabase = createSessionClient();
+    if (!supabase) return this.sessions.get(sessionId) ?? null;
+
+    const { data, error } = await supabase
+      .from('active_game_sessions')
+      .select('session')
+      .eq('id', sessionId)
+      .eq('user_id', userId ?? '')
+      .maybeSingle<ActiveGameSessionRow>();
+
+    if (error || !data) return null;
+    return data.session;
   }
 
-  markSolved(sessionId: string, playerId: string): void {
-    const session = this.get(sessionId);
+  async markSolved(sessionId: string, userId: string | undefined, playerId: string): Promise<void> {
+    const session = await this.get(sessionId, userId);
     const player = session?.players[playerId];
     if (!player) return;
     player.solved = true;
+    await this.persist(session);
   }
 
-  autoSolve(sessionId: string, playerId: string): { playerId: string; name: string } | null {
-    const session = this.get(sessionId);
+  async autoSolve(sessionId: string, userId: string | undefined, playerId: string): Promise<{ playerId: string; name: string } | null> {
+    const session = await this.get(sessionId, userId);
     const player = session?.players[playerId];
     if (!player || player.solved) return null;
 
     player.solved = true;
+    await this.persist(session);
     return { playerId, name: player.name };
   }
 
-  skip(sessionId: string): boolean {
+  async skip(sessionId: string, userId?: string): Promise<boolean> {
+    const supabase = createSessionClient();
+    if (supabase) {
+      const { error } = await supabase
+        .from('active_game_sessions')
+        .delete()
+        .eq('id', sessionId)
+        .eq('user_id', userId ?? '');
+
+      return !error;
+    }
+
     return this.sessions.delete(sessionId);
   }
 
-  incrementWrong(sessionId: string): void {
-    const session = this.get(sessionId);
+  async incrementWrong(sessionId: string, userId?: string): Promise<void> {
+    const session = await this.get(sessionId, userId);
     if (!session) return;
 
     for (const player of Object.values(session.players)) {
@@ -100,10 +130,12 @@ export class GameSessionService {
         player.wrongAttempts += 1;
       }
     }
+
+    await this.persist(session);
   }
 
-  finish(sessionId: string, reason: FinishReason = 'complete') {
-    const session = this.get(sessionId);
+  async finish(sessionId: string, userId: string | undefined, reason: FinishReason = 'complete') {
+    const session = await this.get(sessionId, userId);
     if (!session) return null;
 
     const solved = Object.values(session.players).filter((player) => player.solved).length;
@@ -133,7 +165,7 @@ export class GameSessionService {
       isSeriesComplete: series?.isComplete ?? true,
     });
 
-    return {
+    const finished = {
       result: {
         solved,
         total,
@@ -149,7 +181,36 @@ export class GameSessionService {
         newAchievements: durationSec < 60 && isWin ? ['speed_demon'] : [],
       },
     };
+
+    await this.skip(sessionId, userId);
+    return finished;
   }
+
+  private async persist(session: GameSession): Promise<void> {
+    const supabase = createSessionClient();
+    if (!supabase) {
+      this.sessions.set(session.sessionId, session);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('active_game_sessions')
+      .upsert({
+        id: session.sessionId,
+        user_id: session.userId,
+        session,
+      }, { onConflict: 'id' });
+
+    if (error) {
+      this.sessions.set(session.sessionId, session);
+    }
+  }
+}
+
+function createSessionClient(): SupabaseClient | null {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
+
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 function getNextSeriesState(

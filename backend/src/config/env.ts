@@ -7,6 +7,7 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default('http://localhost:5173'),
   SUPABASE_URL: z.string().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
   TRANSFERMARKT_BACKUP_ENABLED: z.coerce.boolean().default(false),
   TRANSFERMARKT_API_BASE_URL: z.string().url().default('https://transfermarkt-api.fly.dev'),
   TRANSFERMARKT_API_TIMEOUT_MS: z.coerce.number().int().positive().default(3500),

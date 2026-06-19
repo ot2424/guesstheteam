@@ -80,7 +80,7 @@ export function createGameRouter(
       leagueId: payload.leagueId,
       excludeTeamIds: payload.excludeTeamIds,
     });
-    const session = sessionService.create(req.user?.id ?? 'dev-user', team, {
+    const session = await sessionService.create(req.user?.id ?? 'dev-user', team, {
       playMode,
       matchType,
       difficulty,
@@ -117,24 +117,24 @@ export function createGameRouter(
     });
   });
 
-  router.post('/guess', requireAuth, (req, res) => {
+  router.post('/guess', requireAuth, async (req, res) => {
     const payload = guessSchema.parse(req.body);
-    const session = sessionService.get(payload.sessionId);
+    const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
 
     const match = matchService.findMatch(payload.input, session);
     if (!match) {
-      sessionService.incrementWrong(payload.sessionId);
+      await sessionService.incrementWrong(payload.sessionId, req.user?.id);
       return res.json({ correct: false });
     }
 
-    sessionService.markSolved(payload.sessionId, match.playerId);
+    await sessionService.markSolved(payload.sessionId, req.user?.id, match.playerId);
     return res.json({ correct: true, matchedPlayerId: match.playerId, name: match.name });
   });
 
   router.post('/auto-solve', requireAuth, async (req, res) => {
     const payload = autoSolveSchema.parse(req.body);
-    const session = sessionService.get(payload.sessionId);
+    const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
     if (session.playMode !== 'ranked') throw new HttpError(400, 'Auto-Solve-Joker sind nur im Ranked-Modus nutzbar.');
     if (!session.players[payload.playerId] || session.players[payload.playerId].solved) {
@@ -143,7 +143,7 @@ export function createGameRouter(
 
     const profile = await profileService.consumeAutoSolveJoker(req.user?.accessToken);
     if (!profile) throw new HttpError(400, 'Kein Auto-Solve-Joker verfügbar.');
-    const solved = sessionService.autoSolve(payload.sessionId, payload.playerId);
+    const solved = await sessionService.autoSolve(payload.sessionId, req.user?.id, payload.playerId);
     if (!solved) throw new HttpError(400, 'Diese Karte kann nicht automatisch gelöst werden.');
 
     return res.json({
@@ -154,14 +154,14 @@ export function createGameRouter(
 
   router.post('/skip', requireAuth, async (req, res) => {
     const payload = skipSchema.parse(req.body);
-    const session = sessionService.get(payload.sessionId);
+    const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
     if (session.playMode !== 'ranked') throw new HttpError(400, 'Team-Skip-Schilde sind nur im Ranked-Modus nutzbar.');
 
     const profile = await profileService.consumeSkipShield(req.user?.accessToken);
     if (!profile) throw new HttpError(400, 'Kein Team-Skip-Schild verfügbar.');
 
-    sessionService.skip(payload.sessionId);
+    await sessionService.skip(payload.sessionId, req.user?.id);
 
     return res.json({
       skipped: true,
@@ -171,10 +171,10 @@ export function createGameRouter(
 
   router.post('/finish', requireAuth, async (req, res) => {
     const payload = finishSchema.parse(req.body);
-    const session = sessionService.get(payload.sessionId);
+    const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
 
-    const result = sessionService.finish(payload.sessionId, payload.reason);
+    const result = await sessionService.finish(payload.sessionId, req.user?.id, payload.reason);
     if (!result) throw new HttpError(404, 'Session not found');
 
     const profile = await profileService.persistMatch(req.user?.accessToken, {
