@@ -33,7 +33,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
         searchSeqRef.current = searchSeq;
         searchAbortRef.current = controller;
 
-        void searchPlayers(val, 7, controller.signal)
+        void searchPlayers(val, 12, controller.signal)
           .then((response) => {
             if (searchSeqRef.current !== searchSeq) return;
             setSuggestions(response.results.map((result) => result.name));
@@ -90,6 +90,8 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
           <input
             ref={inputRef}
             type="text"
+            id="gtt-player-guess"
+            name="gtt-player-guess"
             value={input}
             onChange={(e) => handleInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && submit(input)}
@@ -98,8 +100,13 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
             placeholder="Spieler erraten – Nachname oder vollständiger Name…"
             disabled={disabled}
             className="flex-1 bg-transparent py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none"
-            autoComplete="off"
+            autoComplete="new-password"
             autoCorrect="off"
+            autoCapitalize="none"
+            inputMode="search"
+            enterKeyHint="search"
+            data-form-type="other"
+            aria-autocomplete="list"
             spellCheck={false}
           />
 
