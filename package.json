@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "backend:dev": "tsx watch backend/src/server.ts",
+    "backend:start": "tsx backend/src/server.ts",
+    "start": "tsx backend/src/server.ts",
     "backend:build": "tsc --project tsconfig.backend.json",
     "data:import:transfermarkt": "tsx scripts/import-transfermarkt-seed.ts",
     "data:enrich:transfermarkt": "tsx scripts/enrich-transfermarkt-seed.ts",

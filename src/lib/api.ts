@@ -1,21 +1,22 @@
-import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, SeriesProgress, Team, UserProfile } from '../types';
-import { supabase } from './supabase';
+import type { Difficulty, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
+import type { UserProfile } from '../types';
+import { hasSupabase, supabase } from './supabase';
 
-const LOCAL_API_BASE_URL = 'http://localhost:4000/api/v1';
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-const API_BASE_URL = resolveApiBaseUrl(configuredApiBaseUrl);
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  if (isSupabaseRestUrl(API_BASE_URL)) {
-    throw new Error('VITE_API_BASE_URL muss auf die Game API zeigen, nicht auf Supabase REST.');
+  const authHeaders: Record<string, string> = {};
+  if (hasSupabase) {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (token) authHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const token = await getAccessToken();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...authHeaders,
       ...options.headers,
     },
   });
@@ -28,23 +29,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function resolveApiBaseUrl(value?: string) {
-  const url = (value ?? LOCAL_API_BASE_URL).replace(/\/+$/, '');
-  if (import.meta.env.DEV && isSupabaseRestUrl(url)) return LOCAL_API_BASE_URL;
-  return url;
-}
-
-function isSupabaseRestUrl(value: string) {
-  return /\.supabase\.co\/rest\/v1$/i.test(value.replace(/\/+$/, ''));
-}
-
-async function getAccessToken() {
-  if (!supabase) return null;
-
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
-}
-
 export interface StartGameResponse {
   sessionId: string;
   playMode: PlayMode;
@@ -52,7 +36,7 @@ export interface StartGameResponse {
   difficulty: Difficulty;
   rank: Rank;
   winStreak: number;
-  series?: SeriesProgress;
+  surrenderLpChange: number;
   selection: {
     pool: string;
     leagueId?: string;
@@ -68,13 +52,16 @@ export interface GuessResponse {
 }
 
 export interface FinishGameResponse {
-  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio' | 'series'>;
+  result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio'>;
   progression: {
     xpGained: number;
     lpChange: number;
     newAchievements: string[];
   };
-  profile?: UserProfile | null;
+}
+
+export interface ProfileResponse {
+  profile: UserProfile;
 }
 
 export interface PlayerSearchResponse {
@@ -87,17 +74,15 @@ export function startGame(payload: {
   difficulty?: Difficulty;
   rank?: Rank;
   leagueId?: string;
-  winStreak?: number;
-  seriesId?: string;
-  seriesRound?: number;
-  seriesWins?: number;
-  seriesPlayed?: number;
-  excludeTeamIds?: string[];
 }) {
   return request<StartGameResponse>('/game/start', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+}
+
+export function getProfile() {
+  return request<ProfileResponse>('/profile/me');
 }
 
 export function submitGuess(payload: { sessionId: string; input: string }) {

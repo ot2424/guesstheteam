@@ -5,12 +5,12 @@ import { requireAuth } from '../middleware/auth';
 import { GameSessionService } from '../services/GameSessionService';
 import { PlayerMatchService } from '../services/PlayerMatchService';
 import { ProfileService } from '../services/ProfileService';
-import { ProgressionService } from '../services/ProgressionService';
+import { ProgressionService, RANKED_UNLOCK_LEVEL, WORLD_CUP_UNLOCK_LEVEL } from '../services/ProgressionService';
 import { TeamSeedService } from '../services/TeamSeedService';
 import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
 
 const startSchema = z.object({
-  playMode: z.enum(['casual', 'ranked']).default('casual'),
+  playMode: z.enum(['casual', 'ranked', 'worldcup']).default('casual'),
   matchType: z.enum(['single', 'series']).default('single'),
   difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
   rank: z.enum(['Bronze 3', 'Bronze 2', 'Bronze 1', 'Silver 3', 'Silver 2', 'Silver 1', 'Gold 3', 'Gold 2', 'Gold 1', 'Platinum 3', 'Platinum 2', 'Platinum 1']).default('Bronze 3'),
@@ -48,6 +48,12 @@ export function createGameRouter(
     const matchType = (payload.mode && payload.mode !== 'tutorial' ? payload.mode : payload.matchType) as MatchType;
     const playMode = payload.playMode as PlayMode;
     const profile = await profileService.getProfile(req.user?.accessToken);
+    if (playMode === 'ranked' && (!profile || profile.level < RANKED_UNLOCK_LEVEL)) {
+      throw new HttpError(403, `Ranked wird ab Level ${RANKED_UNLOCK_LEVEL} freigeschaltet.`);
+    }
+    if (playMode === 'worldcup' && (!profile || profile.level < WORLD_CUP_UNLOCK_LEVEL)) {
+      throw new HttpError(403, `WM-Modus wird ab Level ${WORLD_CUP_UNLOCK_LEVEL} freigeschaltet.`);
+    }
     const rank = playMode === 'ranked'
       ? profile?.rank ?? payload.rank as Rank
       : payload.rank as Rank;
@@ -56,6 +62,8 @@ export function createGameRouter(
       : payload.winStreak;
     const difficulty = playMode === 'ranked'
       ? progressionService.getDifficultyForRank(rank)
+      : playMode === 'worldcup'
+        ? 'medium'
       : payload.difficulty ?? 'easy';
     const team = await teamSeedService.selectTeam({
       playMode,
@@ -86,6 +94,14 @@ export function createGameRouter(
       difficulty: session.difficulty,
       rank: session.rank,
       winStreak: session.winStreak,
+      surrenderLpChange: progressionService.calcLP({
+        playMode: session.playMode,
+        difficulty: session.difficulty,
+        matchType: session.matchType,
+        isWin: false,
+        winStreak: session.winStreak,
+        isSeriesComplete: session.matchType === 'series' ? false : true,
+      }),
       series: session.series,
       selection: getSelectionDescriptor(session.playMode, session.difficulty, payload.leagueId),
       team: session.team,
@@ -131,6 +147,14 @@ export function createGameRouter(
 }
 
 function getSelectionDescriptor(playMode: PlayMode, difficulty: Difficulty, leagueId?: string) {
+  if (playMode === 'worldcup') {
+    return {
+      pool: 'world-cup-national-teams',
+      leagueId: 'national-team',
+      seasons: { from: 2024, to: 2024 },
+    };
+  }
+
   if (playMode === 'casual' && difficulty === 'easy') {
     return {
       pool: 'fixed-league-modern-top-teams',

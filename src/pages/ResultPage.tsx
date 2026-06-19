@@ -1,11 +1,8 @@
-import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { AdSlot } from '../components/ui/AdSlot';
 import { TeamBadge } from '../components/ui/TeamBadge';
-import { useAuth } from '../lib/useAuth';
-import { loadUserProfile } from '../lib/localUser';
 import type { MatchResult } from '../types';
-import { getLeagueLabel } from '../utils/footballDisplay';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
   if (isPerfect) {
@@ -36,74 +33,24 @@ function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean 
 export function ResultPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { applyMatchResult, syncProfile } = useAuth();
   const result = state as MatchResult | null;
 
-  const safeResult = result ?? {
-    teamName: '',
-    teamLogo: '',
-    season: '',
-    league: '',
-    solved: 0,
-    total: 1,
-    durationSec: 0,
-    isWin: false,
-    xpGained: 0,
-    lpChange: 0,
-  };
-  const { resultId, playMode, matchType, profile, teamName, teamLogo, season, league, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = safeResult;
-  const series = safeResult.series;
-  const displayWin = series?.isComplete ? Boolean(series.isWin) : isWin;
+  if (!result) {
+    navigate('/');
+    return null;
+  }
+
+  const { teamName, teamLogo, season, solved, total, durationSec, isWin, isPerfect, xpGained, lpChange } = result;
   const mins = Math.floor(durationSec / 60);
   const secs = durationSec % 60;
   const accuracy = Math.round((solved / total) * 100);
-  const accent = displayWin ? '#22C55E' : '#EF4444';
-
-  useEffect(() => {
-    if (!result) {
-      navigate('/');
-      return;
-    }
-
-    if (profile) {
-      syncProfile(profile);
-      return;
-    }
-
-    void applyMatchResult({
-      resultId: resultId ?? `${teamName}-${season}-${durationSec}-${solved}-${lpChange}`,
-      playMode,
-      matchType,
-      series,
-      isWin,
-      xpGained,
-      lpChange,
-    });
-  }, [applyMatchResult, durationSec, isWin, lpChange, matchType, navigate, playMode, profile, result, resultId, season, series, solved, syncProfile, teamName, xpGained]);
-
-  if (!result) return null;
-
-  const replay = () => {
-    if (playMode !== 'ranked') {
-      navigate('/play');
-      return;
-    }
-
-    const user = loadUserProfile();
-    const replayParams = new URLSearchParams({
-      playMode: 'ranked',
-      matchType: matchType ?? 'single',
-      rank: user.rank,
-      winStreak: String(user.winStreak),
-    });
-    navigate(`/play?${replayParams.toString()}`);
-  };
+  const accent = isWin ? '#22C55E' : '#EF4444';
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 py-10 relative overflow-hidden" style={{ background: '#06090f' }}>
       {/* ambient glow */}
       <div className="absolute inset-0 pointer-events-none"
-           style={{ background: `radial-gradient(50% 45% at 50% 38%, ${displayWin ? 'rgba(34,197,94,0.14)' : 'rgba(239,68,68,0.12)'}, transparent 70%)` }} />
+           style={{ background: `radial-gradient(50% 45% at 50% 38%, ${isWin ? 'rgba(34,197,94,0.14)' : 'rgba(239,68,68,0.12)'}, transparent 70%)` }} />
 
       {/* Result card */}
       <motion.div
@@ -114,13 +61,13 @@ export function ResultPage() {
         style={{
           background: '#111827',
           borderColor: accent,
-          boxShadow: displayWin ? '0 0 60px rgba(34,197,94,0.3), 0 30px 80px rgba(0,0,0,0.6)' : '0 0 60px rgba(239,68,68,0.25), 0 30px 80px rgba(0,0,0,0.6)',
+          boxShadow: isWin ? '0 0 60px rgba(34,197,94,0.3), 0 30px 80px rgba(0,0,0,0.6)' : '0 0 60px rgba(239,68,68,0.25), 0 30px 80px rgba(0,0,0,0.6)',
         }}
       >
         {/* Top banner */}
         <div
           className="px-6 py-7 flex flex-col items-center gap-2"
-          style={{ background: displayWin ? 'linear-gradient(180deg, rgba(34,197,94,0.16), rgba(34,197,94,0.02))' : 'linear-gradient(180deg, rgba(239,68,68,0.14), rgba(239,68,68,0.02))' }}
+          style={{ background: isWin ? 'linear-gradient(180deg, rgba(34,197,94,0.16), rgba(34,197,94,0.02))' : 'linear-gradient(180deg, rgba(239,68,68,0.14), rgba(239,68,68,0.02))' }}
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -129,19 +76,17 @@ export function ResultPage() {
             className="flex items-center justify-center"
             style={{ filter: `drop-shadow(0 0 18px ${accent}aa)` }}
           >
-            <ResultIcon isPerfect={isPerfect} isWin={displayWin} />
+            <ResultIcon isPerfect={isPerfect} isWin={isWin} />
           </motion.div>
           <h1
             className="bebas text-5xl tracking-widest"
             style={{ color: accent, textShadow: `0 0 30px ${accent}66` }}
           >
-            {series?.isComplete
-              ? (displayWin ? 'Serie gewonnen!' : 'Serie verloren')
-              : isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
+            {isPerfect ? 'Perfekt!' : isWin ? 'Geschafft!' : 'Niederlage'}
           </h1>
           <div className="flex items-center gap-2">
             <TeamBadge name={teamName} logoUrl={teamLogo} size={24} />
-            <span className="text-gray-300 text-sm">{teamName} · {season}{league ? ` · ${getLeagueLabel(league)}` : ''}</span>
+            <span className="text-gray-300 text-sm">{teamName} · {season}</span>
           </div>
         </div>
 
@@ -163,12 +108,10 @@ export function ResultPage() {
           </div>
         </div>
 
-        {displayWin && (
+        {isWin && (
           <div className="px-6 py-3 border-t border-white/5 text-center">
             <div className="text-xs font-semibold text-green-300">
-              {series?.isComplete
-                ? `${series.wins}/${series.total} Teams gewonnen.`
-                : isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
+              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
             </div>
           </div>
         )}
@@ -200,10 +143,17 @@ export function ResultPage() {
           </motion.div>
         </div>
 
+        {/* Rewarded ad offer (on loss) */}
+        {!isWin && (
+          <div className="px-6 py-3 border-t border-white/5">
+            <AdSlot type="rewarded" className="text-xs" />
+          </div>
+        )}
+
         {/* Actions */}
         <div className="px-6 py-6 flex flex-col gap-3">
           <button
-            onClick={replay}
+            onClick={() => navigate('/play')}
             className="w-full py-3.5 rounded-xl font-extrabold text-sm transition-all active:scale-95"
             style={{ background: '#22C55E', color: '#0A0E1A', boxShadow: '0 12px 28px rgba(34,197,94,0.3)' }}
           >
@@ -217,6 +167,11 @@ export function ResultPage() {
           </button>
         </div>
       </motion.div>
+
+      {/* Leaderboard ad */}
+      <div className="mt-6 w-full max-w-lg relative">
+        <AdSlot type="leaderboard" />
+      </div>
     </div>
   );
 }

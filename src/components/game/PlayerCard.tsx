@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getPositionGroup, getPositionLabel } from '../../utils/footballDisplay';
+import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   player: PlayerCardType;
@@ -9,6 +10,7 @@ interface Props {
   onTipClick: (playerId: string) => void;
   index: number;
   isActiveTip: boolean;
+  hintMode?: 'nationality' | 'club';
 }
 
 const POS_COLORS: Record<string, string> = {
@@ -18,11 +20,13 @@ const POS_COLORS: Record<string, string> = {
   attacker: '#EF4444',
 };
 
-export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Props) {
+export function PlayerCard({ player, guess, onTipClick, index, isActiveTip, hintMode = 'nationality' }: Props) {
   const positionGroup = getPositionGroup(player.position);
   const posColor = POS_COLORS[positionGroup] ?? '#9CA3AF';
   const isSolved  = guess.solved;
   const displayName = guess.guessedName ?? player.name;
+  const currentClub = getCurrentClub(player);
+  const showClubHint = hintMode === 'club' && currentClub;
 
   return (
     <motion.div
@@ -79,7 +83,11 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
                 transition={{ duration: 0.4 }}
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 pt-5"
               >
-                <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={22} />
+                {showClubHint ? (
+                  <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} size={24} />
+                ) : (
+                  <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={22} />
+                )}
                 <span className="text-[9px] font-semibold text-center leading-tight px-0.5" style={{ color: '#eafff1' }}>
                   {displayName}
                 </span>
@@ -90,7 +98,16 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
                 key="unsolved"
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pt-4"
               >
-                <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={28} />
+                {showClubHint ? (
+                  <>
+                    <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} size={30} />
+                    <span className="max-w-[62px] truncate text-center text-[9px] font-semibold text-gray-300">
+                      {currentClub.clubName}
+                    </span>
+                  </>
+                ) : (
+                  <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={28} />
+                )}
                 {!isSolved && (
                   <span className="text-gray-500 text-[9px] opacity-0 group-hover:opacity-100 transition-opacity">
                     💡 Tipp
@@ -102,5 +119,30 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip }: Pr
         </div>
       </button>
     </motion.div>
+  );
+}
+
+function ClubHintLogo({ name, logoUrl, size }: { name: string; logoUrl: string; size: number }) {
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className="object-contain"
+        style={{ width: size, height: size }}
+        onError={(event) => {
+          (event.currentTarget as HTMLImageElement).style.display = 'none';
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="flex items-center justify-center rounded-lg text-[10px] font-black text-gray-300"
+      style={{ width: size, height: size, background: '#1f2937', border: '1px solid rgba(255,255,255,0.12)' }}
+    >
+      {getClubInitials(name)}
+    </span>
   );
 }

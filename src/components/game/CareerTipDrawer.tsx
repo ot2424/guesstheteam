@@ -2,24 +2,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getPositionLabel } from '../../utils/footballDisplay';
+import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   player: PlayerCard | null;
   onClose: () => void;
+  hintMode?: 'nationality' | 'club';
 }
 
-function getClubInitials(name: string) {
-  const parts = name
-    .replace(/\b(FC|CF|SC|SV|VfB|VfL|TSG|RB)\b/g, '')
-    .split(/\s+/)
-    .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
-    .filter(Boolean);
+export function CareerTipDrawer({ player, onClose, hintMode = 'nationality' }: Props) {
+  const currentClub = player ? getCurrentClub(player) : null;
 
-  const source = parts.length > 0 ? parts : name.split(/\s+/);
-  return source.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'FT';
-}
-
-export function CareerTipDrawer({ player, onClose }: Props) {
   return (
     <AnimatePresence>
       {player && (
@@ -63,11 +56,24 @@ export function CareerTipDrawer({ player, onClose }: Props) {
               {/* Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
-                  <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={26} />
+                  {hintMode === 'club' && currentClub ? (
+                    currentClub.logoUrl ? (
+                      <img src={currentClub.logoUrl} alt={currentClub.clubName} className="h-7 w-7 object-contain" />
+                    ) : (
+                      <div className="h-7 w-7 rounded flex items-center justify-center text-[10px] font-bold"
+                           style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}>
+                        {getClubInitials(currentClub.clubName)}
+                      </div>
+                    )
+                  ) : (
+                    <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={26} />
+                  )}
                   <div>
                     <div className="text-sm font-bold" style={{ color: '#5a8cff' }}>💡 Karriere-Tipp</div>
                     <div className="text-xs text-gray-500">
-                      {player.nationality}{player.nationality2 ? ` / ${player.nationality2}` : ''} · {getPositionLabel(player.position)}
+                      {hintMode === 'club' && currentClub
+                        ? `Aktueller Verein: ${currentClub.clubName} · ${getPositionLabel(player.position)}`
+                        : `${player.nationality}${player.nationality2 ? ` / ${player.nationality2}` : ''} · ${getPositionLabel(player.position)}`}
                     </div>
                   </div>
                 </div>

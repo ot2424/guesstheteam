@@ -7,9 +7,10 @@ interface Props {
   guesses: Record<string, GuessState>;
   onTipClick: (playerId: string) => void;
   activeTipId: string | null;
+  hintMode?: 'nationality' | 'club';
 }
 
-export function FormationGrid({ players, guesses, onTipClick, activeTipId }: Props) {
+export function FormationGrid({ players, guesses, onTipClick, activeTipId, hintMode = 'nationality' }: Props) {
   const cards = getRoleLayout(players);
 
   return (
@@ -63,6 +64,7 @@ export function FormationGrid({ players, guesses, onTipClick, activeTipId }: Pro
                 onTipClick={onTipClick}
                 index={index}
                 isActiveTip={activeTipId === player.id}
+                hintMode={hintMode}
               />
             </div>
           );

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './lib/useAuth';
 import { Navbar } from './components/layout/Navbar';
 import { HomePage } from './pages/HomePage';
 import { GamePage } from './pages/GamePage';
@@ -6,7 +7,6 @@ import { ResultPage } from './pages/ResultPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TutorialPage } from './pages/TutorialPage';
 import { AuthPage } from './pages/AuthPage';
-import { AuthProvider } from './lib/auth';
 
 export default function App() {
   return (
@@ -19,7 +19,6 @@ export default function App() {
           <Route path="/result"   element={<ResultPage />} />
           <Route path="/profile"  element={<ProfilePage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
-          <Route path="/login"    element={<AuthPage />} />
           <Route path="/auth"     element={<AuthPage />} />
         </Routes>
       </BrowserRouter>

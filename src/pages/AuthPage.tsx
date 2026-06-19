@@ -11,37 +11,45 @@ const inputStyle = { background: '#0f1722', borderColor: 'rgba(255,255,255,0.1)'
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { signIn, signUp, isSupabaseReady } = useAuth();
+  const { authReady, signIn, signUp } = useAuth();
   const [mode, setMode] = useState<Mode>('login');
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    setMessage(null);
+    setInfo(null);
     setLoading(true);
     try {
       if (mode === 'login') {
-        await signIn({ email, password });
+        const { error } = await signIn(email, password);
+        if (error) { setError(error); return; }
         navigate('/');
-        return;
-      }
-
-      const signUpMessage = await signUp({ username, firstName, lastName, email, password });
-      if (signUpMessage) {
-        setMessage(signUpMessage);
       } else {
-        navigate('/');
+        const { error, needsEmailConfirmation } = await signUp({
+          email,
+          password,
+          username,
+          firstName,
+          lastName,
+        });
+        if (error) { setError(error); return; }
+        if (needsEmailConfirmation) {
+          setInfo('Fast geschafft! Bitte bestätige deine E-Mail. Danach kannst du dich einloggen.');
+          setMode('login');
+        } else {
+          navigate('/');
+        }
       }
     } catch (err) {
-      setError(getAuthErrorMessage(err, mode));
+      setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.');
     } finally {
       setLoading(false);
     }
@@ -107,12 +115,6 @@ export function AuthPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col">
-            {!isSupabaseReady && (
-              <div className="mb-4 rounded-xl border border-yellow-800/60 px-3 py-2 text-xs text-yellow-300" style={{ background: 'rgba(245,158,11,0.08)' }}>
-                Supabase ist noch nicht konfiguriert. Setze VITE_SUPABASE_URL und VITE_SUPABASE_ANON_KEY.
-              </div>
-            )}
-
             {mode === 'register' && (
               <>
                 <label className="text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Benutzername</label>
@@ -124,11 +126,11 @@ export function AuthPage() {
                   style={inputStyle}
                   autoComplete="username"
                   required
-                  minLength={3}
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8b95a5' }}>Vorname</label>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Vorname</label>
                     <input
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
@@ -140,7 +142,7 @@ export function AuthPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold mb-1.5 block" style={{ color: '#8b95a5' }}>Nachname</label>
+                    <label className="block text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Nachname</label>
                     <input
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
@@ -153,6 +155,12 @@ export function AuthPage() {
                   </div>
                 </div>
               </>
+            )}
+
+            {mode === 'login' && (
+              <div className="text-xs mb-4 rounded-xl border px-3.5 py-3" style={{ color: '#8b95a5', borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.025)' }}>
+                Nutze deine bestätigte E-Mail-Adresse und dein Passwort.
+              </div>
             )}
 
             <label className="text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Email</label>
@@ -180,11 +188,16 @@ export function AuthPage() {
             />
 
             {error && <div className="text-sm text-red-400 mb-4">{error}</div>}
-            {message && <div className="text-sm text-green-300 mb-4">{message}</div>}
+            {info && <div className="text-sm mb-4" style={{ color: '#2bd46a' }}>{info}</div>}
+            {!authReady && (
+              <div className="text-sm text-yellow-300 mb-4">
+                Supabase ist noch nicht konfiguriert. Bitte setze die VITE_SUPABASE_* Variablen.
+              </div>
+            )}
 
             <button
               type="submit"
-              disabled={loading || !isSupabaseReady}
+              disabled={loading || !authReady}
               className="h-13 py-3.5 rounded-xl font-extrabold text-base transition-all active:scale-95 disabled:opacity-50"
               style={{ background: '#22C55E', color: '#04130a', boxShadow: '0 12px 28px rgba(34,197,94,0.3)' }}
             >
@@ -203,38 +216,4 @@ export function AuthPage() {
       </motion.div>
     </div>
   );
-}
-
-function getAuthErrorMessage(error: unknown, mode: Mode) {
-  const message = error instanceof Error ? error.message.toLowerCase() : '';
-
-  if (message.includes('invalid login credentials')) {
-    return 'Email oder Passwort ist falsch. Falls du noch keinen Account hast, registriere dich bitte zuerst.';
-  }
-
-  if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-    return 'Bitte bestaetige zuerst deine Email-Adresse und versuche es danach erneut.';
-  }
-
-  if (message.includes('user already registered') || message.includes('already registered') || message.includes('already exists')) {
-    return 'Mit dieser Email existiert bereits ein Account. Bitte logge dich ein.';
-  }
-
-  if (message.includes('signup disabled')) {
-    return 'Registrierung ist aktuell deaktiviert.';
-  }
-
-  if (message.includes('password')) {
-    return mode === 'register'
-      ? 'Das Passwort ist zu schwach oder zu kurz. Bitte nutze mindestens 6 Zeichen.'
-      : 'Das Passwort ist falsch.';
-  }
-
-  if (message.includes('email')) {
-    return 'Bitte pruefe die Email-Adresse.';
-  }
-
-  return mode === 'login'
-    ? 'Einloggen fehlgeschlagen. Bitte pruefe deine Daten.'
-    : 'Registrierung fehlgeschlagen. Bitte pruefe deine Angaben.';
 }

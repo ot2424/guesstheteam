@@ -1,398 +1,588 @@
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AmbientPreview } from '../components/GameplayPreview';
+import { useAuth } from '../lib/useAuth';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { AmbientPreview } from '../components/GameplayPreview';
-import { RANKED_UNLOCK_LEVEL, isRankedUnlocked } from '../data/mockUser';
-import { useAuth } from '../lib/useAuth';
-import { clearSavedGame, getSavedGameUrl, loadSavedGame } from '../lib/savedGame';
+import { getProfile } from '../lib/api';
+import { RANKED_UNLOCK_LEVEL, WORLD_CUP_UNLOCK_LEVEL } from '../lib/progression';
+import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
+import type { UserProfile } from '../types';
 
-const DIFFICULTIES = [
-  { id: 'easy',   label: 'Leicht', icon: '🟢', desc: 'Feste Liga · moderne Top-Teams · 2018-2026',        xp: 'Nur XP', color: '#22C55E' },
-  { id: 'medium', label: 'Mittel', icon: '🟡', desc: 'Ligen-Mix · etablierte Euro-Clubs · 2010-2026',     xp: 'Nur XP', color: '#F59E0B' },
-  { id: 'hard',   label: 'Schwer', icon: '🔴', desc: 'Ligen-Mix · historische Nostalgie-Teams · 2000-2015', xp: 'Nur XP', color: '#EF4444' },
+// ============================================================================
+//  HomePage.tsx — Landing (nicht eingeloggt)
+//  Drei Bereiche: 1) Hero mit Rate-Animation  2) interaktiver Karriere-Verlauf
+//  3) animierte Rang-Leiter bis Platin (ohne erforderliche LP).
+//
+//  Voraussetzung: src/components/GameplayPreview.tsx (bereits geliefert).
+//  Schriften (Anton / Inter / JetBrains Mono) idealerweise in index.html laden.
+// ============================================================================
+
+type CSS = React.CSSProperties;
+
+// ── Daten ───────────────────────────────────────────────────────────────────
+const CLUB_LOGOS: Record<string, string> = {
+  'Hertha BSC': 'https://commons.wikimedia.org/wiki/Special:FilePath/Hertha_BSC_Logo_2012.svg?width=240',
+  'Hamburger SV': 'https://commons.wikimedia.org/wiki/Special:FilePath/Hamburger_SV_logo.svg?width=240',
+  'Manchester City': 'https://r2.thesportsdb.com/images/media/team/badge/vwpvry1467462651.png',
+  'Bayern Munich': 'https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png',
+  'Bayern (Leihe)': 'https://r2.thesportsdb.com/images/media/team/badge/01ogkh1716960412.png',
+  'FC Barcelona': 'https://r2.thesportsdb.com/images/media/team/badge/wq9sir1639406443.png',
+  'Liverpool': 'https://r2.thesportsdb.com/images/media/team/badge/kfaher1737969724.png',
+  'Real Madrid': 'https://r2.thesportsdb.com/images/media/team/badge/vwvwrw1473502969.png',
+  'FC Porto': 'https://r2.thesportsdb.com/images/media/team/badge/xtwwxr1448811230.png',
+  'AS Monaco': 'https://r2.thesportsdb.com/images/media/team/badge/uysxvw1467036426.png',
+};
+
+interface Club { ini: string; col: string; name: string; years: string; tag?: string; current?: boolean; }
+interface DemoPlayer { id: string; flags: string; posLabel: string; posColor: string; meta: string; answer: string; clubs: Club[]; }
+
+const PLAYERS: DemoPlayer[] = [
+  {
+    id: 'boateng', flags: '🇩🇪🇬🇭', posLabel: 'VERTEIDIGER', posColor: '#5a8cff',
+    meta: 'Deutschland / Ghana · Verteidiger', answer: 'Jérôme Boateng',
+    clubs: [
+      { ini: 'H', col: '#1c4fb0', name: 'Hertha BSC', years: '2002–2007', tag: 'Jugend' },
+      { ini: 'HSV', col: '#1668c4', name: 'Hamburger SV', years: '2007–2010' },
+      { ini: 'MC', col: '#6cabdd', name: 'Manchester City', years: '2010–2011' },
+      { ini: 'FCB', col: '#dc0511', name: 'Bayern Munich', years: '2011–2021', current: true },
+    ],
+  },
+  {
+    id: 'thiago', flags: '🇪🇸🇮🇹', posLabel: 'MITTELFELD', posColor: '#b06bf5',
+    meta: 'Spanien / Italien · Mittelfeld', answer: 'Thiago Alcántara',
+    clubs: [
+      { ini: 'FCB', col: '#a50044', name: 'FC Barcelona', years: '2009–2013', tag: 'Jugend→Profi' },
+      { ini: 'FCB', col: '#dc0511', name: 'Bayern Munich', years: '2013–2020' },
+      { ini: 'LFC', col: '#c8102e', name: 'Liverpool', years: '2020–2024', current: true },
+    ],
+  },
+  {
+    id: 'james', flags: '🇨🇴', posLabel: 'MITTELFELD', posColor: '#b06bf5',
+    meta: 'Kolumbien · Mittelfeld', answer: 'James Rodríguez',
+    clubs: [
+      { ini: 'POR', col: '#1e3a8a', name: 'FC Porto', years: '2010–2013' },
+      { ini: 'ASM', col: '#ce1126', name: 'AS Monaco', years: '2013–2014' },
+      { ini: 'RM', col: '#c9a227', name: 'Real Madrid', years: '2014–2020' },
+      { ini: 'FCB', col: '#dc0511', name: 'Bayern (Leihe)', years: '2017–2019', tag: 'Leihe', current: true },
+    ],
+  },
 ];
 
-const MATCH_TYPES = [
-  { id: 'single', label: 'Einzel-Match',    desc: '1 Team · alle 11 Spieler erraten' },
-  { id: 'series', label: '3er-Match Serie', desc: '3 Teams · mindestens 2 von 3 lösen' },
-] as const;
+const RANKS = [
+  { name: 'Bronze', col: '#cd7f32', g1: '#7a4419', g2: '#cd7f32', glow: 'rgba(205,127,50,0.6)', ini: 'BRZ' },
+  { name: 'Silber', col: '#c2cbd6', g1: '#7c8595', g2: '#c2cbd6', glow: 'rgba(194,203,214,0.55)', ini: 'SLB' },
+  { name: 'Gold', col: '#f5d142', g1: '#b8901f', g2: '#f5d142', glow: 'rgba(245,209,66,0.6)', ini: 'GLD' },
+  { name: 'Platin', col: '#67d6c9', g1: '#2e8c83', g2: '#67d6c9', glow: 'rgba(103,214,201,0.6)', ini: 'PLT' },
+];
+// 12 Divisionen: Bronze 3-2-1, Silber 3-2-1, Gold 3-2-1, Platin 3-2-1
+const STEPS: { rank: number; div: number }[] = [];
+for (let r = 0; r < RANKS.length; r++) for (let d = 0; d < 3; d++) STEPS.push({ rank: r, div: 3 - d });
 
-function getRankedDifficultyLabel(rank: string) {
-  if (rank.startsWith('Bronze')) return 'Leicht';
-  if (rank.startsWith('Silber') || rank.startsWith('Silver')) return 'Mittel';
-  return 'Schwer / Nostalgie';
+// ── Reveal-Hook (Scroll-Einblendung) ────────────────────────────────────────
+function useReveal<T extends HTMLElement>(delay = 0) {
+  const [node, setNode] = useState<T | null>(null);
+  const [shown, setShown] = useState(false);
+  const ref = useCallback((element: T | null) => {
+    setNode(element);
+  }, []);
+
+  useEffect(() => {
+    const el = node;
+    if (!el) return;
+    // Fallback: falls IntersectionObserver fehlt/nicht feuert, trotzdem anzeigen
+    if (typeof IntersectionObserver === 'undefined') {
+      const fallback = window.setTimeout(() => setShown(true), 0);
+      return () => window.clearTimeout(fallback);
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { setShown(true); io.unobserve(e.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    io.observe(el);
+    const safety = window.setTimeout(() => setShown(true), 1200);
+    return () => { io.disconnect(); window.clearTimeout(safety); };
+  }, [node]);
+  const style: CSS = {
+    opacity: shown ? 1 : 0,
+    transform: shown ? 'none' : 'translateY(24px)',
+    transition: `opacity .65s cubic-bezier(.16,.84,.34,1) ${delay}ms, transform .65s cubic-bezier(.16,.84,.34,1) ${delay}ms`,
+  };
+  return [ref, style] as const;
 }
 
-const container = { hidden: {}, show: { transition: { staggerChildren: 0.08 } } };
-const item = { hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } };
+const Jersey = ({ size = 30 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
+    <path d="M19 5.5 L29 5.5 L42 12.6 L36.4 22.1 L32.5 19.8 L32.5 42.5 L15.5 42.5 L15.5 19.8 L11.6 22.1 L6 12.6 Z" fill="#22c55e" stroke="rgba(0,0,0,0.18)" strokeWidth="1" strokeLinejoin="round" />
+    <path d="M19 5.5 Q24 11.8 29 5.5" fill="none" stroke="rgba(0,0,0,0.28)" strokeWidth="1.7" strokeLinecap="round" />
+  </svg>
+);
 
-const cardStyle = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' } as const;
-
-export function HomePage() {
-  const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const rankedUnlocked = isAuthenticated && isRankedUnlocked(user.level);
-  const storedGame = loadSavedGame();
-  const savedGame = isAuthenticated && storedGame?.userId === user.id ? storedGame : null;
-
-  const startNewGame = (url: string) => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
-    clearSavedGame();
-    navigate(url);
-  };
-
-  const scrollToModes = () => {
-    const el = document.getElementById('modes');
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 72;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-  };
+// ── Karriere-Verlauf (interaktiv) ────────────────────────────────────────────
+function CareerSection() {
+  const [headRef, headStyle] = useReveal<HTMLDivElement>(0);
+  const [bodyRef, bodyStyle] = useReveal<HTMLDivElement>(120);
+  const [selectedId, setSelectedId] = useState('boateng');
+  const sel = PLAYERS.find((p) => p.id === selectedId) ?? PLAYERS[0];
 
   return (
-    <div className="min-h-screen" style={{ background: '#06090f' }}>
-
-      {/* ═══════════ HERO (full-width, Video im Hintergrund) ═══════════ */}
-      <header className="relative overflow-hidden" style={{ minHeight: '74vh' }}>
-        {/* Ambient gameplay loop as background */}
-        <div className="absolute inset-0 z-0">
-          <AmbientPreview />
+    <section style={{ position: 'relative', zIndex: 3, background: 'linear-gradient(180deg,#080c13,#0a0e16)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '96px 32px' }}>
+        <div ref={headRef} style={{ ...headStyle, textAlign: 'center', marginBottom: 18 }}>
+          <div style={{ fontSize: 13, letterSpacing: '0.26em', color: '#5a8cff', marginBottom: 14 }}>DER HINWEIS</div>
+          <h2 style={{ fontFamily: 'Anton, sans-serif', fontSize: 'clamp(40px,5vw,62px)', lineHeight: 0.98, margin: '0 0 14px', color: '#fff' }}>Klick einen Spieler — lies die Karriere</h2>
+          <p style={{ fontSize: 17, color: '#9aa4b2', maxWidth: 560, margin: '0 auto' }}>Kein Name — erkenne das Muster der Vereine und du hast ihn.</p>
         </div>
-        {/* scrims */}
-        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(90deg, rgba(6,9,15,0.94) 0%, rgba(6,9,15,0.78) 34%, rgba(6,9,15,0.24) 68%, rgba(6,9,15,0.38) 100%)' }} />
-        <div className="absolute inset-0 z-[1]" style={{ background: 'linear-gradient(180deg, rgba(6,9,15,0.42) 0%, transparent 28%, transparent 58%, #06090f 100%)' }} />
 
-        <div className="relative z-[2] max-w-6xl mx-auto px-4 w-full flex items-center" style={{ minHeight: '74vh' }}>
-          <div className="grid w-full grid-cols-1 lg:grid-cols-[minmax(0,1fr)_430px] gap-8 items-center py-24">
-            <div className="max-w-2xl">
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
-                style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.35)' }}>
-                <span className="w-2 h-2 rounded-full" style={{ background: '#22c55e', boxShadow: '0 0 10px #22c55e' }} />
-                <span className="text-xs font-bold tracking-[0.22em]" style={{ color: '#7ee2a8' }}>DAS FUSSBALL-RÄTSEL</span>
-              </motion.div>
-
-              <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.06 }}
-                className="bebas text-white leading-[0.9] tracking-wide mb-5"
-                style={{ fontSize: 'clamp(64px, 9vw, 116px)', textShadow: '0 8px 60px rgba(0,0,0,0.7)' }}>
-                Erkenne<br />die <span style={{ color: '#22c55e', textShadow: '0 0 70px rgba(34,197,94,0.55)' }}>Elf</span>
-              </motion.h1>
-
-              <motion.p initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.12 }}
-                className="text-lg leading-relaxed mb-9 max-w-xl" style={{ color: '#aeb7c4' }}>
-                Errate komplette Mannschaften – nur aus Position, Nationalität und Karriere-Stationen. Sammle XP, steig in der Rangliste auf, werde zur Legende.
-              </motion.p>
-
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.18 }}
-                className="flex flex-wrap gap-3.5 items-center">
-                <button onClick={scrollToModes}
-                  className="inline-flex items-center gap-3 font-extrabold text-base px-8 py-4 rounded-xl active:scale-95 transition-transform"
-                  style={{ background: '#22c55e', color: '#04130a', boxShadow: '0 14px 34px rgba(34,197,94,0.4)' }}>
-                  Jetzt spielen <span className="text-lg">→</span>
-                </button>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.24 }}
-                className="flex flex-wrap gap-7 mt-10">
-                {['Kostenlos spielbar', 'Freizeit & Ranked', 'Fortschritt speichern'].map((t) => (
-                  <div key={t} className="flex items-center gap-2 text-sm" style={{ color: '#8b95a5' }}>
-                    <span style={{ color: '#22c55e' }}>✓</span> {t}
+        <div ref={bodyRef} style={{ ...bodyStyle, display: 'grid', gridTemplateColumns: 'minmax(0,300px) 1fr', gap: 26, marginTop: 42 }} className="gtt-career-grid">
+          {/* Spieler-Auswahl */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontSize: 12, letterSpacing: '0.2em', color: '#59626f', marginBottom: 2 }}>WÄHLE EINEN SPIELER</div>
+            {PLAYERS.map((p) => {
+              const active = p.id === selectedId;
+              return (
+                <button key={p.id} onClick={() => setSelectedId(p.id)} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 13, padding: '15px 16px', borderRadius: 15, border: '1px solid rgba(255,255,255,0.08)', background: 'linear-gradient(180deg,#0e141d,#0a0e16)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', transition: 'border-color .2s, transform .15s' }}>
+                  {active && <div style={{ position: 'absolute', inset: 0, borderRadius: 15, border: '1.5px solid #22c55e', boxShadow: '0 0 22px rgba(34,197,94,0.28)', pointerEvents: 'none' }} />}
+                  <div style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>{p.flags}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 11, letterSpacing: '0.04em', border: `1px solid ${p.posColor}`, color: p.posColor, borderRadius: 5, padding: '2px 7px', display: 'inline-block', lineHeight: 1 }}>{p.posLabel}</div>
+                    <div style={{ fontSize: 13, color: '#8b95a5', marginTop: 6 }}>{p.clubs.length} Stationen</div>
                   </div>
-                ))}
-              </motion.div>
-            </div>
+                  <div style={{ color: active ? '#22c55e' : '#59626f', fontSize: 17 }}>›</div>
+                </button>
+              );
+            })}
+          </div>
 
-            <HeroCareerTip />
+          {/* Karriere-Karte */}
+          <div style={{ background: 'rgba(12,17,25,0.96)', border: '1px solid rgba(255,255,255,0.13)', borderRadius: 20, boxShadow: '0 28px 70px rgba(0,0,0,0.55)', overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ fontSize: 26 }}>{sel.flags}</div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 800, fontSize: 17, color: '#5a8cff' }}>💡 Karriere-Tipp</div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a0b0', marginLeft: 2 }}>{sel.meta}</div>
+              <div style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5, color: '#59626f' }}>{sel.clubs.length} Vereine</div>
+            </div>
+            <div style={{ padding: '18px 24px 8px' }}>
+              {sel.clubs.map((c, i) => (
+                <div key={`${sel.id}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 0', animation: 'gttRow .45s both', animationDelay: `${i * 0.08}s` }}>
+                  <div style={{ position: 'relative', width: 14, display: 'flex', justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' }}>
+                    <div style={{ position: 'absolute', top: -9, bottom: -9, width: 2, background: 'rgba(255,255,255,0.12)' }} />
+                    <div style={{ width: 11, height: 11, borderRadius: '50%', background: c.current ? '#22c55e' : 'transparent', border: c.current ? 'none' : '1.5px solid #59626f', boxShadow: c.current ? '0 0 10px #22c55e' : 'none', zIndex: 1 }} />
+                  </div>
+                  <div style={{ position: 'relative', width: 38, height: 38, borderRadius: 9, background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Anton, sans-serif', fontSize: 11, color: '#cfd6e0', flexShrink: 0, overflow: 'hidden', boxShadow: '0 0 0 1px rgba(255,255,255,0.08)' }}>
+                    {c.ini}
+                    {CLUB_LOGOS[c.name] && (
+                      <img src={CLUB_LOGOS[c.name]} alt="" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 4 }} />
+                    )}
+                  </div>
+                  <div style={{ fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 15.5, color: '#f3f6fa' }}>{c.name}</div>
+                  {c.tag && <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.05em', color: '#94a0b0', background: 'rgba(255,255,255,0.07)', padding: '3px 8px', borderRadius: 5 }}>{c.tag}</div>}
+                  <div style={{ marginLeft: 'auto', fontFamily: 'JetBrains Mono, monospace', fontSize: 12.5, color: '#59626f' }}>{c.years}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '14px 24px 20px' }}>
+              <div style={{ flex: 1, height: 46, borderRadius: 12, background: '#0a0e16', border: '1px solid rgba(34,197,94,0.55)', boxShadow: '0 0 0 3px rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px' }}>
+                <span style={{ fontSize: 15 }}>⚽</span>
+                <span style={{ fontSize: 14.5, color: '#22c55e', fontWeight: 700 }}>{sel.answer}</span>
+                <span style={{ marginLeft: 'auto', color: '#2bd46a', fontWeight: 800 }}>✓ Gelöst</span>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
+    </section>
+  );
+}
 
-      {/* ═══════════ Hauptinhalt ═══════════ */}
-      <div className="max-w-6xl mx-auto px-4 pb-12 flex gap-6 -mt-6 relative z-[3]">
-        <main className="flex-1 min-w-0">
+// ── Aufstieg bis Platin (animiert, OHNE erforderliche LP) ────────────────────
+function RankSection() {
+  const [headRef, headStyle] = useReveal<HTMLDivElement>(0);
+  const [bodyRef, bodyStyle] = useReveal<HTMLDivElement>(120);
+  const [stepIdx, setStepIdx] = useState(0);
+  const [pct, setPct] = useState(0);
 
-          {isAuthenticated ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="rounded-2xl border p-4 mb-5 flex flex-wrap items-center gap-4" style={cardStyle}>
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full flex items-center justify-center font-bold"
-                  style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid #15803d', color: '#7ee2a8', boxShadow: '0 0 18px rgba(34,197,94,0.22)' }}>
-                  {user.username[0]}
+  useEffect(() => {
+    let raf = 0;
+    let start: number | null = null;
+    const FILL = 0.4, PAUSE = 0.45, TOTAL = STEPS.length * FILL + PAUSE;
+    const frame = (now: number) => {
+      if (start == null) start = now;
+      const el = ((now - start) / 1000) % TOTAL;
+      let si: number, p: number;
+      if (el < STEPS.length * FILL) { si = Math.floor(el / FILL); p = (el % FILL) / FILL * 100; }
+      else { si = STEPS.length - 1; p = 100; }
+      setStepIdx(si);
+      setPct(p);
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const step = STEPS[stepIdx];
+  const t = RANKS[step.rank];
+  const nextStep = STEPS[stepIdx + 1];
+  const nextLabel = nextStep ? `→ ${RANKS[nextStep.rank].name} ${nextStep.div}` : 'Maximaler Rang';
+
+  return (
+    <section style={{ position: 'relative', zIndex: 3, background: 'radial-gradient(80% 90% at 50% 0%, #0d1622, #06090f)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '96px 32px' }}>
+        <div ref={headRef} style={{ ...headStyle, textAlign: 'center', marginBottom: 54 }}>
+          <div style={{ fontSize: 13, letterSpacing: '0.26em', color: '#22c55e', marginBottom: 14 }}>RANKED</div>
+          <h2 style={{ fontFamily: 'Anton, sans-serif', fontSize: 'clamp(40px,5vw,62px)', lineHeight: 0.98, margin: '0 0 14px', color: '#fff' }}>Sammle LP — steig auf bis Platin</h2>
+          <p style={{ fontSize: 17, color: '#9aa4b2', maxWidth: 560, margin: '0 auto' }}>Jedes gelöste Team bringt LP. Fülle die Leiste, klettere durch die Ränge.</p>
+        </div>
+
+        <div ref={bodyRef} style={bodyStyle}>
+          {/* Rang-Badges */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 30 }}>
+            {RANKS.map((tt, i) => (
+              <div key={tt.ini} style={{ display: 'contents' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, transition: 'opacity .4s', opacity: i <= step.rank ? 1 : 0.55 }}>
+                  <div style={{
+                    width: 64, height: 64, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: i <= step.rank ? '#0c1018' : '#0e141d',
+                    border: `1px solid ${i <= step.rank ? tt.col : 'rgba(255,255,255,0.1)'}`,
+                    boxShadow: i === step.rank ? `0 0 24px ${tt.glow}` : 'none',
+                    transform: i === step.rank ? 'scale(1.08)' : 'scale(1)',
+                    transition: 'all .4s',
+                  }}>
+                    <span style={{ fontFamily: 'Anton, sans-serif', fontSize: 15, color: tt.col }}>{tt.ini}</span>
+                  </div>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#8b95a5' }}>{tt.name}</span>
                 </div>
-                <div>
-                  <div className="text-sm font-semibold text-white">{user.username}</div>
-                  <div className="text-xs text-gray-500">{user.matchesPlayed} Matches · {user.winStreak}er Serie</div>
-                </div>
-              </div>
-              <RankBadge rank={user.rank} />
-              <div className="flex-1 min-w-40">
-                <XPBar xp={user.xp} level={user.level} />
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-              className="rounded-2xl border p-4 mb-5 flex flex-wrap items-center justify-between gap-4" style={cardStyle}>
-              <div>
-                <div className="text-sm font-semibold text-white">Melde dich an, um zu spielen</div>
-                <div className="text-xs text-gray-500 mt-1">Level, Rang, gespeicherte Spiele und Fortschritt brauchen einen Account.</div>
-              </div>
-              <button
-                onClick={() => navigate('/login')}
-                className="rounded-xl px-4 py-2.5 text-sm font-extrabold"
-                style={{ background: '#22C55E', color: '#04130a' }}
-              >
-                Einloggen
-              </button>
-            </motion.div>
-          )}
-
-          {isAuthenticated && user.matchesPlayed === 0 && (
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.22 }}
-              onClick={() => navigate('/tutorial')}
-              className="w-full mb-5 flex items-center gap-4 rounded-2xl border p-4 text-left hover:border-green-500 transition-all group"
-              style={{ background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.45)' }}
-            >
-              <span className="text-2xl">🎓</span>
-              <div className="flex-1">
-                <div className="text-green-300 font-semibold">Starter-Tutorial abschließen</div>
-                <div className="text-xs text-gray-500 mt-0.5">Einmalige Einführung mit gutem XP-Bonus für deinen Start.</div>
-              </div>
-              <span className="text-gray-600 group-hover:text-gray-400 transition-colors">→</span>
-            </motion.button>
-          )}
-
-          {/* Resume saved game */}
-          {savedGame && (
-            <motion.button initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
-              onClick={() => navigate(getSavedGameUrl(savedGame))}
-              className="w-full mb-5 flex items-center gap-4 rounded-2xl border p-4 hover:border-green-500 transition-all group"
-              style={{ background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.5)' }}>
-              <span className="text-2xl">▶</span>
-              <div className="text-left flex-1">
-                <div className="text-green-300 font-semibold">Spiel fortsetzen</div>
-                <div className="text-xs text-gray-500">
-                  {savedGame.team.name} · {savedGame.team.season} · {Object.values(savedGame.guesses).filter(g => g.solved).length}/{savedGame.team.players.length}
-                </div>
-              </div>
-              <span className="text-gray-600 group-hover:text-gray-400 transition-colors">→</span>
-            </motion.button>
-          )}
-
-          {/* ─── Spielmodi ─── */}
-          <div id="modes" className="scroll-mt-20">
-            <div className="text-xs tracking-[0.26em] text-green-400 mb-4">SPIELMODI</div>
-          </div>
-          <motion.div variants={container} initial="hidden" whileInView="show" viewport={{ once: true, margin: '-10%' }}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-
-            {/* Freizeit */}
-            <motion.div variants={item} className="rounded-2xl border overflow-hidden relative" style={{ ...cardStyle, borderColor: 'rgba(90,140,255,0.22)' }}>
-              <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(90,140,255,0.16), transparent 70%)' }} />
-              <div className="px-5 py-4 border-b relative" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="inline-flex items-center gap-2 text-[11px] tracking-[0.16em] mb-2 px-3 py-1 rounded-full" style={{ color: '#9fb3ff', background: 'rgba(90,140,255,0.12)', border: '1px solid rgba(90,140,255,0.3)' }}>🎮 ENTSPANNT</div>
-                <div className="bebas tracking-wider text-white text-2xl">Freizeit-Modus</div>
-                <p className="text-xs text-gray-500 mt-0.5">Solo ohne Rang · XP-Gewinn · kein LP-Verlust</p>
-              </div>
-              <div className="p-4 flex flex-col gap-2 relative">
-                {DIFFICULTIES.map(d => (
-                  <button key={d.id}
-                    onClick={() => startNewGame(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=L1`)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border hover:border-gray-500 transition-all text-left"
-                    style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.07)' }}>
-                    <span className="text-xl">{d.icon}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-white">{d.label}</div>
-                      <div className="text-xs text-gray-500">{d.desc}</div>
-                    </div>
-                    <span className="text-xs tabular-nums" style={{ color: d.color }}>{d.xp}</span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Ranked */}
-            <motion.div variants={item} className="rounded-2xl border overflow-hidden relative" style={{ ...cardStyle, borderColor: 'rgba(34,197,94,0.3)' }}>
-              <div className="absolute -top-10 -right-10 w-52 h-52 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(34,197,94,0.2), transparent 70%)' }} />
-              <div className="px-5 py-4 border-b relative" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="inline-flex items-center gap-2 text-[11px] tracking-[0.16em] mb-2 px-3 py-1 rounded-full" style={{ color: '#7ee2a8', background: 'rgba(34,197,94,0.14)', border: '1px solid rgba(34,197,94,0.4)' }}>🏆 KOMPETITIV</div>
-                <div className="flex items-center gap-2">
-                  <span className="bebas tracking-wider text-white text-2xl">Solo-Rangliste</span>
-                <span className="text-xs px-2 py-0.5 rounded" style={{ background: '#F59E0B20', color: '#F59E0B' }}>
-                  {isAuthenticated ? (rankedUnlocked ? getRankedDifficultyLabel(user.rank) : `Ab Level ${RANKED_UNLOCK_LEVEL}`) : 'Login benötigt'}
-                </span>
-                </div>
-                <p className="text-xs text-gray-500 mt-0.5">Schwierigkeit aus deinem Rang · LP &amp; Siegesserien</p>
-              </div>
-              <div className="p-4 flex flex-col gap-2 relative">
-                {MATCH_TYPES.map(match => (
-                  <button key={match.id}
-                    onClick={() => {
-                      if (!rankedUnlocked) return;
-                      startNewGame(`/play?playMode=ranked&matchType=${match.id}&rank=${encodeURIComponent(user.rank)}&winStreak=${user.winStreak}`);
-                    }}
-                    disabled={!rankedUnlocked}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl border hover:border-gray-500 transition-all text-left disabled:opacity-45 disabled:cursor-not-allowed"
-                    style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.07)' }}>
-                    <span className="text-xl font-bold text-gray-300">{match.id === 'series' ? '3' : '1'}</span>
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-white">{match.label}</div>
-                      <div className="text-xs text-gray-500">{match.desc}</div>
-                    </div>
-                    <span className="text-xs tabular-nums text-green-400">{rankedUnlocked ? (match.id === 'series' ? 'LP x1.5' : 'Streak-Bonus') : 'Gesperrt'}</span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* ─── Bald verfügbar ─── */}
-          <div className="text-xs tracking-[0.24em] text-gray-600 mb-3 mt-7">BALD VERFÜGBAR</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
-            {[
-              { icon: '🌐', title: 'ONLINE-DUELL', desc: 'Tritt live gegen andere Spieler an — wer löst die Elf zuerst?' },
-              { icon: '🌍', title: 'WM-MODUS', desc: 'Errate die Spieler nicht über die Nationalität, sondern anhand ihrer Vereine.' },
-            ].map((m) => (
-              <div key={m.title} className="relative rounded-2xl border p-6 overflow-hidden" style={{ background: '#0a0e16', borderColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="absolute inset-0 pointer-events-none" style={{ background: 'repeating-linear-gradient(135deg, rgba(255,255,255,0.014) 0 11px, transparent 11px 22px)' }} />
-                <div className="absolute top-4 right-4 inline-flex items-center gap-1.5 text-[10.5px] tracking-[0.14em] px-3 py-1.5 rounded-full" style={{ color: '#9aa4b2', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.13)' }}>🔒 BALD</div>
-                <div className="relative">
-                  <div className="text-2xl mb-3" style={{ filter: 'grayscale(0.35)', opacity: 0.8 }}>{m.icon}</div>
-                  <div className="bebas text-2xl tracking-wider mb-2" style={{ color: '#aeb7c4' }}>{m.title}</div>
-                  <p className="text-sm leading-relaxed" style={{ color: '#7b8595' }}>{m.desc}</p>
-                </div>
+                {i < RANKS.length - 1 && <div style={{ height: 2, flex: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 26 }} />}
               </div>
             ))}
           </div>
 
-          {/* ─── Rang-Leiter ─── */}
-          <div className="rounded-2xl border p-6 mt-6 mb-2 relative overflow-hidden" style={cardStyle}>
-            <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(50% 80% at 80% 20%, rgba(34,197,94,0.1), transparent 70%)' }} />
-            <div className="relative">
-              <div className="text-xs tracking-[0.26em] text-green-400 mb-2">DEIN ZIEL IN RANKED</div>
-              <div className="bebas text-3xl text-white mb-4">Vom Neuling zur Legende</div>
-              <div className="flex flex-wrap gap-3">
-                {[
-                  { label: 'Bronze', col: '#cd7f32', bg: 'rgba(205,127,50,0.12)', bd: 'rgba(205,127,50,0.4)', tx: '#e3a878' },
-                  { label: 'Silber', col: '#c2cbd6', bg: 'rgba(180,190,200,0.1)', bd: 'rgba(180,190,200,0.32)', tx: '#cfd6e0' },
-                  { label: 'Gold',   col: '#f5d142', bg: 'rgba(245,209,66,0.1)', bd: 'rgba(245,209,66,0.34)', tx: '#f5d142' },
-                  { label: 'Platin', col: '#67d6c9', bg: 'rgba(103,214,201,0.1)', bd: 'rgba(103,214,201,0.36)', tx: '#8fe6dc' },
-                ].map((r) => (
-                  <div key={r.label} className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl" style={{ background: r.bg, border: `1px solid ${r.bd}` }}>
-                    <span className="w-3.5 h-3.5 rounded" style={{ background: r.col }} />
-                    <span className="text-sm font-bold" style={{ color: r.tx }}>{r.label}</span>
-                  </div>
-                ))}
+          {/* LP-Leiste — ohne erforderliche LP */}
+          <div style={{ background: 'rgba(13,18,26,0.9)', border: '1px solid rgba(255,255,255,0.13)', borderRadius: 18, padding: '24px 26px', boxShadow: '0 24px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+                <span style={{ fontFamily: 'Anton, sans-serif', fontSize: 28, color: '#fff' }}>{t.name.toUpperCase()} {step.div}</span>
+                <span style={{ fontSize: 14, color: '#8b95a5' }}>{nextLabel}</span>
+              </div>
+            </div>
+            <div style={{ height: 18, borderRadius: 10, background: 'rgba(255,255,255,0.08)', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)' }}>
+              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 10, background: `linear-gradient(90deg,${t.g1},${t.g2})`, boxShadow: `0 0 16px ${t.glow}` }} />
+            </div>
+            <div style={{ marginTop: 14, fontSize: 14.5, color: '#9aa4b2' }}>Sieg: <span style={{ color: '#2bd46a', fontWeight: 700 }}>+14 bis +18 LP</span> · Siegesserie gibt Bonus-LP.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Seite ────────────────────────────────────────────────────────────────────
+export function HomePage() {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Dashboard /> : <Landing />;
+}
+
+// ── Landing (nicht eingeloggt) ──────────────────────────────────
+function Landing() {
+  const navigate = useNavigate();
+  const [ctaRef, ctaStyle] = useReveal<HTMLDivElement>(0);
+
+  return (
+    <div style={{ position: 'relative', width: '100%', background: '#06090f', color: '#f3f6fa', fontFamily: 'Inter, system-ui, sans-serif', overflowX: 'hidden' }}>
+      <style>{`
+        @keyframes gttScrollDot { 0% { transform: translateY(0); opacity: 0; } 35% { opacity: 1; } 70% { transform: translateY(13px); opacity: 0; } 100% { opacity: 0; } }
+        @keyframes gttPulse { 0%,100% { box-shadow: 0 14px 34px rgba(34,197,94,0.4), 0 0 0 0 rgba(34,197,94,0.5); } 50% { box-shadow: 0 14px 34px rgba(34,197,94,0.4), 0 0 0 14px rgba(34,197,94,0); } }
+        @keyframes gttRow { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+        @keyframes gttHeroIn { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+        @media (max-width: 760px) { .gtt-career-grid { grid-template-columns: 1fr !important; } }
+      `}</style>
+
+      {/* NAV — entfernt: die globale <Navbar> der App rendert die Navigation.
+          (Doppelte Navigation würde sich oben überlagern.) */}
+
+      {/* 1 · HERO */}
+      <header style={{ position: 'relative', minHeight: '92vh', display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+          <AmbientPreview />
+        </div>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(90deg, rgba(6,9,15,0.94) 0%, rgba(6,9,15,0.74) 36%, rgba(6,9,15,0.30) 66%, rgba(6,9,15,0.55) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, zIndex: 1, background: 'linear-gradient(180deg, rgba(6,9,15,0.55) 0%, transparent 26%, transparent 60%, #06090f 100%)' }} />
+
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 1200, margin: '0 auto', padding: '120px 32px 90px', width: '100%' }}>
+          <div style={{ maxWidth: 680 }}>
+            <div style={{ opacity: 0, animation: 'gttHeroIn .7s cubic-bezier(.16,.84,.34,1) .05s both', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 16px', borderRadius: 999, background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.35)', marginBottom: 24 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 10px #22c55e' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.22em', color: '#7ee2a8' }}>DAS FUSSBALL-RÄTSEL</span>
+            </div>
+            <h1 style={{ opacity: 0, animation: 'gttHeroIn .7s cubic-bezier(.16,.84,.34,1) .13s both', fontFamily: 'Anton, sans-serif', fontSize: 'clamp(64px,9vw,124px)', lineHeight: 0.86, letterSpacing: '0.005em', margin: '0 0 22px', color: '#fff', textShadow: '0 8px 60px rgba(0,0,0,0.75)' }}>
+              ERKENNE<br />DIE <span style={{ color: '#22c55e', textShadow: '0 0 70px rgba(34,197,94,0.55)' }}>ELF</span>
+            </h1>
+            <p style={{ opacity: 0, animation: 'gttHeroIn .7s cubic-bezier(.16,.84,.34,1) .21s both', fontSize: 20, lineHeight: 1.6, color: '#aeb7c4', maxWidth: 520, margin: '0 0 34px' }}>Errate komplette Mannschaften — nur aus Position, Nationalität und Karriere. Ein Spieler nach dem anderen.</p>
+            <div style={{ opacity: 0, animation: 'gttHeroIn .7s cubic-bezier(.16,.84,.34,1) .29s both' }}>
+              <button onClick={() => navigate('/auth')} style={{ display: 'inline-flex', alignItems: 'center', gap: 11, background: '#22c55e', border: 'none', color: '#04130a', fontFamily: 'inherit', fontWeight: 800, fontSize: 17, padding: '18px 34px', borderRadius: 13, cursor: 'pointer', animation: 'gttPulse 2.8s ease-out infinite' }}>Jetzt kostenlos spielen <span style={{ fontSize: 18 }}>→</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, letterSpacing: '0.28em', color: '#5e6776' }}>MEHR ENTDECKEN</span>
+          <div style={{ width: 24, height: 38, border: '2px solid rgba(255,255,255,0.22)', borderRadius: 13, display: 'flex', justifyContent: 'center', paddingTop: 7 }}>
+            <div style={{ width: 4, height: 8, borderRadius: 2, background: '#22c55e', animation: 'gttScrollDot 1.7s ease-in-out infinite' }} />
+          </div>
+        </div>
+      </header>
+
+      {/* 2 · KARRIERE */}
+      <CareerSection />
+
+      {/* 3 · AUFSTIEG */}
+      <RankSection />
+
+      {/* FINAL CTA */}
+      <section style={{ position: 'relative', zIndex: 3, padding: '96px 32px 110px', textAlign: 'center', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(60% 70% at 50% 45%, rgba(34,197,94,0.16), transparent 70%)' }} />
+        <div ref={ctaRef} style={{ ...ctaStyle, position: 'relative' }}>
+          <h2 style={{ fontFamily: 'Anton, sans-serif', fontSize: 'clamp(48px,7vw,86px)', lineHeight: 0.92, margin: '0 0 18px', color: '#fff' }}>Bereit, die Elf<br />zu knacken?</h2>
+          <p style={{ fontSize: 19, color: '#9aa4b2', margin: '0 auto 34px', maxWidth: 500 }}>Kostenlos. Sofort spielbar.</p>
+          <button onClick={() => navigate('/auth')} style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: '#22c55e', border: 'none', color: '#04130a', fontFamily: 'inherit', fontWeight: 800, fontSize: 19, padding: '21px 44px', borderRadius: 14, cursor: 'pointer', animation: 'gttPulse 2.8s ease-out infinite' }}>Jetzt kostenlos registrieren <span style={{ fontSize: 20 }}>→</span></button>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ position: 'relative', zIndex: 3, borderTop: '1px solid rgba(255,255,255,0.06)', padding: '30px 32px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', background: '#080c13' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Jersey size={26} />
+          <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.12em', color: '#cfd6e0' }}>GUESSTHETEAM</span>
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 24, fontSize: 14, color: '#7b8595' }}>
+          <span>Freizeit</span><span>Ranked</span><span>Rangliste</span><span>Impressum</span>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ── Dashboard (eingeloggt) ───────────────────────────────────────────────────
+const DIFFICULTIES = [
+  { id: 'easy', label: 'Leicht', dot: '#22c55e', desc: 'Feste Liga · moderne Top-Teams · 2018–2026', xp: 'Nur XP' },
+  { id: 'medium', label: 'Mittel', dot: '#f59e0b', desc: 'Ligen-Mix · etablierte Euro-Clubs · 2010–2026', xp: 'Nur XP' },
+  { id: 'hard', label: 'Schwer', dot: '#ef4444', desc: 'Ligen-Mix · historische Nostalgie-Teams · 2000–2015', xp: 'Nur XP' },
+] as const;
+
+const MATCH_TYPES = [
+  { id: 'single', label: 'Einzel-Match', desc: '1 Team · alle 11 Spieler erraten', lp: '+/- LP', n: '1' },
+  { id: 'series', label: '3er-Match Serie', desc: '3 Teams · mindestens 2 von 3 lösen', lp: 'LP x1.5', n: '3' },
+] as const;
+
+function getRankedDifficultyLabel(rank: string) {
+  if (rank.startsWith('Bronze')) return 'Leicht';
+  if (rank.startsWith('Silver') || rank.startsWith('Silber')) return 'Mittel';
+  return 'Schwer / Nostalgie';
+}
+
+const cardStyle: CSS = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18, overflow: 'hidden' };
+const rowStyle: CSS = { display: 'flex', alignItems: 'center', gap: 13, padding: '13px 15px', borderRadius: 13, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', width: '100%', transition: 'border-color .2s, background .2s' };
+
+function Dashboard() {
+  const navigate = useNavigate();
+  const { displayName, user } = useAuth();
+  const [savedGame, setSavedGame] = useState<SavedGame | null>(() => loadSavedGame());
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const name = profile?.username || displayName || user?.email?.split('@')[0] || 'Spieler';
+  const dashboardUser: UserProfile = profile ?? {
+    id: user?.email ?? 'local-user',
+    username: name,
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
+    email: user?.email ?? '',
+    xp: 0,
+    level: 1,
+    lp: 0,
+    rank: 'Bronze 3',
+    badges: [],
+    matchesPlayed: 0,
+    matchesWon: 0,
+    winStreak: 0,
+  };
+  const isRankedUnlocked = dashboardUser.level >= RANKED_UNLOCK_LEVEL;
+  const isWorldCupUnlocked = dashboardUser.level >= WORLD_CUP_UNLOCK_LEVEL;
+
+  useEffect(() => {
+    let active = true;
+    getProfile()
+      .then((response) => {
+        if (active) setProfile(response.profile);
+      })
+      .catch(() => {
+        if (active) setProfile(null);
+      })
+      .finally(() => {
+        if (active) setProfileLoading(false);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const startNewGame = (url: string) => {
+    clearSavedGame();
+    setSavedGame(null);
+    navigate(url);
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#06090f', color: '#f3f6fa', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <style>{`
+        @keyframes gttHeroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+        .gtt-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        @media (max-width: 760px) { .gtt-dash-grid { grid-template-columns: 1fr !important; } }
+        .gtt-row:hover { border-color: rgba(34,197,94,0.5) !important; background: rgba(34,197,94,0.06) !important; }
+      `}</style>
+
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 90px' }}>
+        {/* Begrüßung */}
+        <div style={{ animation: 'gttHeroIn .5s ease both', marginBottom: 28 }}>
+          <div style={{ fontSize: 13, letterSpacing: '0.24em', color: '#22c55e', marginBottom: 10 }}>WILLKOMMEN ZURÜCK</div>
+          <h1 style={{ fontFamily: 'Anton, sans-serif', fontSize: 'clamp(40px,6vw,68px)', lineHeight: 0.92, margin: 0, color: '#fff' }}>
+            Wer spielt heute, {name}?
+          </h1>
+          <p style={{ fontSize: 16.5, color: '#9aa4b2', maxWidth: 540, margin: '14px 0 0' }}>
+            Erkenne Fußballer an Karriere und Nationalität. Steige auf, sammle Ränge, schalte Inhalte frei.
+          </p>
+        </div>
+
+        {/* Stats-Leiste */}
+        <div style={{ ...cardStyle, borderRadius: 16, padding: 16, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 18, marginBottom: 22, animation: 'gttHeroIn .5s ease .06s both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ width: 42, height: 42, borderRadius: '50%', background: 'rgba(34,197,94,0.12)', border: '1px solid #15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7ee2a8', fontWeight: 800, fontSize: 17 }}>{name[0]?.toUpperCase()}</div>
+            <div>
+              <div style={{ fontSize: 14.5, fontWeight: 700, color: '#fff' }}>{name}</div>
+              <div style={{ fontSize: 12.5, color: '#59626f' }}>
+                {profileLoading ? 'Profil wird geladen...' : `${dashboardUser.matchesPlayed} Matches · ${dashboardUser.winStreak}🔥 Serie`}
               </div>
             </div>
           </div>
+          <RankBadge rank={dashboardUser.rank} />
+          <div style={{ flex: 1, minWidth: 180 }}>
+            <XPBar xp={dashboardUser.xp} level={dashboardUser.level} />
+          </div>
+        </div>
 
-        </main>
+        {/* Tutorial */}
+        <button onClick={() => navigate('/tutorial')} className="gtt-row" style={{ ...rowStyle, padding: '16px 18px', borderStyle: 'dashed', borderColor: 'rgba(34,197,94,0.45)', background: 'rgba(34,197,94,0.05)', marginBottom: 14, animation: 'gttHeroIn .5s ease .1s both' }}>
+          <span style={{ fontSize: 26 }}>🎓</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: '#2bd46a', fontWeight: 700, fontSize: 15 }}>Tutorial spielen</div>
+            <div style={{ fontSize: 12.5, color: '#8b95a5' }}>Lerne das Spielprinzip mit Real Madrid 2022/23 · Kein XP/LP-Einfluss</div>
+          </div>
+          <span style={{ color: '#59626f', fontSize: 18 }}>→</span>
+        </button>
 
+        {/* Spiel fortsetzen */}
+        {savedGame && (
+          <button onClick={() => navigate(getSavedGameUrl(savedGame))} className="gtt-row" style={{ ...rowStyle, padding: '16px 18px', borderColor: 'rgba(34,197,94,0.6)', background: 'rgba(34,197,94,0.09)', marginBottom: 14 }}>
+            <span style={{ fontSize: 22, color: '#2bd46a' }}>▶</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#7ee2a8', fontWeight: 700, fontSize: 15 }}>Spiel fortsetzen</div>
+              <div style={{ fontSize: 12.5, color: '#8b95a5' }}>
+                {savedGame.team.name} · {savedGame.team.season} · {Object.values(savedGame.guesses).filter((g) => g.solved).length}/{savedGame.team.players.length}
+              </div>
+            </div>
+            <span style={{ color: '#59626f', fontSize: 18 }}>→</span>
+          </button>
+        )}
+
+        {/* Modi */}
+        <div className="gtt-dash-grid" style={{ marginTop: 8, animation: 'gttHeroIn .5s ease .14s both' }}>
+          {/* Freizeit */}
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 19, letterSpacing: '0.04em', color: '#fff' }}>FREIZEIT-MODUS</div>
+              <div style={{ fontSize: 12.5, color: '#8b95a5', marginTop: 3 }}>Solo ohne Rang · XP-Gewinn · kein LP-Verlust</div>
+            </div>
+            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
+              {DIFFICULTIES.map((d) => (
+                <button key={d.id} onClick={() => startNewGame(`/play?playMode=casual&matchType=single&difficulty=${d.id}&leagueId=L1`)} className="gtt-row" style={rowStyle}>
+                  <span style={{ width: 11, height: 11, borderRadius: '50%', background: d.dot, boxShadow: `0 0 9px ${d.dot}`, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>{d.label}</div>
+                    <div style={{ fontSize: 12, color: '#8b95a5' }}>{d.desc}</div>
+                  </div>
+                  <span style={{ fontSize: 12, color: '#8b95a5', fontFamily: 'JetBrains Mono, monospace' }}>{d.xp}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Ranked */}
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 19, letterSpacing: '0.04em', color: '#fff' }}>SOLO-RANGLISTE</div>
+              <span style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999, background: isRankedUnlocked ? 'rgba(245,166,35,0.14)' : 'rgba(148,163,184,0.12)', color: isRankedUnlocked ? '#f5a623' : '#94a3b8', border: `1px solid ${isRankedUnlocked ? 'rgba(245,166,35,0.4)' : 'rgba(148,163,184,0.24)'}` }}>
+                {isRankedUnlocked ? getRankedDifficultyLabel(dashboardUser.rank) : `Ab Level ${RANKED_UNLOCK_LEVEL}`}
+              </span>
+            </div>
+            <div style={{ padding: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <p style={{ fontSize: 12.5, color: '#8b95a5', margin: '0 2px 2px' }}>
+                {isRankedUnlocked
+                  ? 'Deine Schwierigkeit wird automatisch aus deinem Rang bestimmt. Siege und Niederlagen verändern LP und XP.'
+                  : `Spiele Freizeit oder Tutorial, bis du Level ${RANKED_UNLOCK_LEVEL} erreichst. Danach wird Ranked freigeschaltet.`}
+              </p>
+              {MATCH_TYPES.map((m) => (
+                <button
+                  key={m.id}
+                  disabled={!isRankedUnlocked || profileLoading}
+                  onClick={() => startNewGame(`/play?playMode=ranked&matchType=${m.id}&rank=${encodeURIComponent(dashboardUser.rank)}`)}
+                  className="gtt-row"
+                  style={{
+                    ...rowStyle,
+                    cursor: isRankedUnlocked && !profileLoading ? 'pointer' : 'not-allowed',
+                    opacity: isRankedUnlocked && !profileLoading ? 1 : 0.55,
+                  }}
+                >
+                  <span style={{ fontFamily: 'Anton, sans-serif', fontSize: 18, color: '#2bd46a', width: 20, textAlign: 'center', flexShrink: 0 }}>{m.n}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>{m.label}</div>
+                    <div style={{ fontSize: 12, color: '#8b95a5' }}>{m.desc}</div>
+                  </div>
+                  <span style={{ fontSize: 12, color: '#2bd46a', fontFamily: 'JetBrains Mono, monospace' }}>{m.lp}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, marginTop: 18, animation: 'gttHeroIn .5s ease .18s both' }}>
+          <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 19, letterSpacing: '0.04em', color: '#fff' }}>WM-MODUS</div>
+            <span style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999, background: isWorldCupUnlocked ? 'rgba(34,197,94,0.12)' : 'rgba(148,163,184,0.12)', color: isWorldCupUnlocked ? '#2bd46a' : '#94a3b8', border: `1px solid ${isWorldCupUnlocked ? 'rgba(34,197,94,0.35)' : 'rgba(148,163,184,0.24)'}` }}>
+              {isWorldCupUnlocked ? 'Freigeschaltet' : `Ab Level ${WORLD_CUP_UNLOCK_LEVEL}`}
+            </span>
+          </div>
+          <div style={{ padding: 14 }}>
+            <button
+              disabled={!isWorldCupUnlocked || profileLoading}
+              onClick={() => startNewGame('/play?playMode=worldcup&matchType=single&difficulty=medium')}
+              className="gtt-row"
+              style={{
+                ...rowStyle,
+                cursor: isWorldCupUnlocked && !profileLoading ? 'pointer' : 'not-allowed',
+                opacity: isWorldCupUnlocked && !profileLoading ? 1 : 0.55,
+              }}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0 }}>🏆</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>Nationalteam erraten</div>
+                <div style={{ fontSize: 12, color: '#8b95a5' }}>
+                  Keine Nationalitäten als Hinweis · Land und aktuelle Vereine helfen dir.
+                </div>
+              </div>
+              <span style={{ fontSize: 12, color: '#2bd46a', fontFamily: 'JetBrains Mono, monospace' }}>XP</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function HeroCareerTip() {
-  const clubs = [
-    { name: 'Hertha BSC Youth', years: '2002 – 2003', tag: 'Nachwuchs', mark: false },
-    { name: 'Hamburger SV', years: '2007 – 2010', tag: null, mark: false },
-    { name: 'Manchester City', years: '2010 – 2011', tag: null, mark: false },
-    { name: 'Bayern Munich', years: '2011 – heute', tag: 'Aktuell', mark: true },
-  ];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 34, scale: 0.96 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ delay: 0.28, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
-      className="hidden lg:block"
-    >
-      <motion.div
-        animate={{ y: [0, -8, 0], opacity: [0.88, 1, 0.88] }}
-        transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="relative pl-5"
-        style={{
-          filter: 'drop-shadow(0 26px 58px rgba(0,0,0,0.52))',
-        }}
-      >
-        <div className="absolute left-0 top-8 bottom-8 w-px bg-gradient-to-b from-transparent via-green-400/50 to-transparent" />
-        <div
-          className="relative rounded-2xl px-4 py-4"
-          style={{
-            background: 'linear-gradient(90deg, rgba(12,17,25,0.72), rgba(12,17,25,0.36))',
-            backdropFilter: 'blur(6px)',
-          }}
-        >
-        <div className="relative flex items-start justify-between gap-4 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="relative flex h-11 w-16 items-center">
-              <span className="absolute left-0 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-red-700 text-lg">🇩🇪</span>
-              <span className="absolute left-7 flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-2 border-white/80 bg-black text-lg">🇬🇭</span>
-            </div>
-            <div>
-              <div className="text-sm font-extrabold text-blue-300">Karriere-Tipp</div>
-              <div className="text-xs text-gray-400">Deutschland / Ghana · Verteidiger</div>
-            </div>
-          </div>
-          <div className="rounded-full border border-green-500/40 bg-green-500/10 px-3 py-1 text-[11px] font-bold text-green-300">
-            Tipp offen
-          </div>
-        </div>
-
-        <div className="relative mt-4 space-y-3">
-          {clubs.map((club, index) => (
-            <motion.div
-              key={club.name}
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.45 + index * 0.13, duration: 0.45 }}
-              className="flex items-center gap-3 rounded-2xl px-3 py-3"
-              style={{
-                background: club.mark ? 'rgba(34,197,94,0.16)' : 'rgba(255,255,255,0.055)',
-                boxShadow: club.mark ? 'inset 0 0 0 1px rgba(34,197,94,0.28)' : 'inset 0 0 0 1px rgba(255,255,255,0.065)',
-              }}
-            >
-              <div className="flex flex-col items-center">
-                <div
-                  className="h-3 w-3 rounded-full border-2"
-                  style={{
-                    borderColor: club.mark ? '#22C55E' : '#59626f',
-                    background: club.mark ? '#22C55E' : 'transparent',
-                    boxShadow: club.mark ? '0 0 12px rgba(34,197,94,0.8)' : 'none',
-                  }}
-                />
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-gray-900 text-xs font-black text-gray-300">
-                {club.name.split(/\s+/).slice(0, 2).map((part) => part[0]).join('')}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-bold text-white">{club.name}</div>
-                <div className="text-xs text-gray-500">{club.years}</div>
-              </div>
-              {club.tag && (
-                <span className="rounded-lg bg-white/8 px-2 py-1 text-[10px] uppercase tracking-wider text-gray-400">
-                  {club.tag}
-                </span>
-              )}
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="relative mt-4 flex items-center gap-3 rounded-2xl bg-green-500/10 px-4 py-3">
-          <span className="text-lg">↳</span>
-          <div className="text-sm font-semibold text-green-200">Erkenne ihn anhand der Karriere des gesuchten Spielers.</div>
-        </div>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
+export default HomePage;

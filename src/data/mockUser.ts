@@ -14,53 +14,8 @@ export const RANK_COLORS: Record<string, { text: string; bg: string; border: str
   Platinum: { text: '#22D3EE', bg: '#001A2A', border: '#22D3EE' },
 };
 
-export const RANKED_UNLOCK_LEVEL = 5;
-
-export const LEVEL_UNLOCKS = [
-  {
-    level: RANKED_UNLOCK_LEVEL,
-    title: 'Solo-Rangliste',
-    description: 'LP, Ränge und Siegesserien werden verfügbar.',
-  },
-];
-
-export function isRankedUnlocked(level: number) {
-  return level >= RANKED_UNLOCK_LEVEL;
-}
-
-export function getNextUnlock(level: number) {
-  return LEVEL_UNLOCKS.find((unlock) => unlock.level > level) ?? null;
-}
-
 export function getRankTier(rank: Rank) {
   return rank.split(' ')[0] as keyof typeof RANK_COLORS;
-}
-
-export function getRankStepSize(rank: Rank): number {
-  const tier = getRankTier(rank);
-  if (tier === 'Bronze') return 180;
-  if (tier === 'Silver') return 240;
-  if (tier === 'Gold') return 320;
-  return 420;
-}
-
-export function getRankLowerBound(rank: Rank): number {
-  const rankIndex = RANKS.indexOf(rank);
-  if (rankIndex <= 0) return 0;
-
-  return RANKS
-    .slice(0, rankIndex)
-    .reduce((total, currentRank) => total + getRankStepSize(currentRank), 0);
-}
-
-export function getRankProgress(lp: number, rank = getRankFromLP(lp)): { current: number; needed: number; percent: number } {
-  const needed = getRankStepSize(rank);
-  const current = Math.max(0, Math.min(lp - getRankLowerBound(rank), needed));
-  return {
-    current,
-    needed,
-    percent: needed > 0 ? Math.round((current / needed) * 100) : 0,
-  };
 }
 
 export function getLevelFromXP(xp: number): number {
@@ -73,22 +28,19 @@ export function getXPToNextLevel(xp: number): { current: number; needed: number 
 }
 
 export function getRankFromLP(lp: number): Rank {
-  const safeLp = Math.max(0, lp);
-  for (let i = RANKS.length - 1; i >= 0; i -= 1) {
-    if (safeLp >= getRankLowerBound(RANKS[i])) return RANKS[i];
-  }
-  return RANKS[0];
+  const index = Math.min(Math.floor(lp / 100), RANKS.length - 1);
+  return RANKS[Math.max(0, index)];
 }
 
 export const MOCK_USER: UserProfile = {
   id: 'user-1',
   username: 'FootballFan99',
-  firstName: 'Demo',
-  lastName: 'Player',
-  email: 'demo@guesstheteam.local',
+  firstName: 'Football',
+  lastName: 'Fan',
+  email: 'footballfan@example.com',
   xp: 1340,
   level: 3,
-  lp: 610,
+  lp: 285,
   rank: 'Silver 3',
   badges: ['first_win', 'speed_demon', 'hat_trick'],
   matchesPlayed: 24,

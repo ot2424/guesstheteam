@@ -2,12 +2,14 @@ import { motion } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getPositionGroup, getPositionLabel, type PositionGroup } from '../../utils/footballDisplay';
+import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   players: PlayerCardType[];
   guesses: Record<string, GuessState>;
   onTipClick: (playerId: string) => void;
   activeTipId: string | null;
+  hintMode?: 'nationality' | 'club';
 }
 
 const POS_COLORS: Record<string, string> = {
@@ -24,7 +26,7 @@ const GROUPS = [
   { label: 'Angreifer', role: 'attacker' },
 ];
 
-export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: Props) {
+export function MobilePlayerList({ players, guesses, onTipClick, activeTipId, hintMode = 'nationality' }: Props) {
   return (
     <div className="flex flex-col gap-4">
       {GROUPS.map((group) => {
@@ -44,6 +46,8 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
                 const isSolved = guess?.solved;
                 const isActive = activeTipId === player.id;
                 const displayName = guess?.guessedName ?? player.name;
+                const currentClub = getCurrentClub(player);
+                const showClubHint = hintMode === 'club' && currentClub;
 
                 return (
                   <motion.button
@@ -72,13 +76,16 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
                         : 'none',
                     }}
                   >
-                    {/* Flag */}
-                    <FlagIcon
-                      nationality={player.nationality}
-                      nationality2={player.nationality2}
-                      size={24}
-                      className="flex-shrink-0"
-                    />
+                    {showClubHint ? (
+                      <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} />
+                    ) : (
+                      <FlagIcon
+                        nationality={player.nationality}
+                        nationality2={player.nationality2}
+                        size={24}
+                        className="flex-shrink-0"
+                      />
+                    )}
 
                     {/* Position badge */}
                     <span
@@ -89,15 +96,13 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
                     </span>
 
                     {/* Name or placeholder */}
-                    {isSolved ? (
-                      <span className="text-sm font-semibold flex-1 truncate" style={{ color: '#eafff1' }}>
-                        {displayName}
-                      </span>
-                    ) : (
-                      <span className="text-sm flex-1" style={{ color: isActive ? '#9fb3ff' : '#59626f' }}>
-                        {isActive ? '💡 Tipp offen' : 'Tippen für Karriere-Tipp'}
-                      </span>
-                    )}
+                    <span className="text-sm flex-1 truncate" style={{ color: isSolved ? '#eafff1' : isActive ? '#9fb3ff' : '#59626f' }}>
+                      {isSolved
+                        ? displayName
+                        : showClubHint
+                          ? currentClub.clubName
+                          : isActive ? '💡 Tipp offen' : 'Tippen für Karriere-Tipp'}
+                    </span>
 
                     {/* Right indicator */}
                     {isSolved ? (
@@ -115,5 +120,29 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId }: 
         );
       })}
     </div>
+  );
+}
+
+function ClubHintLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className="h-7 w-7 object-contain flex-shrink-0"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none';
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="h-7 w-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black"
+      style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}
+    >
+      {getClubInitials(name)}
+    </span>
   );
 }

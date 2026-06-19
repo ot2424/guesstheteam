@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
-import { MOCK_MATCH_HISTORY, BADGES, RANKS, getNextUnlock, getRankFromLP, getRankProgress, getRankTier, RANK_COLORS, isRankedUnlocked } from '../data/mockUser';
-import { useAuth } from '../lib/useAuth';
+import { AdSlot } from '../components/ui/AdSlot';
+import { MOCK_USER, MOCK_MATCH_HISTORY, BADGES, RANKS, getRankTier, RANK_COLORS } from '../data/mockUser';
 
 const container = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const item      = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
@@ -13,17 +13,14 @@ const cardStyle = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borde
 const innerStyle = { background: '#161d29', borderColor: 'rgba(255,255,255,0.06)' } as const;
 
 export function ProfilePage() {
-  const { user, isAuthenticated } = useAuth();
+  const user = MOCK_USER;
   const winRate = user.matchesPlayed > 0
     ? Math.round((user.matchesWon / user.matchesPlayed) * 100)
     : 0;
 
+  const currentRankIndex = RANKS.indexOf(user.rank);
   const lp = user.lp;
-  const rank = getRankFromLP(lp);
-  const currentRankIndex = RANKS.indexOf(rank);
-  const rankProgress = getRankProgress(lp, rank);
-  const nextUnlock = getNextUnlock(user.level);
-  const rankedUnlocked = isRankedUnlocked(user.level);
+  const lpInTier = lp % 100;
 
   return (
     <div className="min-h-screen" style={{ background: '#06090f' }}>
@@ -48,9 +45,8 @@ export function ProfilePage() {
             <div className="flex-1 min-w-0 relative">
               <h1 className="bebas text-3xl tracking-wider text-white">{user.username}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-1">
-                <RankBadge rank={rank} size="md" />
+                <RankBadge rank={user.rank} size="md" />
                 <span className="text-xs text-gray-500">Level {user.level}</span>
-                <span className="text-xs text-gray-600">{isAuthenticated ? 'Gespeichert' : 'Lokal'}</span>
                 {user.winStreak >= 3 && (
                   <span className="text-xs text-orange-400">🔥 {user.winStreak}er-Serie</span>
                 )}
@@ -72,7 +68,7 @@ export function ProfilePage() {
               { label: 'Matches', value: user.matchesPlayed, color: '#fff' },
               { label: 'Siege', value: user.matchesWon, color: '#fff' },
               { label: 'Winrate', value: `${winRate}%`, color: '#2bd46a' },
-              { label: 'Serie', value: user.winStreak, color: '#fff' },
+              { label: 'Gesamte XP', value: user.xp.toLocaleString(), color: '#fff' },
             ].map(({ label, value, color }) => (
               <motion.div
                 key={label}
@@ -97,21 +93,21 @@ export function ProfilePage() {
           >
             <div className="text-xs tracking-[0.22em] text-green-400 mb-3">RANG-FORTSCHRITT</div>
             <div className="flex items-center gap-4 mb-3">
-              <RankBadge rank={rank} size="lg" />
+              <RankBadge rank={user.rank} size="lg" />
               <div className="flex-1">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
-                  <span>{rankProgress.current} LP</span>
-                  <span>{rankProgress.needed} LP</span>
+                  <span>{lpInTier} LP</span>
+                  <span>100 LP</span>
                 </div>
                 <div className="h-2.5 rounded-full bg-gray-800 overflow-hidden">
                   <motion.div
                     className="h-full rounded-full"
                     style={{
-                      background: `linear-gradient(90deg, ${RANK_COLORS[getRankTier(rank)].border}80, ${RANK_COLORS[getRankTier(rank)].border})`,
-                      boxShadow: `0 0 12px ${RANK_COLORS[getRankTier(rank)].border}99`,
+                      background: `linear-gradient(90deg, ${RANK_COLORS[getRankTier(user.rank)].border}80, ${RANK_COLORS[getRankTier(user.rank)].border})`,
+                      boxShadow: `0 0 12px ${RANK_COLORS[getRankTier(user.rank)].border}99`,
                     }}
                     initial={{ width: 0 }}
-                    animate={{ width: `${rankProgress.percent}%` }}
+                    animate={{ width: `${lpInTier}%` }}
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </div>
@@ -121,34 +117,8 @@ export function ProfilePage() {
               )}
             </div>
             <p className="text-xs text-gray-600">
-              {rankedUnlocked
-                ? 'Sieg: +14 bis +18 LP · Streak-Bonus bis +8 LP · Divisionen brauchen mehr LP'
-                : 'Rangliste wird mit Level 5 freigeschaltet.'}
+              Sieg: +25 LP · Niederlage: −20 LP · Abstieg möglich
             </p>
-          </motion.div>
-
-          <motion.div
-            variants={item}
-            initial="hidden"
-            animate="show"
-            transition={{ delay: 0.32 }}
-            className={`${CARD} p-5 mb-5`}
-            style={cardStyle}
-          >
-            <div className="text-xs tracking-[0.22em] text-green-400 mb-3">FREISCHALTUNGEN</div>
-            {nextUnlock ? (
-              <div className="flex items-center justify-between gap-4 rounded-xl border p-4" style={innerStyle}>
-                <div>
-                  <div className="text-sm font-semibold text-white">{nextUnlock.title}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{nextUnlock.description}</div>
-                </div>
-                <div className="text-xs font-semibold text-green-300 whitespace-nowrap">Level {nextUnlock.level}</div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-green-900/50 p-4 text-sm text-green-300" style={{ background: 'rgba(34,197,94,0.08)' }}>
-                Alle aktuellen Freischaltungen aktiv. Neue Inhalte kommen später dazu.
-              </div>
-            )}
           </motion.div>
 
           {/* Badges */}
@@ -233,6 +203,10 @@ export function ProfilePage() {
           </motion.div>
         </main>
 
+        {/* Sidebar */}
+        <aside className="hidden lg:flex flex-col gap-4 flex-shrink-0" style={{ width: '180px' }}>
+          <AdSlot type="sidebar" />
+        </aside>
       </div>
     </div>
   );

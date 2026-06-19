@@ -3,6 +3,8 @@ import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
 const BRONZE_RANKS: Rank[] = ['Bronze 3', 'Bronze 2', 'Bronze 1'];
 const SILVER_RANKS: Rank[] = ['Silver 3', 'Silver 2', 'Silver 1'];
 const WIN_THRESHOLD = 0.8;
+export const RANKED_UNLOCK_LEVEL = 5;
+export const WORLD_CUP_UNLOCK_LEVEL = 10;
 
 export class ProgressionService {
   getDifficultyForRank(rank: Rank): Difficulty {
@@ -27,7 +29,7 @@ export class ProgressionService {
   }
 
   calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean; winStreak?: number; isSeriesComplete?: boolean }): number {
-    if (opts.playMode === 'casual') return 0;
+    if (opts.playMode !== 'ranked') return 0;
     if (opts.matchType === 'series' && opts.isSeriesComplete === false) return 0;
 
     const base = this.getRankedLpBase(opts.difficulty, opts.isWin);

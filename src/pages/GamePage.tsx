@@ -5,54 +5,39 @@ import { MobilePlayerList } from '../components/game/MobilePlayerList';
 import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
+import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { finishGame, startGame, submitGuess } from '../lib/api';
-import { loadRecentTeamIds, rememberRecentTeamId } from '../lib/recentTeams';
+import { getRankedSurrenderLpChange } from '../lib/progression';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
-import { useAuth } from '../lib/useAuth';
-import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, SeriesProgress, Team } from '../types';
-import { getLeagueLabel, getPositionLabel } from '../utils/footballDisplay';
+import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
+import { getPositionLabel } from '../utils/footballDisplay';
+import { getClubInitials, getCurrentClub } from '../utils/playerHints';
 
 const COMPLETION_THRESHOLD = 0.8;
 
-function getDifficultyForRank(rank: Rank): Difficulty {
-  if (rank.startsWith('Bronze')) return 'easy';
-  if (rank.startsWith('Silver')) return 'medium';
-  return 'hard';
-}
-
-function getNumberParam(value: string | null, fallback: number) {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? Math.trunc(parsed) : fallback;
-}
-
 export function GamePage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
   const [params] = useSearchParams();
   const legacyMode = params.get('mode');
   const playMode = (params.get('playMode') ?? 'casual') as PlayMode;
   const matchType = (params.get('matchType') ?? legacyMode ?? 'single') as MatchType;
+  const difficulty = (params.get('difficulty') ?? 'easy') as Difficulty;
   const rank = (params.get('rank') ?? 'Bronze 3') as Rank;
-  const difficulty = playMode === 'ranked'
-    ? getDifficultyForRank(rank)
-    : (params.get('difficulty') ?? 'easy') as Difficulty;
   const leagueId = params.get('leagueId') ?? undefined;
-  const winStreak = getNumberParam(params.get('winStreak'), 0);
-  const seriesId = params.get('seriesId') ?? undefined;
-  const seriesRound = getNumberParam(params.get('seriesRound'), 1);
-  const seriesWins = getNumberParam(params.get('seriesWins'), 0);
-  const seriesPlayed = getNumberParam(params.get('seriesPlayed'), 0);
+  const hintMode = playMode === 'worldcup' ? 'club' : 'nationality';
 
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [team, setTeam] = useState<Team | null>(null);
-  const [series, setSeries] = useState<SeriesProgress | undefined>(undefined);
   const [finished, setFinished] = useState(false);
   const [activeTipId, setActiveTipId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<'correct' | 'wrong' | null>(null);
   const [guesses, setGuesses] = useState<Record<string, GuessState>>({});
+  const [effectiveDifficulty, setEffectiveDifficulty] = useState<Difficulty>(difficulty);
+  const [effectiveRank, setEffectiveRank] = useState<Rank>(rank);
+  const [surrenderLpChange, setSurrenderLpChange] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSurrenderModal, setShowSurrenderModal] = useState(false);
@@ -62,21 +47,18 @@ export function GamePage() {
 
     async function createSession() {
       try {
-        if (!isAuthenticated) {
-          navigate('/login');
-          return;
-        }
-
         setLoading(true);
         setError(null);
         const saved = loadSavedGame();
 
-        if (saved && matchesSavedGame(saved, { userId: user.id, playMode, matchType, seriesId, difficulty, rank, winStreak, leagueId })) {
+        if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, leagueId })) {
           setSessionId(saved.sessionId);
           setTeam(saved.team);
-          setSeries(saved.series);
           setGuesses(saved.guesses);
           setStartedAt(saved.startedAt);
+          setEffectiveDifficulty(saved.difficulty);
+          setEffectiveRank(saved.rank);
+          setSurrenderLpChange(saved.surrenderLpChange ?? getRankedSurrenderLpChange(saved.difficulty, saved.matchType));
           return;
         }
 
@@ -86,11 +68,6 @@ export function GamePage() {
           difficulty,
           rank,
           leagueId,
-          winStreak,
-          excludeTeamIds: loadRecentTeamIds(user.id),
-          ...(matchType === 'series'
-            ? { seriesId, seriesRound, seriesWins, seriesPlayed }
-            : {}),
         });
 
         if (controller.signal.aborted) return;
@@ -98,7 +75,9 @@ export function GamePage() {
         const nextStartedAt = Date.now();
         setSessionId(response.sessionId);
         setTeam(response.team);
-        setSeries(response.series);
+        setEffectiveDifficulty(response.difficulty);
+        setEffectiveRank(response.rank);
+        setSurrenderLpChange(response.surrenderLpChange);
         setStartedAt(nextStartedAt);
         setGuesses(Object.fromEntries(
           response.team.players.map((player) => [
@@ -118,27 +97,25 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, isAuthenticated, leagueId, matchType, navigate, playMode, rank, seriesId, seriesPlayed, seriesRound, seriesWins, user.id, winStreak]);
+  }, [difficulty, leagueId, matchType, playMode, rank]);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
 
     saveGame({
-      userId: user.id,
       sessionId,
       team,
       guesses,
       startedAt,
       playMode,
       matchType,
-      series,
-      difficulty,
-      rank,
-      winStreak,
+      difficulty: effectiveDifficulty,
+      rank: effectiveRank,
+      surrenderLpChange: surrenderLpChange ?? undefined,
       leagueId,
       savedAt: Date.now(),
     });
-  }, [difficulty, finished, guesses, leagueId, loading, matchType, playMode, rank, series, sessionId, startedAt, team, user.id, winStreak]);
+  }, [effectiveDifficulty, effectiveRank, finished, guesses, leagueId, loading, matchType, playMode, sessionId, startedAt, surrenderLpChange, team]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
@@ -147,7 +124,7 @@ export function GamePage() {
   const total = team?.players.length ?? 0;
   const completionRatio = total > 0 ? solved / total : 0;
   const canCompleteLevel = completionRatio >= COMPLETION_THRESHOLD && solved < total && !finished;
-  const rankedLossText = difficulty === 'easy' ? '-10 LP' : difficulty === 'medium' ? '-14 LP' : '-18 LP';
+  const rankedLossText = `${surrenderLpChange ?? getRankedSurrenderLpChange(effectiveDifficulty, matchType)} LP`;
 
   // Active tip player object
   const activeTipPlayer: PlayerCard | null = activeTipId
@@ -156,35 +133,11 @@ export function GamePage() {
 
   const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
     clearSavedGame();
-    rememberRecentTeamId(user.id, currentTeam.id);
-
-    if (matchType === 'series' && finish.result.series && !finish.result.series.isComplete) {
-      const nextParams = new URLSearchParams({
-        playMode,
-        matchType,
-        difficulty,
-        rank,
-        winStreak: String(winStreak),
-        seriesId: finish.result.series.seriesId,
-        seriesRound: String(finish.result.series.round + 1),
-        seriesWins: String(finish.result.series.wins),
-        seriesPlayed: String(finish.result.series.played),
-      });
-      if (leagueId) nextParams.set('leagueId', leagueId);
-      navigate(`/play?${nextParams.toString()}`);
-      return;
-    }
-
     navigate('/result', {
       state: {
-        resultId: sessionId,
-        playMode,
-        matchType,
-        series: finish.result.series,
         teamName: currentTeam.name,
         teamLogo: currentTeam.logoUrl,
         season: currentTeam.season,
-        league: currentTeam.league,
         solved: finish.result.solved,
         total: finish.result.total,
         durationSec: finish.result.durationSec,
@@ -193,10 +146,9 @@ export function GamePage() {
         completionRatio: finish.result.completionRatio,
         xpGained: finish.progression.xpGained,
         lpChange: finish.progression.lpChange,
-        profile: finish.profile,
       },
     });
-  }, [difficulty, leagueId, matchType, navigate, playMode, rank, sessionId, user.id, winStreak]);
+  }, [navigate]);
 
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {
@@ -322,26 +274,21 @@ export function GamePage() {
               <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
               <div>
                 <h1 className="bebas text-xl tracking-wider text-white leading-none">{team.name}</h1>
-                <div className="text-xs text-gray-500">{team.season} · {getLeagueLabel(team.league)}</div>
+                <div className="text-xs text-gray-500">{team.season}</div>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <GameTimer key={startedAt} startedAt={startedAt} active={!finished} />
               <div className="flex gap-2 text-xs">
                 <span className="px-2.5 py-1 rounded-lg capitalize border" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#e5e9f0' }}>
-                  {difficulty === 'easy' ? '🟢' : difficulty === 'medium' ? '🟡' : '🔴'} {difficulty}
+                  {effectiveDifficulty === 'easy' ? '🟢' : effectiveDifficulty === 'medium' ? '🟡' : '🔴'} {effectiveDifficulty}
                 </span>
                 <span className="px-2.5 py-1 rounded-lg border"
                       style={ playMode === 'ranked'
                         ? { background: 'rgba(34,197,94,0.12)', borderColor: 'rgba(34,197,94,0.4)', color: '#2bd46a' }
                         : { background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#94a0b0' } }>
-                  {playMode === 'ranked' ? 'Ranked' : 'Freizeit'} · {matchType === 'series' ? '3er-Serie' : 'Einzel'}
+                  {playMode === 'ranked' ? 'Ranked' : playMode === 'worldcup' ? 'WM-Modus' : 'Freizeit'} · {matchType === 'series' ? '3er-Serie' : 'Einzel'}
                 </span>
-                {series && (
-                  <span className="px-2.5 py-1 rounded-lg border" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#94a0b0' }}>
-                    Runde {series.round}/3 · {series.wins}/{series.neededWins}
-                  </span>
-                )}
               </div>
               <button
                 onClick={() => setShowSurrenderModal(true)}
@@ -382,6 +329,7 @@ export function GamePage() {
               guesses={guesses}
               onTipClick={handleTipClick}
               activeTipId={activeTipId}
+              hintMode={hintMode}
             />
           </div>
 
@@ -391,6 +339,7 @@ export function GamePage() {
               guesses={guesses}
               onTipClick={handleTipClick}
               activeTipId={activeTipId}
+              hintMode={hintMode}
             />
           </div>
 
@@ -399,9 +348,13 @@ export function GamePage() {
             <CareerTipDrawer
               player={activeTipPlayer}
               onClose={() => setActiveTipId(null)}
+              hintMode={hintMode}
             />
           </div>
 
+          <div className="mt-2">
+            <AdSlot type="leaderboard" />
+          </div>
         </main>
 
         {/* ─── Sidebar ─── */}
@@ -411,15 +364,20 @@ export function GamePage() {
             <div className="space-y-2.5">
               {team.players.map(p => {
                 const g = guesses[p.id] as GuessState;
+                const currentClub = getCurrentClub(p);
                 return (
                   <div key={p.id} className="flex items-center gap-2">
-                    <FlagIcon
-                      nationality={p.nationality}
-                      nationality2={p.nationality2}
-                      size={18}
-                      variant="inline"
-                      className="w-10 flex-shrink-0"
-                    />
+                    {hintMode === 'club' && currentClub ? (
+                      <ClubProgressLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} />
+                    ) : (
+                      <FlagIcon
+                        nationality={p.nationality}
+                        nationality2={p.nationality2}
+                        size={18}
+                        variant="inline"
+                        className="w-10 flex-shrink-0"
+                      />
+                    )}
                     <span className="text-xs text-gray-600">{getPositionLabel(p.position)}</span>
                     <span className="ml-auto text-xs">
                       {g.solved ? <span className="text-green-400">✓</span> : <span className="text-gray-700">·</span>}
@@ -429,6 +387,7 @@ export function GamePage() {
               })}
             </div>
           </div>
+          <AdSlot type="sidebar" />
         </aside>
       </div>
 
@@ -437,6 +396,7 @@ export function GamePage() {
         <CareerTipDrawer
           player={activeTipPlayer}
           onClose={() => setActiveTipId(null)}
+          hintMode={hintMode}
         />
       </div>
 
@@ -472,5 +432,29 @@ export function GamePage() {
         </div>
       )}
     </div>
+  );
+}
+
+function ClubProgressLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt={name}
+        className="h-5 w-10 object-contain flex-shrink-0"
+        onError={(event) => {
+          event.currentTarget.style.display = 'none';
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="h-5 w-10 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-black"
+      style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}
+    >
+      {getClubInitials(name)}
+    </span>
   );
 }

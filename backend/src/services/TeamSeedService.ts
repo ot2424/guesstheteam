@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
-import { REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
+import { GERMANY_2024, REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
 import { TransfermarktBackupService } from './TransfermarktBackupService';
 
@@ -70,6 +70,8 @@ export class TeamSeedService {
   ) {}
 
   async selectTeam(options: TeamSelectionOptions): Promise<TeamData> {
+    if (options.playMode === 'worldcup') return this.toDisplayTeam(GERMANY_2024);
+
     const teams = this.getTeams();
     if (teams.length === 0) return REAL_MADRID_2223;
 
