@@ -78,6 +78,19 @@ export class GameSessionService {
     player.solved = true;
   }
 
+  autoSolve(sessionId: string, playerId: string): { playerId: string; name: string } | null {
+    const session = this.get(sessionId);
+    const player = session?.players[playerId];
+    if (!player || player.solved) return null;
+
+    player.solved = true;
+    return { playerId, name: player.name };
+  }
+
+  skip(sessionId: string): boolean {
+    return this.sessions.delete(sessionId);
+  }
+
   incrementWrong(sessionId: string): void {
     const session = this.get(sessionId);
     if (!session) return;

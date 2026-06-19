@@ -8,10 +8,10 @@ import { GameTimer } from '../components/game/GameTimer';
 import { AdSlot } from '../components/ui/AdSlot';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
-import { finishGame, startGame, submitGuess } from '../lib/api';
+import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess } from '../lib/api';
 import { getRankedSurrenderLpChange } from '../lib/progression';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
-import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team, UserProfile } from '../types';
 import { getPositionLabel } from '../utils/footballDisplay';
 import { getClubInitials, getCurrentClub } from '../utils/playerHints';
 
@@ -38,6 +38,8 @@ export function GamePage() {
   const [effectiveDifficulty, setEffectiveDifficulty] = useState<Difficulty>(difficulty);
   const [effectiveRank, setEffectiveRank] = useState<Rank>(rank);
   const [surrenderLpChange, setSurrenderLpChange] = useState<number | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [restartNonce, setRestartNonce] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSurrenderModal, setShowSurrenderModal] = useState(false);
@@ -97,7 +99,20 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, leagueId, matchType, playMode, rank]);
+  }, [difficulty, leagueId, matchType, playMode, rank, restartNonce]);
+
+  useEffect(() => {
+    if (playMode !== 'ranked') return;
+    let active = true;
+    getProfile()
+      .then((response) => {
+        if (active) setProfile(response.profile);
+      })
+      .catch(() => {
+        if (active) setProfile(null);
+      });
+    return () => { active = false; };
+  }, [playMode]);
 
   useEffect(() => {
     if (!sessionId || !team || finished || loading) return;
@@ -125,6 +140,7 @@ export function GamePage() {
   const completionRatio = total > 0 ? solved / total : 0;
   const canCompleteLevel = completionRatio >= COMPLETION_THRESHOLD && solved < total && !finished;
   const rankedLossText = `${surrenderLpChange ?? getRankedSurrenderLpChange(effectiveDifficulty, matchType)} LP`;
+  const inventory = profile?.inventory ?? { skipShields: 0, autoSolveJokers: 0 };
 
   // Active tip player object
   const activeTipPlayer: PlayerCard | null = activeTipId
@@ -230,6 +246,59 @@ export function GamePage() {
     }
   }, [finished, goToResult, navigate, sessionId, team]);
 
+  const handleSkipShield = useCallback(async () => {
+    if (!sessionId || playMode !== 'ranked' || inventory.skipShields <= 0 || finished) return;
+
+    try {
+      const response = await skipRankedTeam({ sessionId });
+      setProfile(response.profile);
+      clearSavedGame();
+      setLoading(true);
+      setSessionId(null);
+      setTeam(null);
+      setGuesses({});
+      setActiveTipId(null);
+      setFinished(false);
+      setRestartNonce((value) => value + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Schild konnte nicht eingesetzt werden.');
+    }
+  }, [finished, inventory.skipShields, playMode, sessionId]);
+
+  const handleAutoSolve = useCallback(async () => {
+    if (!sessionId || !activeTipId || playMode !== 'ranked' || inventory.autoSolveJokers <= 0 || finished) return;
+
+    try {
+      const response = await autoSolvePlayer({ sessionId, playerId: activeTipId });
+      setProfile(response.profile);
+      setLastResult('correct');
+      setGuesses(prev => {
+        const existing = prev[response.solved.playerId] as GuessState;
+        const next = {
+          ...prev,
+          [response.solved.playerId]: {
+            ...existing,
+            solved: true,
+            attempts: existing.attempts,
+            guessedName: response.solved.name,
+          },
+        };
+        const allSolved = Object.values(next).every((g: GuessState) => g.solved);
+        if (allSolved && team) {
+          setFinished(true);
+          window.setTimeout(() => {
+            void finishGame({ sessionId, reason: 'complete' }).then((finish) => goToResult(finish, team));
+          }, 900);
+        }
+        return next;
+      });
+      setActiveTipId(null);
+      window.setTimeout(() => setLastResult(null), 700);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Joker konnte nicht eingesetzt werden.');
+    }
+  }, [activeTipId, finished, goToResult, inventory.autoSolveJokers, playMode, sessionId, team]);
+
   const handleTipClick = useCallback((playerId: string) => {
     setActiveTipId(prev => prev === playerId ? null : playerId);
   }, []);
@@ -309,6 +378,36 @@ export function GamePage() {
               disabled={finished}
               lastResult={lastResult}
             />
+            {playMode === 'ranked' && (
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <button
+                  onClick={() => void handleSkipShield()}
+                  disabled={finished || inventory.skipShields <= 0}
+                  className="rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'rgba(59,130,246,0.12)',
+                    borderColor: 'rgba(59,130,246,0.35)',
+                    color: '#93c5fd',
+                  }}
+                  title="Überspringt dieses Team ohne LP-Verlust und ohne Streak-Bruch."
+                >
+                  Schild x{inventory.skipShields}
+                </button>
+                <button
+                  onClick={() => void handleAutoSolve()}
+                  disabled={finished || !activeTipId || inventory.autoSolveJokers <= 0}
+                  className="rounded-xl border px-3 py-2 text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: 'rgba(245,158,11,0.12)',
+                    borderColor: 'rgba(245,158,11,0.35)',
+                    color: '#facc15',
+                  }}
+                  title="Löst genau die aktuell ausgewählte Karte. Keine Teiltipps."
+                >
+                  Auto-Solve x{inventory.autoSolveJokers}
+                </button>
+              </div>
+            )}
             {canCompleteLevel && (
               <div className="mt-2 flex justify-center">
                 <button

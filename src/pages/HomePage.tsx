@@ -6,6 +6,7 @@ import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { getProfile } from '../lib/api';
 import { RANKED_UNLOCK_LEVEL, WORLD_CUP_UNLOCK_LEVEL } from '../lib/progression';
+import { getPrestigeVisual, getUnlockedRewards } from '../lib/rewards';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
 import type { UserProfile } from '../types';
 
@@ -403,6 +404,12 @@ function Dashboard() {
     matchesPlayed: 0,
     matchesWon: 0,
     winStreak: 0,
+    inventory: {
+      skipShields: 0,
+      autoSolveJokers: 0,
+    },
+    unlockedRewards: getUnlockedRewards(1),
+    prestige: getPrestigeVisual('Bronze 3'),
   };
   const isRankedUnlocked = dashboardUser.level >= RANKED_UNLOCK_LEVEL;
   const isWorldCupUnlocked = dashboardUser.level >= WORLD_CUP_UNLOCK_LEVEL;

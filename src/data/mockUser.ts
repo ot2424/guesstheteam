@@ -1,4 +1,5 @@
 import type { UserProfile, Rank, MatchResult } from '../types';
+import { getPrestigeVisual, getUnlockedRewards } from '../lib/rewards';
 
 export const RANKS: Rank[] = [
   'Bronze 3', 'Bronze 2', 'Bronze 1',
@@ -46,6 +47,12 @@ export const MOCK_USER: UserProfile = {
   matchesPlayed: 24,
   matchesWon: 14,
   winStreak: 3,
+  inventory: {
+    skipShields: 0,
+    autoSolveJokers: 0,
+  },
+  unlockedRewards: getUnlockedRewards(3),
+  prestige: getPrestigeVisual('Silver 3'),
 };
 
 export const BADGES: Record<string, { name: string; description: string; icon: string }> = {

@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
-import type { GameSession, PlayMode, Rank } from '../types';
+import type { GameSession, PlayMode, PrestigeVisual, ProgressionReward, Rank, UserInventory } from '../types';
+import { getInventoryRewardDelta, getPrestigeVisual, getUnlockedRewards } from './RewardService';
 
 type ProfileRow = {
   id: string;
@@ -16,6 +17,8 @@ type ProfileRow = {
   matches_played: number;
   matches_won: number;
   win_streak: number;
+  skip_shields?: number | null;
+  auto_solve_jokers?: number | null;
 };
 
 export type PublicProfile = {
@@ -32,6 +35,9 @@ export type PublicProfile = {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  inventory: UserInventory;
+  unlockedRewards: ProgressionReward[];
+  prestige: PrestigeVisual;
 };
 
 export type MatchPersistencePayload = {
@@ -118,11 +124,48 @@ export class ProfileService {
         matches_played: nextProfile.matchesPlayed,
         matches_won: nextProfile.matchesWon,
         win_streak: nextProfile.winStreak,
+        skip_shields: nextProfile.inventory.skipShields,
+        auto_solve_jokers: nextProfile.inventory.autoSolveJokers,
       })
       .eq('id', currentProfile.id);
 
     if (profileError) return null;
     return nextProfile;
+  }
+
+  async consumeSkipShield(accessToken?: string): Promise<PublicProfile | null> {
+    return this.consumeInventoryItem(accessToken, 'skipShields');
+  }
+
+  async consumeAutoSolveJoker(accessToken?: string): Promise<PublicProfile | null> {
+    return this.consumeInventoryItem(accessToken, 'autoSolveJokers');
+  }
+
+  private async consumeInventoryItem(accessToken: string | undefined, item: keyof UserInventory): Promise<PublicProfile | null> {
+    const supabase = createUserClient(accessToken);
+    if (!supabase) return null;
+
+    const currentProfile = await this.getProfile(accessToken);
+    if (!currentProfile || currentProfile.inventory[item] <= 0) return null;
+
+    const nextInventory = {
+      ...currentProfile.inventory,
+      [item]: currentProfile.inventory[item] - 1,
+    };
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        skip_shields: nextInventory.skipShields,
+        auto_solve_jokers: nextInventory.autoSolveJokers,
+      })
+      .eq('id', currentProfile.id);
+
+    if (error) return null;
+    return {
+      ...currentProfile,
+      inventory: nextInventory,
+    };
   }
 }
 
@@ -153,6 +196,12 @@ function mapProfile(row: ProfileRow): PublicProfile {
     matchesPlayed: row.matches_played,
     matchesWon: row.matches_won,
     winStreak: row.win_streak,
+    inventory: {
+      skipShields: row.skip_shields ?? 0,
+      autoSolveJokers: row.auto_solve_jokers ?? 0,
+    },
+    unlockedRewards: getUnlockedRewards(row.level),
+    prestige: getPrestigeVisual(row.rank),
   };
 }
 
@@ -164,7 +213,14 @@ function applyProgress(
   progression: { xpGained: number; lpChange: number },
 ): PublicProfile {
   const xp = profile.xp + progression.xpGained;
+  const nextLevel = getLevelFromXP(xp);
   const lp = playMode === 'ranked' ? Math.max(0, profile.lp + progression.lpChange) : profile.lp;
+  const nextRank = getRankFromLP(lp);
+  const inventoryDelta = getInventoryRewardDelta(profile.level, nextLevel);
+  const inventory = {
+    skipShields: profile.inventory.skipShields + inventoryDelta.skipShields,
+    autoSolveJokers: profile.inventory.autoSolveJokers + inventoryDelta.autoSolveJokers,
+  };
   const rankedSeriesPending = playMode === 'ranked' && matchType === 'series' && result.series?.isComplete === false;
   const rankedOutcome = matchType === 'series' && result.series?.isComplete
     ? result.series.isWin
@@ -173,9 +229,12 @@ function applyProgress(
   return {
     ...profile,
     xp,
-    level: getLevelFromXP(xp),
+    level: nextLevel,
     lp,
-    rank: getRankFromLP(lp),
+    rank: nextRank,
+    inventory,
+    unlockedRewards: getUnlockedRewards(nextLevel),
+    prestige: getPrestigeVisual(nextRank),
     matchesPlayed: profile.matchesPlayed + 1,
     matchesWon: profile.matchesWon + (result.isWin ? 1 : 0),
     winStreak: playMode === 'ranked' && !rankedSeriesPending

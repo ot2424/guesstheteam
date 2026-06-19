@@ -51,6 +51,19 @@ export interface GuessResponse {
   name?: string;
 }
 
+export interface AutoSolveResponse {
+  solved: {
+    playerId: string;
+    name: string;
+  };
+  profile: UserProfile;
+}
+
+export interface SkipTeamResponse {
+  skipped: boolean;
+  profile: UserProfile;
+}
+
 export interface FinishGameResponse {
   result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio'>;
   progression: {
@@ -87,6 +100,20 @@ export function getProfile() {
 
 export function submitGuess(payload: { sessionId: string; input: string }) {
   return request<GuessResponse>('/game/guess', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function autoSolvePlayer(payload: { sessionId: string; playerId: string }) {
+  return request<AutoSolveResponse>('/game/auto-solve', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function skipRankedTeam(payload: { sessionId: string }) {
+  return request<SkipTeamResponse>('/game/skip', {
     method: 'POST',
     body: JSON.stringify(payload),
   });

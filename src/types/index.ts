@@ -80,6 +80,29 @@ export interface UserProfile {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  inventory: UserInventory;
+  unlockedRewards: ProgressionReward[];
+  prestige: PrestigeVisual;
+}
+
+export interface UserInventory {
+  skipShields: number;
+  autoSolveJokers: number;
+}
+
+export type RewardKind = 'avatar_frame' | 'profile_banner' | 'user_title' | 'anthem' | 'inventory_pack';
+
+export interface ProgressionReward {
+  id: string;
+  level: number;
+  kind: RewardKind;
+  name: string;
+  description: string;
+}
+
+export interface PrestigeVisual {
+  emblem: 'bronze' | 'silver' | 'gold-winged' | 'platinum-storm';
+  nameGlow: string | null;
 }
 
 export interface MatchResult {

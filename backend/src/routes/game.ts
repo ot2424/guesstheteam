@@ -34,6 +34,15 @@ const finishSchema = z.object({
   reason: z.enum(['complete', 'surrender']).default('complete'),
 });
 
+const autoSolveSchema = z.object({
+  sessionId: z.string().uuid(),
+  playerId: z.string().min(1),
+});
+
+const skipSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
 export function createGameRouter(
   sessionService = new GameSessionService(),
   matchService = new PlayerMatchService(),
@@ -121,6 +130,43 @@ export function createGameRouter(
 
     sessionService.markSolved(payload.sessionId, match.playerId);
     return res.json({ correct: true, matchedPlayerId: match.playerId, name: match.name });
+  });
+
+  router.post('/auto-solve', requireAuth, async (req, res) => {
+    const payload = autoSolveSchema.parse(req.body);
+    const session = sessionService.get(payload.sessionId);
+    if (!session) throw new HttpError(404, 'Session not found');
+    if (session.playMode !== 'ranked') throw new HttpError(400, 'Auto-Solve-Joker sind nur im Ranked-Modus nutzbar.');
+    if (!session.players[payload.playerId] || session.players[payload.playerId].solved) {
+      throw new HttpError(400, 'Diese Karte kann nicht automatisch gelöst werden.');
+    }
+
+    const profile = await profileService.consumeAutoSolveJoker(req.user?.accessToken);
+    if (!profile) throw new HttpError(400, 'Kein Auto-Solve-Joker verfügbar.');
+    const solved = sessionService.autoSolve(payload.sessionId, payload.playerId);
+    if (!solved) throw new HttpError(400, 'Diese Karte kann nicht automatisch gelöst werden.');
+
+    return res.json({
+      solved,
+      profile,
+    });
+  });
+
+  router.post('/skip', requireAuth, async (req, res) => {
+    const payload = skipSchema.parse(req.body);
+    const session = sessionService.get(payload.sessionId);
+    if (!session) throw new HttpError(404, 'Session not found');
+    if (session.playMode !== 'ranked') throw new HttpError(400, 'Team-Skip-Schilde sind nur im Ranked-Modus nutzbar.');
+
+    const profile = await profileService.consumeSkipShield(req.user?.accessToken);
+    if (!profile) throw new HttpError(400, 'Kein Team-Skip-Schild verfügbar.');
+
+    sessionService.skip(payload.sessionId);
+
+    return res.json({
+      skipped: true,
+      profile,
+    });
   });
 
   router.post('/finish', requireAuth, async (req, res) => {
