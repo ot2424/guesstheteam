@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
-import { getPositionGroup, getPositionLabel } from '../../utils/footballDisplay';
+import { getDetailedPositionLabel, getPositionGroup } from '../../utils/footballDisplay';
 import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
@@ -67,10 +67,10 @@ export function PlayerCard({ player, guess, onTipClick, index, isActiveTip, hint
 
           {/* Position badge */}
           <div
-            className="absolute top-1.5 left-1/2 -translate-x-1/2 bebas text-[10px] px-1.5 py-0.5 rounded"
+            className="absolute top-1.5 left-1/2 -translate-x-1/2 bebas text-[11px] px-2 py-0.5 rounded"
             style={{ background: posColor + '25', color: posColor, border: `1px solid ${posColor}55`, textShadow: `0 0 9px ${posColor}66` }}
           >
-            {getPositionLabel(player.position)}
+            {getDetailedPositionLabel(player.position)}
           </div>
 
           {/* Solved: show name */}

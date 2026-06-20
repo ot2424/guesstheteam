@@ -16,6 +16,20 @@ const POSITION_LABELS: Record<string, string> = {
   attacker: 'Angreifer',
 };
 
+const DETAILED_POSITION_LABELS: Record<Position, string> = {
+  GK: 'TW',
+  CB: 'IV',
+  LB: 'LV',
+  RB: 'RV',
+  CDM: 'DM',
+  CM: 'ZM',
+  CAM: 'OM',
+  LW: 'LF',
+  RW: 'RF',
+  ST: 'ST',
+  CF: 'HS',
+};
+
 export type PositionGroup = keyof typeof POSITION_LABELS;
 
 export function getLeagueLabel(league: string) {
@@ -31,4 +45,8 @@ export function getPositionGroup(position: Position): PositionGroup {
 
 export function getPositionLabel(position: Position) {
   return POSITION_LABELS[getPositionGroup(position)];
+}
+
+export function getDetailedPositionLabel(position: Position) {
+  return DETAILED_POSITION_LABELS[position] ?? position;
 }

@@ -1,4 +1,4 @@
-import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
+import type { PlayerCard as PlayerCardType, GuessState, Position } from '../../types';
 import { PlayerCard } from './PlayerCard';
 import { getPositionGroup, type PositionGroup } from '../../utils/footballDisplay';
 
@@ -74,24 +74,72 @@ export function FormationGrid({ players, guesses, onTipClick, activeTipId, hintM
   );
 }
 
+const POSITION_ANCHORS: Record<Position, { x: number; y: number; order: number }> = {
+  GK: { x: 50, y: 88, order: 100 },
+  LB: { x: 18, y: 66, order: 70 },
+  CB: { x: 50, y: 66, order: 72 },
+  RB: { x: 82, y: 66, order: 74 },
+  CDM: { x: 36, y: 48, order: 45 },
+  CM: { x: 50, y: 42, order: 46 },
+  CAM: { x: 64, y: 36, order: 47 },
+  LW: { x: 24, y: 18, order: 10 },
+  CF: { x: 50, y: 18, order: 12 },
+  ST: { x: 50, y: 12, order: 11 },
+  RW: { x: 76, y: 18, order: 13 },
+};
+
 const ROW_Y: Record<PositionGroup, number> = {
-  attacker: 16,
-  midfielder: 40,
-  defender: 64,
+  attacker: 18,
+  midfielder: 42,
+  defender: 66,
   goalkeeper: 88,
 };
 
-const ROLE_ORDER: PositionGroup[] = ['attacker', 'midfielder', 'defender', 'goalkeeper'];
-
 function getRoleLayout(players: PlayerCardType[]) {
-  return ROLE_ORDER.flatMap((role) => {
-    const rowPlayers = players.filter((player) => getPositionGroup(player.position) === role);
-    const spacing = 78 / Math.max(rowPlayers.length, 1);
+  const countsByPosition = players.reduce<Record<string, number>>((counts, player) => {
+    counts[player.position] = (counts[player.position] ?? 0) + 1;
+    return counts;
+  }, {});
 
-    return rowPlayers.map((player, index) => ({
-      player,
-      x: 11 + spacing / 2 + spacing * index,
-      y: ROW_Y[role],
-    }));
-  });
+  const seenByPosition: Record<string, number> = {};
+
+  return [...players]
+    .sort((a, b) => {
+      const anchorA = POSITION_ANCHORS[a.position];
+      const anchorB = POSITION_ANCHORS[b.position];
+      return anchorA.order - anchorB.order || a.formationSlot - b.formationSlot;
+    })
+    .map((player) => {
+      const role = getPositionGroup(player.position);
+      const anchor = POSITION_ANCHORS[player.position] ?? {
+        x: 50,
+        y: ROW_Y[role],
+        order: 50,
+      };
+      const positionIndex = seenByPosition[player.position] ?? 0;
+      const positionCount = countsByPosition[player.position] ?? 1;
+      seenByPosition[player.position] = positionIndex + 1;
+      const offset = getDuplicateOffset(positionIndex, positionCount, player.position);
+
+      return {
+        player,
+        x: clamp(anchor.x + offset.x, 10, 90),
+        y: clamp(anchor.y + offset.y, 10, 90),
+      };
+    });
+}
+
+function getDuplicateOffset(index: number, count: number, position: Position) {
+  if (count <= 1) return { x: 0, y: 0 };
+
+  const spread = position === 'CB' ? 16 : position === 'CM' ? 14 : 10;
+  const centered = index - (count - 1) / 2;
+  return {
+    x: centered * spread,
+    y: Math.abs(centered) > 0.5 ? 3 : 0,
+  };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }

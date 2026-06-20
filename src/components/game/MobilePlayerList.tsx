@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
-import { getPositionGroup, getPositionLabel, type PositionGroup } from '../../utils/footballDisplay';
+import { getDetailedPositionLabel, getPositionGroup, getPositionLabel, type PositionGroup } from '../../utils/footballDisplay';
 import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
@@ -92,7 +92,7 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId, hi
                       className="text-[10px] bebas tracking-wider px-2 py-0.5 rounded flex-shrink-0"
                       style={{ background: posColor + '22', color: posColor, border: `1px solid ${posColor}55` }}
                     >
-                      {getPositionLabel(player.position)}
+                      {getDetailedPositionLabel(player.position)} · {getPositionLabel(player.position)}
                     </span>
 
                     {/* Name or placeholder */}
