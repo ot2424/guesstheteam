@@ -4,14 +4,15 @@ import { getPositionGroup, type PositionGroup } from '../../utils/footballDispla
 
 interface Props {
   players: PlayerCardType[];
+  formation?: string;
   guesses: Record<string, GuessState>;
   onTipClick: (playerId: string) => void;
   activeTipId: string | null;
   hintMode?: 'nationality' | 'club';
 }
 
-export function FormationGrid({ players, guesses, onTipClick, activeTipId, hintMode = 'nationality' }: Props) {
-  const cards = getRoleLayout(players);
+export function FormationGrid({ players, formation = '4-3-3', guesses, onTipClick, activeTipId, hintMode = 'nationality' }: Props) {
+  const cards = getRoleLayout(players, formation);
 
   return (
     <div
@@ -49,7 +50,7 @@ export function FormationGrid({ players, guesses, onTipClick, activeTipId, hintM
 
       {/* Cards */}
       <div className="relative w-full" style={{ minHeight: '520px' }}>
-        {cards.map(({ player, x, y }, index) => {
+        {cards.map(({ player, x, y, displayPosition }, index) => {
           const guess = guesses[player.id] ?? { playerId: player.id, solved: false, attempts: 0, revealed: false };
 
           return (
@@ -60,6 +61,7 @@ export function FormationGrid({ players, guesses, onTipClick, activeTipId, hintM
             >
               <PlayerCard
                 player={player}
+                displayPosition={displayPosition}
                 guess={guess}
                 onTipClick={onTipClick}
                 index={index}
@@ -82,6 +84,8 @@ const POSITION_ANCHORS: Record<Position, { x: number; y: number; order: number }
   CDM: { x: 36, y: 48, order: 45 },
   CM: { x: 50, y: 42, order: 46 },
   CAM: { x: 64, y: 36, order: 47 },
+  LM: { x: 22, y: 42, order: 44 },
+  RM: { x: 78, y: 42, order: 48 },
   LW: { x: 24, y: 18, order: 10 },
   CF: { x: 50, y: 18, order: 12 },
   ST: { x: 50, y: 12, order: 11 },
@@ -95,49 +99,187 @@ const ROW_Y: Record<PositionGroup, number> = {
   goalkeeper: 88,
 };
 
-function getRoleLayout(players: PlayerCardType[]) {
-  const countsByPosition = players.reduce<Record<string, number>>((counts, player) => {
-    counts[player.position] = (counts[player.position] ?? 0) + 1;
-    return counts;
-  }, {});
+function getRoleLayout(players: PlayerCardType[], formation: string) {
+  const rows = getFormationRows(formation);
+  const available = [...players].sort(comparePlayersByPosition);
+  const assigned = new Set<string>();
+  const cards: Array<{ player: PlayerCardType; x: number; y: number; displayPosition?: Position }> = [];
 
-  const seenByPosition: Record<string, number> = {};
+  const goalkeeper = takeBest(available, assigned, (player) => player.position === 'GK');
+  if (goalkeeper) cards.push({ player: goalkeeper, x: 50, y: 88 });
 
-  return [...players]
-    .sort((a, b) => {
-      const anchorA = POSITION_ANCHORS[a.position];
-      const anchorB = POSITION_ANCHORS[b.position];
-      return anchorA.order - anchorB.order || a.formationSlot - b.formationSlot;
-    })
-    .map((player) => {
-      const role = getPositionGroup(player.position);
-      const anchor = POSITION_ANCHORS[player.position] ?? {
-        x: 50,
-        y: ROW_Y[role],
-        order: 50,
-      };
-      const positionIndex = seenByPosition[player.position] ?? 0;
-      const positionCount = countsByPosition[player.position] ?? 1;
-      seenByPosition[player.position] = positionIndex + 1;
-      const offset = getDuplicateOffset(positionIndex, positionCount, player.position);
-
-      return {
-        player,
-        x: clamp(anchor.x + offset.x, 10, 90),
-        y: clamp(anchor.y + offset.y, 10, 90),
-      };
+  for (const row of rows) {
+    const rowPlayers = takeRowPlayers(available, assigned, row);
+    const slots = getRowSlots(row.count, row.y);
+    rowPlayers.forEach((player, index) => {
+      const slot = slots[index] ?? slots[slots.length - 1];
+      cards.push({ player, x: slot.x, y: slot.y, displayPosition: getSlotDisplayPosition(row, index) });
     });
+  }
+
+  const leftovers = available.filter((player) => !assigned.has(player.id));
+  const fallbackSlots = getRowSlots(leftovers.length, ROW_Y.midfielder);
+  leftovers.forEach((player, index) => {
+    const slot = fallbackSlots[index];
+    cards.push({ player, x: slot.x, y: slot.y });
+  });
+
+  return cards;
 }
 
-function getDuplicateOffset(index: number, count: number, position: Position) {
-  if (count <= 1) return { x: 0, y: 0 };
+type FormationRow = {
+  role: PositionGroup;
+  count: number;
+  y: number;
+  preferred: Position[];
+  slotPositions: Position[];
+};
 
-  const spread = position === 'CB' ? 16 : position === 'CM' ? 14 : 10;
-  const centered = index - (count - 1) / 2;
-  return {
-    x: centered * spread,
-    y: Math.abs(centered) > 0.5 ? 3 : 0,
-  };
+function getFormationRows(formation: string): FormationRow[] {
+  const parts = formation
+    .split('-')
+    .map((part) => Number(part))
+    .filter((part) => Number.isInteger(part) && part > 0);
+
+  const numbers = parts.length >= 2 ? parts : [4, 3, 3];
+  const defenderCount = numbers[0] ?? 4;
+  const attackingCount = numbers.at(-1) ?? 1;
+  const midfieldCounts = numbers.slice(1, -1);
+  const midfieldYs = getMidfieldYs(midfieldCounts.length);
+
+  return [
+    {
+      role: 'attacker',
+      count: attackingCount,
+      y: 14,
+      preferred: getAttackerPreferences(attackingCount),
+      slotPositions: getAttackerSlotPositions(attackingCount),
+    },
+    ...midfieldCounts.map((count, index) => ({
+      role: 'midfielder' as PositionGroup,
+      count,
+      y: midfieldYs[index],
+      preferred: getMidfieldPreferences(count, index, midfieldCounts.length),
+      slotPositions: getMidfieldSlotPositions(count, index, midfieldCounts.length),
+    })),
+    {
+      role: 'defender',
+      count: defenderCount,
+      y: 68,
+      preferred: getDefenderPreferences(defenderCount),
+      slotPositions: getDefenderSlotPositions(defenderCount),
+    },
+  ];
+}
+
+function getMidfieldYs(rowCount: number) {
+  if (rowCount <= 1) return [43];
+  if (rowCount === 2) return [35, 53];
+  return [31, 45, 58].slice(0, rowCount);
+}
+
+function getAttackerPreferences(count: number): Position[] {
+  if (count <= 1) return ['ST', 'CF', 'LW', 'RW', 'CAM'];
+  if (count === 2) return ['CF', 'ST', 'LW', 'RW', 'CAM'];
+  return ['LW', 'ST', 'RW', 'CF', 'CAM'];
+}
+
+function getAttackerSlotPositions(count: number): Position[] {
+  if (count <= 1) return ['ST'];
+  if (count === 2) return ['CF', 'ST'];
+  return ['LW', 'ST', 'RW'];
+}
+
+function getMidfieldPreferences(count: number, rowIndex: number, rowCount: number): Position[] {
+  const isTopMidfield = rowIndex === 0 && rowCount > 1;
+  const isBottomMidfield = rowIndex === rowCount - 1 && rowCount > 1;
+  if (isTopMidfield) return ['LM', 'CAM', 'RM', 'LW', 'RW', 'CM', 'ST', 'CF'];
+  if (isBottomMidfield) return ['CDM', 'CM', 'LM', 'RM', 'CAM'];
+  if (count >= 4) return ['LM', 'CM', 'CDM', 'CM', 'RM', 'LW', 'RW', 'CAM'];
+  return ['CDM', 'CM', 'CAM', 'LM', 'RM'];
+}
+
+function getMidfieldSlotPositions(count: number, rowIndex: number, rowCount: number): Position[] {
+  const isTopMidfield = rowIndex === 0 && rowCount > 1;
+  const isBottomMidfield = rowIndex === rowCount - 1 && rowCount > 1;
+  if (isTopMidfield && count === 3) return ['LM', 'CAM', 'RM'];
+  if (isBottomMidfield && count === 2) return ['CDM', 'CDM'];
+  if (count === 5) return ['LM', 'CM', 'CDM', 'CM', 'RM'];
+  if (count === 4) return ['LM', 'CM', 'CM', 'RM'];
+  if (count === 3) return ['CM', 'CDM', 'CM'];
+  if (count === 2) return ['CM', 'CM'];
+  return ['CM'];
+}
+
+function getDefenderPreferences(count: number): Position[] {
+  if (count <= 3) return ['CB', 'CB', 'CB', 'LB', 'RB', 'CDM'];
+  return ['LB', 'CB', 'CB', 'RB', 'CDM'];
+}
+
+function getDefenderSlotPositions(count: number): Position[] {
+  if (count <= 3) return ['CB', 'CB', 'CB'];
+  if (count === 5) return ['LB', 'CB', 'CB', 'CB', 'RB'];
+  return ['LB', 'CB', 'CB', 'RB'];
+}
+
+function getSlotDisplayPosition(row: FormationRow, index: number) {
+  return row.slotPositions[index] ?? row.slotPositions[row.slotPositions.length - 1];
+}
+
+function takeRowPlayers(
+  players: PlayerCardType[],
+  assigned: Set<string>,
+  row: FormationRow,
+) {
+  const selected: PlayerCardType[] = [];
+
+  for (const preferredPosition of row.preferred) {
+    if (selected.length >= row.count) break;
+    const player = takeBest(players, assigned, (candidate) => candidate.position === preferredPosition);
+    if (player) selected.push(player);
+  }
+
+  while (selected.length < row.count) {
+    const player = takeBest(players, assigned, (candidate) => getPositionGroup(candidate.position) === row.role);
+    if (!player) break;
+    selected.push(player);
+  }
+
+  while (selected.length < row.count) {
+    const player = takeBest(players, assigned, () => true);
+    if (!player) break;
+    selected.push(player);
+  }
+
+  return selected;
+}
+
+function takeBest(
+  players: PlayerCardType[],
+  assigned: Set<string>,
+  predicate: (player: PlayerCardType) => boolean,
+) {
+  const player = players.find((candidate) => !assigned.has(candidate.id) && predicate(candidate));
+  if (!player) return null;
+  assigned.add(player.id);
+  return player;
+}
+
+function getRowSlots(count: number, y: number) {
+  if (count <= 1) return [{ x: 50, y }];
+  const start = count >= 5 ? 12 : count === 4 ? 18 : count === 3 ? 28 : 38;
+  const end = 100 - start;
+  const gap = (end - start) / (count - 1);
+  return Array.from({ length: count }, (_, index) => ({
+    x: clamp(start + gap * index, 10, 90),
+    y,
+  }));
+}
+
+function comparePlayersByPosition(a: PlayerCardType, b: PlayerCardType) {
+  const anchorA = POSITION_ANCHORS[a.position];
+  const anchorB = POSITION_ANCHORS[b.position];
+  return anchorA.order - anchorB.order || a.formationSlot - b.formationSlot;
 }
 
 function clamp(value: number, min: number, max: number) {

@@ -466,6 +466,7 @@ export function GamePage() {
           <div className="hidden sm:block">
             <FormationGrid
               players={team.players}
+              formation={team.formation}
               guesses={guesses}
               onTipClick={handleTipClick}
               activeTipId={activeTipId}

@@ -154,6 +154,8 @@ const POSITION_MAP: Record<string, string> = {
   'Defensive Midfield': 'CDM',
   'Central Midfield': 'CM',
   'Attacking Midfield': 'CAM',
+  'Left Midfield': 'LM',
+  'Right Midfield': 'RM',
   Attack: 'ST',
   'Left Winger': 'LW',
   'Right Winger': 'RW',

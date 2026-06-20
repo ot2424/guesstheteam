@@ -21,12 +21,14 @@ const DETAILED_POSITION_LABELS: Record<Position, string> = {
   CB: 'IV',
   LB: 'LV',
   RB: 'RV',
-  CDM: 'DM',
+  CDM: 'ZDM',
   CM: 'ZM',
-  CAM: 'OM',
+  CAM: 'ZOM',
+  LM: 'LM',
+  RM: 'RM',
   LW: 'LF',
   RW: 'RF',
-  ST: 'ST',
+  ST: 'MS',
   CF: 'HS',
 };
 
@@ -39,7 +41,7 @@ export function getLeagueLabel(league: string) {
 export function getPositionGroup(position: Position): PositionGroup {
   if (position === 'GK') return 'goalkeeper';
   if (position === 'CB' || position === 'LB' || position === 'RB') return 'defender';
-  if (position === 'CDM' || position === 'CM' || position === 'CAM') return 'midfielder';
+  if (position === 'CDM' || position === 'CM' || position === 'CAM' || position === 'LM' || position === 'RM') return 'midfielder';
   return 'attacker';
 }
 
