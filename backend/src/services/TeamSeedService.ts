@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { env } from '../config/env';
 import { GERMANY_2024, REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
 import { TransfermarktBackupService } from './TransfermarktBackupService';
@@ -13,6 +15,10 @@ type SeedTeam = TeamData & {
   difficulty?: Difficulty;
   clubId?: string;
 };
+
+interface TeamSeasonRow {
+  team: SeedTeam;
+}
 
 interface TeamSelectionOptions {
   playMode: PlayMode;
@@ -63,6 +69,7 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
 
 export class TeamSeedService {
   private seed: SeedFile | null | undefined;
+  private supabaseTeams: SeedTeam[] | null | undefined;
 
   constructor(
     private seedPath = process.env.GUESSTHETEAM_SEED_PATH ?? process.env.FOOTYGUESSER_SEED_PATH ?? getDefaultSeedPath(),
@@ -72,7 +79,7 @@ export class TeamSeedService {
   async selectTeam(options: TeamSelectionOptions): Promise<TeamData> {
     if (options.playMode === 'worldcup') return this.toDisplayTeam(GERMANY_2024);
 
-    const teams = this.getTeams();
+    const teams = await this.getTeams();
     if (teams.length === 0) return REAL_MADRID_2223;
 
     const filtered = this.filterTeams(teams, options);
@@ -93,10 +100,13 @@ export class TeamSeedService {
     return this.transfermarktBackup.enrichTeam(team);
   }
 
-  searchPlayers(query: string, limit: number) {
+  async searchPlayers(query: string, limit: number) {
     const normalizedQuery = query.toLowerCase().trim();
+    const teamPlayers = (await this.getTeams())
+      .flatMap((team) => team.players)
+      .map((player) => player.name);
     const seedPlayers = this.getSeed()?.players?.map((player) => player.name) ?? [];
-    const pool = seedPlayers.length > 0 ? seedPlayers : PLAYER_SEARCH_POOL;
+    const pool = uniqueNames(teamPlayers.length > 0 ? teamPlayers : seedPlayers.length > 0 ? seedPlayers : PLAYER_SEARCH_POOL);
 
     return pool
       .filter((name) => name.toLowerCase().includes(normalizedQuery))
@@ -115,8 +125,38 @@ export class TeamSeedService {
     return byDifficulty;
   }
 
-  private getTeams() {
+  private async getTeams() {
+    if (env.GUESSTHETEAM_TEAM_SOURCE === 'supabase') {
+      const supabaseTeams = await this.getSupabaseTeams();
+      if (supabaseTeams.length > 0) return supabaseTeams;
+    }
+
     return this.getSeed()?.teams ?? [];
+  }
+
+  private async getSupabaseTeams() {
+    if (this.supabaseTeams !== undefined) return this.supabaseTeams ?? [];
+
+    const supabase = createTeamClient();
+    if (!supabase) {
+      this.supabaseTeams = null;
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from('team_seasons')
+      .select('team')
+      .order('season', { ascending: false })
+      .returns<TeamSeasonRow[]>();
+
+    if (error || !data) {
+      console.warn(`Could not load Supabase team seasons: ${error?.message ?? 'empty response'}`);
+      this.supabaseTeams = null;
+      return [];
+    }
+
+    this.supabaseTeams = data.map((row) => row.team);
+    return this.supabaseTeams;
   }
 
   private getSeed() {
@@ -149,6 +189,11 @@ export class TeamSeedService {
   }
 }
 
+function createTeamClient(): SupabaseClient | null {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function getDefaultSeedPath() {
   return existsSync(DEFAULT_SEED_PATH) ? DEFAULT_SEED_PATH : LEGACY_SEED_PATH;
 }
@@ -168,6 +213,10 @@ function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {
   if (excludeTeamIds.length === 0) return teams;
   const excluded = new Set(excludeTeamIds);
   return teams.filter((team) => !excluded.has(team.id));
+}
+
+function uniqueNames(names: string[]) {
+  return [...new Set(names)];
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {

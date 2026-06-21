@@ -6,12 +6,11 @@ export class PlayerSearchService {
 
   constructor(private teamSeedService = new TeamSeedService()) {}
 
-  search(query: string, limit: number) {
+  async search(query: string, limit: number) {
     const normalizedQuery = this.matcher.normalize(query);
     if (normalizedQuery.length < 2) return [];
 
-    return this.teamSeedService
-      .searchPlayers(query, limit)
-      .filter((result) => this.matcher.normalize(result.name).includes(normalizedQuery));
+    const candidates = await this.teamSeedService.searchPlayers(query, limit);
+    return candidates.filter((result) => this.matcher.normalize(result.name).includes(normalizedQuery));
   }
 }

@@ -10,9 +10,10 @@ const querySchema = z.object({
 export function createPlayersRouter(playerSearchService = new PlayerSearchService()) {
   const router = Router();
 
-  router.get('/search', (req, res) => {
+  router.get('/search', async (req, res) => {
     const query = querySchema.parse(req.query);
-    res.json({ results: playerSearchService.search(query.q, query.limit) });
+    const results = await playerSearchService.search(query.q, query.limit);
+    res.json({ results });
   });
 
   return router;
