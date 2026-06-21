@@ -1,5 +1,9 @@
 import 'dotenv/config';
+import { createReadStream, existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { createInterface } from 'node:readline';
+import { createGunzip } from 'node:zlib';
 import { createClient } from '@supabase/supabase-js';
 import { TransfermarktBackupService } from '../backend/src/services/TransfermarktBackupService';
 import type { Difficulty, InternalPlayer, Position, TeamData } from '../backend/src/types';
@@ -13,6 +17,7 @@ interface Args {
   dryRun: boolean;
   provider: string;
   seedPath: string;
+  datasetSource: string;
 }
 
 interface ClubSearchResponse {
@@ -80,7 +85,40 @@ interface SeedFile {
 type SeedTeam = TeamData & {
   clubId?: string;
   difficulty?: Difficulty;
+  sourceGameId?: string;
 };
+
+type Row = Record<string, string>;
+
+interface DatasetClub {
+  clubId: string;
+  name: string;
+  competitionId: string;
+}
+
+interface DatasetGame {
+  gameId: string;
+  season: number;
+  date: string;
+  competitionId: string;
+  homeClubId: string;
+  awayClubId: string;
+  homeFormation: string;
+  awayFormation: string;
+}
+
+interface DatasetPlayer {
+  playerId: string;
+  name: string;
+  position: string;
+  nationality: string;
+  nationality2?: string;
+}
+
+interface DatasetLineupPlayer {
+  playerId: string;
+  position: string;
+}
 
 const TRANSFERMARKT_BASE_URL = process.env.TRANSFERMARKT_API_BASE_URL ?? 'https://transfermarkt-api.fly.dev';
 const TRANSFERMARKT_TIMEOUT_MS = Number(process.env.TRANSFERMARKT_API_TIMEOUT_MS ?? 8000);
@@ -91,7 +129,7 @@ if (!args.club && !args.clubId) {
   throw new Error('Provide --club "Club Name" or --club-id 123.');
 }
 
-const clubId = args.clubId ?? await searchClubId(args.club);
+const clubId = args.clubId ?? await searchClubId(args.club) ?? await searchDatasetClubId(args.datasetSource, args.club);
 if (!clubId) throw new Error(`Could not resolve club "${args.club}".`);
 
 const [profile, squad] = await Promise.all([
@@ -113,7 +151,21 @@ if (rawPlayers.length < 11) {
   });
 
   if (!seedTeam) {
-    throw new Error(`Transfermarkt returned only ${rawPlayers.length} players for ${clubName} ${args.season}, and no local seed fallback matched.`);
+    const datasetTeam = await findDatasetFallback(args.datasetSource, {
+      clubId,
+      clubName,
+      requestedClub: args.club,
+      season: args.season,
+      league,
+    });
+
+    if (!datasetTeam) {
+      throw new Error(`Transfermarkt returned only ${rawPlayers.length} players for ${clubName} ${args.season}, and no local seed or dataset fallback matched.`);
+    }
+
+    const enrichedDatasetTeam = await new TransfermarktBackupService().enrichTeamData(datasetTeam);
+    await outputTeam(enrichedDatasetTeam, datasetTeam.clubId ?? clubId, args.provider, args.difficulty ?? datasetTeam.difficulty ?? getDifficulty(args.season));
+    process.exit(0);
   }
 
   const enrichedSeedTeam = await new TransfermarktBackupService().enrichTeamData(seedTeam);
@@ -159,6 +211,7 @@ function parseArgs(argv: string[]): Args {
     dryRun: values.has('dry-run'),
     provider: String(values.get('provider') ?? 'transfermarkt-openai-builder'),
     seedPath: String(values.get('seed') ?? 'data/seeds/guesstheteam-seed.json'),
+    datasetSource: String(values.get('dataset-source') ?? 'data/transfermarkt'),
   };
 }
 
@@ -186,8 +239,172 @@ async function findSeedFallback(
   }) ?? null;
 }
 
+async function findDatasetFallback(
+  source: string,
+  input: { clubId: string; clubName: string; requestedClub: string; season: string; league: string },
+): Promise<SeedTeam | null> {
+  const season = Number(input.season);
+  if (!Number.isFinite(season)) return null;
+
+  const clubs = await readDatasetClubs(source);
+  const club = clubs.get(input.clubId) ?? findClubByName(clubs, input.clubName) ?? findClubByName(clubs, input.requestedClub);
+  if (!club) return null;
+
+  const games = await readDatasetGames(source, club.clubId, season);
+  if (games.length === 0) return null;
+
+  const lineups = await readDatasetLineups(source, new Set(games.map((game) => game.gameId)), club.clubId);
+  const selectedGame = games.find((game) => (lineups.get(game.gameId)?.length ?? 0) >= 11);
+  if (!selectedGame) return null;
+
+  const starters = lineups.get(selectedGame.gameId)?.slice(0, 11) ?? [];
+  const players = await readDatasetPlayers(source, new Set(starters.map((starter) => starter.playerId)));
+  const seedPlayers = starters
+    .map((starter, index) => toDatasetSeedPlayer(starter, index, season, players, club))
+    .filter((player): player is InternalPlayer => Boolean(player));
+
+  if (seedPlayers.length !== 11) return null;
+
+  const formation = selectedGame.homeClubId === club.clubId
+    ? selectedGame.homeFormation
+    : selectedGame.awayFormation;
+
+  return {
+    id: `${slugify(club.name)}-${season}`,
+    sourceGameId: selectedGame.gameId,
+    clubId: club.clubId,
+    name: club.name,
+    season: String(season),
+    league: input.league || club.competitionId || selectedGame.competitionId,
+    logoUrl: getTransfermarktLogoUrl(club.clubId),
+    formation: formation || inferFormation(seedPlayers),
+    difficulty: getDifficulty(String(season)),
+    players: seedPlayers,
+  };
+}
+
 function parseDifficulty(value: string | boolean | undefined): Difficulty | undefined {
   return value === 'easy' || value === 'medium' || value === 'hard' ? value : undefined;
+}
+
+async function readDatasetClubs(source: string) {
+  const clubs = new Map<string, DatasetClub>();
+
+  for await (const row of readCsv(resolveCsv(source, 'clubs'))) {
+    const clubId = get(row, 'club_id');
+    const name = get(row, 'pretty_name') || get(row, 'name');
+    if (!clubId || !name) continue;
+
+    clubs.set(clubId, {
+      clubId,
+      name: normalizeClubName(name),
+      competitionId: get(row, 'domestic_competition_id'),
+    });
+  }
+
+  return clubs;
+}
+
+function findClubByName(clubs: Map<string, DatasetClub>, clubName: string) {
+  const normalized = normalizeName(clubName);
+  return [...clubs.values()].find((club) => normalizeName(club.name) === normalized)
+    ?? [...clubs.values()].find((club) => normalizeName(club.name).includes(normalized) || normalized.includes(normalizeName(club.name)))
+    ?? null;
+}
+
+async function readDatasetGames(source: string, clubId: string, season: number) {
+  const games: DatasetGame[] = [];
+
+  for await (const row of readCsv(resolveCsv(source, 'games'))) {
+    if (Number(get(row, 'season')) !== season) continue;
+    const homeClubId = get(row, 'home_club_id');
+    const awayClubId = get(row, 'away_club_id');
+    if (homeClubId !== clubId && awayClubId !== clubId) continue;
+
+    games.push({
+      gameId: get(row, 'game_id'),
+      season,
+      date: get(row, 'date'),
+      competitionId: get(row, 'competition_id'),
+      homeClubId,
+      awayClubId,
+      homeFormation: get(row, 'home_club_formation'),
+      awayFormation: get(row, 'away_club_formation'),
+    });
+  }
+
+  return games
+    .filter((game) => game.gameId)
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+async function readDatasetLineups(source: string, gameIds: Set<string>, clubId: string) {
+  const lineups = new Map<string, DatasetLineupPlayer[]>();
+
+  for await (const row of readCsv(resolveCsv(source, 'game_lineups'))) {
+    const gameId = get(row, 'game_id');
+    if (!gameIds.has(gameId)) continue;
+    if (get(row, 'club_id') !== clubId) continue;
+    if (!get(row, 'type').toLowerCase().includes('starting')) continue;
+
+    const playerId = get(row, 'player_id');
+    if (!playerId) continue;
+
+    const lineup = lineups.get(gameId) ?? [];
+    lineup.push({
+      playerId,
+      position: get(row, 'position'),
+    });
+    lineups.set(gameId, lineup);
+  }
+
+  return lineups;
+}
+
+async function readDatasetPlayers(source: string, playerIds: Set<string>) {
+  const players = new Map<string, DatasetPlayer>();
+
+  for await (const row of readCsv(resolveCsv(source, 'players'))) {
+    const playerId = get(row, 'player_id');
+    if (!playerIds.has(playerId)) continue;
+
+    players.set(playerId, {
+      playerId,
+      name: get(row, 'name'),
+      position: get(row, 'sub_position') || get(row, 'position') || 'Unknown',
+      ...getNationalities(row),
+    });
+  }
+
+  return players;
+}
+
+function toDatasetSeedPlayer(
+  lineupPlayer: DatasetLineupPlayer,
+  formationSlot: number,
+  season: number,
+  players: Map<string, DatasetPlayer>,
+  club: DatasetClub,
+): InternalPlayer | null {
+  const player = players.get(lineupPlayer.playerId);
+  if (!player?.name) return null;
+
+  return {
+    id: player.playerId,
+    name: player.name,
+    position: mapPosition(lineupPlayer.position || player.position),
+    nationality: player.nationality,
+    nationality2: player.nationality2,
+    nationalityFlag: player.nationality,
+    formationSlot,
+    career: [{
+      clubId: club.clubId,
+      clubName: club.name,
+      logoUrl: getTransfermarktLogoUrl(club.clubId),
+      fromYear: season,
+      toYear: null,
+    }],
+  };
 }
 
 async function searchClubId(clubName: string) {
@@ -196,6 +413,15 @@ async function searchClubId(clubName: string) {
   return response?.results?.find((club) => normalizeName(club.name ?? '') === normalized)?.id
     ?? response?.results?.[0]?.id
     ?? null;
+}
+
+async function searchDatasetClubId(source: string, clubName: string) {
+  try {
+    const clubs = await readDatasetClubs(source);
+    return findClubByName(clubs, clubName)?.clubId ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function enrichCandidatesWithStats(players: ClubPlayer[], clubId: string, season: string): Promise<PlayerCandidate[]> {
@@ -416,7 +642,7 @@ function toTeamSeasonRow(team: TeamData, clubId: string, provider: string, diffi
   return {
     id: team.id,
     club_id: clubId,
-    source_game_id: null,
+    source_game_id: (team as TeamData & { sourceGameId?: string }).sourceGameId ?? null,
     name: team.name,
     season: team.season,
     league: team.league,
@@ -548,6 +774,26 @@ function getDifficulty(season: string): Difficulty {
   return 'hard';
 }
 
+function getNationalities(row: Row) {
+  const citizenship = get(row, 'country_of_citizenship');
+  const birthCountry = get(row, 'country_of_birth');
+  const nationality = citizenship || birthCountry || 'Unknown';
+  const nationality2 = birthCountry && birthCountry !== nationality && isUsableCountry(birthCountry)
+    ? birthCountry
+    : undefined;
+
+  return { nationality, nationality2 };
+}
+
+function isUsableCountry(country: string) {
+  return !['CSSR', 'UdSSR', 'Jugoslawien (SFR)', 'East Germany (GDR)', 'Unknown'].includes(country);
+}
+
+function getTransfermarktLogoUrl(clubId: string | undefined) {
+  if (!clubId || !/^\d+$/.test(clubId)) return '';
+  return `https://tmssl.akamaized.net/images/wappen/big/${clubId}.png`;
+}
+
 function normalizeClubName(name: string) {
   return name
     .replace(/^Football\s+Club\s+Internazionale\s+Milano.*$/i, 'Inter Milan')
@@ -573,4 +819,65 @@ function slugify(value: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+async function* readCsv(filePath: string): AsyncGenerator<Row> {
+  const stream = filePath.endsWith('.gz')
+    ? createReadStream(filePath).pipe(createGunzip())
+    : createReadStream(filePath);
+  const lines = createInterface({ input: stream, crlfDelay: Infinity });
+  let headers: string[] | null = null;
+
+  for await (const line of lines) {
+    if (!headers) {
+      headers = parseCsvLine(line);
+      continue;
+    }
+
+    const values = parseCsvLine(line);
+    const row: Row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] ?? '';
+    });
+    yield row;
+  }
+}
+
+function parseCsvLine(line: string) {
+  const values: string[] = [];
+  let value = '';
+  let quoted = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const next = line[index + 1];
+
+    if (char === '"' && quoted && next === '"') {
+      value += '"';
+      index += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === ',' && !quoted) {
+      values.push(value);
+      value = '';
+    } else {
+      value += char;
+    }
+  }
+
+  values.push(value);
+  return values;
+}
+
+function get(row: Row, key: string) {
+  return row[key]?.trim() ?? '';
+}
+
+function resolveCsv(source: string, name: string) {
+  const csv = path.join(source, `${name}.csv`);
+  const gz = `${csv}.gz`;
+
+  if (existsSync(csv)) return csv;
+  if (existsSync(gz)) return gz;
+  throw new Error(`Missing ${name}.csv or ${name}.csv.gz in ${source}`);
 }
