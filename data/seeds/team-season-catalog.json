@@ -1105,7 +1105,7 @@
   },
   {
     "id": 139,
-    "team_name": "Newcastle United",
+    "team_name": "West Ham United",
     "season": "2016/2017",
     "season_id": "2016",
     "league": "Premier League",
@@ -1961,7 +1961,7 @@
   },
   {
     "id": 246,
-    "team_name": "Everton",
+    "team_name": "West Ham United",
     "season": "2017/2018",
     "season_id": "2017",
     "league": "Premier League",
@@ -1969,6 +1969,14 @@
   },
   {
     "id": 247,
+    "team_name": "Everton",
+    "season": "2017/2018",
+    "season_id": "2017",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 248,
     "team_name": "Villarreal",
     "season": "2018/2019",
     "season_id": "2018",
@@ -1976,16 +1984,8 @@
     "difficulty": "medium"
   },
   {
-    "id": 248,
-    "team_name": "Lazio",
-    "season": "2018/2019",
-    "season_id": "2018",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
     "id": 249,
-    "team_name": "Atalanta",
+    "team_name": "Lazio",
     "season": "2018/2019",
     "season_id": "2018",
     "league": "Serie A",
@@ -1993,7 +1993,7 @@
   },
   {
     "id": 250,
-    "team_name": "Fiorentina",
+    "team_name": "Atalanta",
     "season": "2018/2019",
     "season_id": "2018",
     "league": "Serie A",
@@ -2001,6 +2001,14 @@
   },
   {
     "id": 251,
+    "team_name": "Fiorentina",
+    "season": "2018/2019",
+    "season_id": "2018",
+    "league": "Serie A",
+    "difficulty": "medium"
+  },
+  {
+    "id": 252,
     "team_name": "Lille",
     "season": "2018/2019",
     "season_id": "2018",
@@ -2008,16 +2016,8 @@
     "difficulty": "medium"
   },
   {
-    "id": 252,
-    "team_name": "PSV",
-    "season": "2018/2019",
-    "season_id": "2018",
-    "league": "Eredivisie",
-    "difficulty": "medium"
-  },
-  {
     "id": 253,
-    "team_name": "Feyenoord",
+    "team_name": "PSV",
     "season": "2018/2019",
     "season_id": "2018",
     "league": "Eredivisie",
@@ -2025,15 +2025,15 @@
   },
   {
     "id": 254,
-    "team_name": "Athletic Bilbao",
+    "team_name": "Feyenoord",
     "season": "2018/2019",
     "season_id": "2018",
-    "league": "La Liga",
+    "league": "Eredivisie",
     "difficulty": "medium"
   },
   {
     "id": 255,
-    "team_name": "Real Sociedad",
+    "team_name": "Athletic Bilbao",
     "season": "2018/2019",
     "season_id": "2018",
     "league": "La Liga",
@@ -2041,15 +2041,15 @@
   },
   {
     "id": 256,
-    "team_name": "Newcastle United",
+    "team_name": "Real Sociedad",
     "season": "2018/2019",
     "season_id": "2018",
-    "league": "Premier League",
+    "league": "La Liga",
     "difficulty": "medium"
   },
   {
     "id": 257,
-    "team_name": "Everton",
+    "team_name": "Newcastle United",
     "season": "2018/2019",
     "season_id": "2018",
     "league": "Premier League",
@@ -2057,6 +2057,22 @@
   },
   {
     "id": 258,
+    "team_name": "West Ham United",
+    "season": "2018/2019",
+    "season_id": "2018",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 259,
+    "team_name": "Everton",
+    "season": "2018/2019",
+    "season_id": "2018",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 260,
     "team_name": "Villarreal",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2064,7 +2080,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 259,
+    "id": 261,
     "team_name": "Lazio",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2072,7 +2088,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 260,
+    "id": 262,
     "team_name": "Atalanta",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2080,7 +2096,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 261,
+    "id": 263,
     "team_name": "Fiorentina",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2088,7 +2104,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 262,
+    "id": 264,
     "team_name": "Lille",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2096,7 +2112,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 263,
+    "id": 265,
     "team_name": "PSV",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2104,7 +2120,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 264,
+    "id": 266,
     "team_name": "Feyenoord",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2112,27 +2128,11 @@
     "difficulty": "medium"
   },
   {
-    "id": 265,
+    "id": 267,
     "team_name": "Athletic Bilbao",
     "season": "2019/2020",
     "season_id": "2019",
     "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 266,
-    "team_name": "Real Sociedad",
-    "season": "2019/2020",
-    "season_id": "2019",
-    "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 267,
-    "team_name": "Newcastle United",
-    "season": "2019/2020",
-    "season_id": "2019",
-    "league": "Premier League",
     "difficulty": "medium"
   },
   {
@@ -2673,6 +2673,30 @@
   },
   {
     "id": 335,
+    "team_name": "Real Sociedad",
+    "season": "2019/2020",
+    "season_id": "2019",
+    "league": "La Liga",
+    "difficulty": "medium"
+  },
+  {
+    "id": 336,
+    "team_name": "Newcastle United",
+    "season": "2019/2020",
+    "season_id": "2019",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 337,
+    "team_name": "West Ham United",
+    "season": "2019/2020",
+    "season_id": "2019",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 338,
     "team_name": "Everton",
     "season": "2019/2020",
     "season_id": "2019",
@@ -2680,7 +2704,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 336,
+    "id": 339,
     "team_name": "Villarreal",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2688,7 +2712,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 337,
+    "id": 340,
     "team_name": "Lazio",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2696,7 +2720,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 338,
+    "id": 341,
     "team_name": "Atalanta",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2704,7 +2728,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 339,
+    "id": 342,
     "team_name": "Fiorentina",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2712,7 +2736,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 340,
+    "id": 343,
     "team_name": "Lille",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2720,7 +2744,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 341,
+    "id": 344,
     "team_name": "PSV",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2728,7 +2752,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 342,
+    "id": 345,
     "team_name": "Feyenoord",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2736,7 +2760,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 343,
+    "id": 346,
     "team_name": "Athletic Bilbao",
     "season": "2020/2021",
     "season_id": "2020",
@@ -2744,39 +2768,47 @@
     "difficulty": "medium"
   },
   {
-    "id": 344,
+    "id": 347,
     "team_name": "Real Sociedad",
     "season": "2020/2021",
     "season_id": "2020",
-    "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 345,
-    "team_name": "Newcastle United",
-    "season": "2020/2021",
-    "season_id": "2020",
-    "league": "Premier League",
-    "difficulty": "medium"
-  },
-  {
-    "id": 346,
-    "team_name": "Everton",
-    "season": "2020/2021",
-    "season_id": "2020",
-    "league": "Premier League",
-    "difficulty": "medium"
-  },
-  {
-    "id": 347,
-    "team_name": "Villarreal",
-    "season": "2021/2022",
-    "season_id": "2021",
     "league": "La Liga",
     "difficulty": "medium"
   },
   {
     "id": 348,
+    "team_name": "Newcastle United",
+    "season": "2020/2021",
+    "season_id": "2020",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 349,
+    "team_name": "West Ham United",
+    "season": "2020/2021",
+    "season_id": "2020",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 350,
+    "team_name": "Everton",
+    "season": "2020/2021",
+    "season_id": "2020",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 351,
+    "team_name": "Villarreal",
+    "season": "2021/2022",
+    "season_id": "2021",
+    "league": "La Liga",
+    "difficulty": "medium"
+  },
+  {
+    "id": 352,
     "team_name": "Lazio",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2784,7 +2816,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 349,
+    "id": 353,
     "team_name": "Atalanta",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2792,7 +2824,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 350,
+    "id": 354,
     "team_name": "Fiorentina",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2800,7 +2832,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 351,
+    "id": 355,
     "team_name": "Lille",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2808,7 +2840,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 352,
+    "id": 356,
     "team_name": "PSV",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2816,7 +2848,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 353,
+    "id": 357,
     "team_name": "Feyenoord",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2824,7 +2856,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 354,
+    "id": 358,
     "team_name": "Athletic Bilbao",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2832,7 +2864,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 355,
+    "id": 359,
     "team_name": "Real Sociedad",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2840,7 +2872,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 356,
+    "id": 360,
     "team_name": "Newcastle United",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2848,7 +2880,15 @@
     "difficulty": "medium"
   },
   {
-    "id": 357,
+    "id": 361,
+    "team_name": "West Ham United",
+    "season": "2021/2022",
+    "season_id": "2021",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 362,
     "team_name": "Everton",
     "season": "2021/2022",
     "season_id": "2021",
@@ -2856,7 +2896,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 358,
+    "id": 363,
     "team_name": "Villarreal",
     "season": "2022/2023",
     "season_id": "2022",
@@ -2864,7 +2904,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 359,
+    "id": 364,
     "team_name": "Lazio",
     "season": "2022/2023",
     "season_id": "2022",
@@ -2872,7 +2912,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 360,
+    "id": 365,
     "team_name": "Atalanta",
     "season": "2022/2023",
     "season_id": "2022",
@@ -2880,7 +2920,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 361,
+    "id": 366,
     "team_name": "Fiorentina",
     "season": "2022/2023",
     "season_id": "2022",
@@ -2888,51 +2928,11 @@
     "difficulty": "medium"
   },
   {
-    "id": 362,
+    "id": 367,
     "team_name": "Lyon",
     "season": "2022/2023",
     "season_id": "2022",
     "league": "Ligue 1",
-    "difficulty": "medium"
-  },
-  {
-    "id": 363,
-    "team_name": "Marseille",
-    "season": "2022/2023",
-    "season_id": "2022",
-    "league": "Ligue 1",
-    "difficulty": "medium"
-  },
-  {
-    "id": 364,
-    "team_name": "Monaco",
-    "season": "2022/2023",
-    "season_id": "2022",
-    "league": "Ligue 1",
-    "difficulty": "medium"
-  },
-  {
-    "id": 365,
-    "team_name": "Lille",
-    "season": "2022/2023",
-    "season_id": "2022",
-    "league": "Ligue 1",
-    "difficulty": "medium"
-  },
-  {
-    "id": 366,
-    "team_name": "PSV",
-    "season": "2022/2023",
-    "season_id": "2022",
-    "league": "Eredivisie",
-    "difficulty": "medium"
-  },
-  {
-    "id": 367,
-    "team_name": "Feyenoord",
-    "season": "2022/2023",
-    "season_id": "2022",
-    "league": "Eredivisie",
     "difficulty": "medium"
   },
   {
@@ -3201,6 +3201,22 @@
   },
   {
     "id": 401,
+    "team_name": "Marseille",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Ligue 1",
+    "difficulty": "easy"
+  },
+  {
+    "id": 402,
+    "team_name": "Monaco",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Ligue 1",
+    "difficulty": "easy"
+  },
+  {
+    "id": 403,
     "team_name": "Sporting CP",
     "season": "2022/2023",
     "season_id": "2022",
@@ -3208,7 +3224,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 402,
+    "id": 404,
     "team_name": "Bayern Munich",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3216,7 +3232,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 403,
+    "id": 405,
     "team_name": "Real Madrid",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3224,7 +3240,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 404,
+    "id": 406,
     "team_name": "Barcelona",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3232,7 +3248,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 405,
+    "id": 407,
     "team_name": "Manchester City",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3240,7 +3256,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 406,
+    "id": 408,
     "team_name": "Liverpool",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3248,7 +3264,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 407,
+    "id": 409,
     "team_name": "Paris Saint-Germain",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3256,24 +3272,8 @@
     "difficulty": "easy"
   },
   {
-    "id": 408,
-    "team_name": "Juventus",
-    "season": "2023/2024",
-    "season_id": "2023",
-    "league": "Serie A",
-    "difficulty": "easy"
-  },
-  {
-    "id": 409,
-    "team_name": "Inter Milan",
-    "season": "2023/2024",
-    "season_id": "2023",
-    "league": "Serie A",
-    "difficulty": "easy"
-  },
-  {
     "id": 410,
-    "team_name": "AC Milan",
+    "team_name": "Juventus",
     "season": "2023/2024",
     "season_id": "2023",
     "league": "Serie A",
@@ -3281,6 +3281,22 @@
   },
   {
     "id": 411,
+    "team_name": "Inter Milan",
+    "season": "2023/2024",
+    "season_id": "2023",
+    "league": "Serie A",
+    "difficulty": "easy"
+  },
+  {
+    "id": 412,
+    "team_name": "AC Milan",
+    "season": "2023/2024",
+    "season_id": "2023",
+    "league": "Serie A",
+    "difficulty": "easy"
+  },
+  {
+    "id": 413,
     "team_name": "Arsenal",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3288,24 +3304,8 @@
     "difficulty": "easy"
   },
   {
-    "id": 412,
-    "team_name": "Chelsea",
-    "season": "2023/2024",
-    "season_id": "2023",
-    "league": "Premier League",
-    "difficulty": "easy"
-  },
-  {
-    "id": 413,
-    "team_name": "Atletico Madrid",
-    "season": "2023/2024",
-    "season_id": "2023",
-    "league": "La Liga",
-    "difficulty": "easy"
-  },
-  {
     "id": 414,
-    "team_name": "Manchester United",
+    "team_name": "Chelsea",
     "season": "2023/2024",
     "season_id": "2023",
     "league": "Premier League",
@@ -3313,15 +3313,15 @@
   },
   {
     "id": 415,
-    "team_name": "Borussia Dortmund",
+    "team_name": "Atletico Madrid",
     "season": "2023/2024",
     "season_id": "2023",
-    "league": "Bundesliga",
+    "league": "La Liga",
     "difficulty": "easy"
   },
   {
     "id": 416,
-    "team_name": "Tottenham Hotspur",
+    "team_name": "Manchester United",
     "season": "2023/2024",
     "season_id": "2023",
     "league": "Premier League",
@@ -3329,6 +3329,22 @@
   },
   {
     "id": 417,
+    "team_name": "Borussia Dortmund",
+    "season": "2023/2024",
+    "season_id": "2023",
+    "league": "Bundesliga",
+    "difficulty": "easy"
+  },
+  {
+    "id": 418,
+    "team_name": "Tottenham Hotspur",
+    "season": "2023/2024",
+    "season_id": "2023",
+    "league": "Premier League",
+    "difficulty": "easy"
+  },
+  {
+    "id": 419,
     "team_name": "Napoli",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3336,7 +3352,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 418,
+    "id": 420,
     "team_name": "Roma",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3344,7 +3360,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 419,
+    "id": 421,
     "team_name": "Bayer Leverkusen",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3352,7 +3368,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 420,
+    "id": 422,
     "team_name": "Benfica",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3360,7 +3376,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 421,
+    "id": 423,
     "team_name": "Porto",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3368,7 +3384,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 422,
+    "id": 424,
     "team_name": "RB Leipzig",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3376,7 +3392,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 423,
+    "id": 425,
     "team_name": "Ajax",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3384,7 +3400,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 424,
+    "id": 426,
     "team_name": "Sevilla",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3392,7 +3408,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 425,
+    "id": 427,
     "team_name": "Valencia",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3400,7 +3416,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 426,
+    "id": 428,
     "team_name": "Lyon",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3408,7 +3424,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 427,
+    "id": 429,
     "team_name": "Marseille",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3416,7 +3432,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 428,
+    "id": 430,
     "team_name": "Monaco",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3424,7 +3440,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 429,
+    "id": 431,
     "team_name": "Sporting CP",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3432,7 +3448,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 430,
+    "id": 432,
     "team_name": "Bayern Munich",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3440,7 +3456,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 431,
+    "id": 433,
     "team_name": "Real Madrid",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3448,7 +3464,7 @@
     "difficulty": "easy"
   },
   {
-    "id": 432,
+    "id": 434,
     "team_name": "Barcelona",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3456,23 +3472,31 @@
     "difficulty": "easy"
   },
   {
-    "id": 433,
-    "team_name": "Manchester City",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Premier League",
-    "difficulty": "easy"
-  },
-  {
-    "id": 434,
-    "team_name": "Liverpool",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Premier League",
-    "difficulty": "easy"
-  },
-  {
     "id": 435,
+    "team_name": "Lille",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Ligue 1",
+    "difficulty": "medium"
+  },
+  {
+    "id": 436,
+    "team_name": "PSV",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Eredivisie",
+    "difficulty": "medium"
+  },
+  {
+    "id": 437,
+    "team_name": "Feyenoord",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Eredivisie",
+    "difficulty": "medium"
+  },
+  {
+    "id": 438,
     "team_name": "Athletic Bilbao",
     "season": "2022/2023",
     "season_id": "2022",
@@ -3480,7 +3504,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 436,
+    "id": 439,
     "team_name": "Real Sociedad",
     "season": "2022/2023",
     "season_id": "2022",
@@ -3488,7 +3512,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 437,
+    "id": 440,
     "team_name": "Newcastle United",
     "season": "2022/2023",
     "season_id": "2022",
@@ -3496,7 +3520,15 @@
     "difficulty": "medium"
   },
   {
-    "id": 438,
+    "id": 441,
+    "team_name": "West Ham United",
+    "season": "2022/2023",
+    "season_id": "2022",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 442,
     "team_name": "Everton",
     "season": "2022/2023",
     "season_id": "2022",
@@ -3504,7 +3536,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 439,
+    "id": 443,
     "team_name": "Villarreal",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3512,7 +3544,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 440,
+    "id": 444,
     "team_name": "Lazio",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3520,7 +3552,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 441,
+    "id": 445,
     "team_name": "Atalanta",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3528,7 +3560,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 442,
+    "id": 446,
     "team_name": "Fiorentina",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3536,7 +3568,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 443,
+    "id": 447,
     "team_name": "Lille",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3544,7 +3576,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 444,
+    "id": 448,
     "team_name": "PSV",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3552,7 +3584,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 445,
+    "id": 449,
     "team_name": "Feyenoord",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3560,7 +3592,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 446,
+    "id": 450,
     "team_name": "Athletic Bilbao",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3568,7 +3600,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 447,
+    "id": 451,
     "team_name": "Real Sociedad",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3576,7 +3608,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 448,
+    "id": 452,
     "team_name": "Newcastle United",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3584,7 +3616,15 @@
     "difficulty": "medium"
   },
   {
-    "id": 449,
+    "id": 453,
+    "team_name": "West Ham United",
+    "season": "2023/2024",
+    "season_id": "2023",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 454,
     "team_name": "Everton",
     "season": "2023/2024",
     "season_id": "2023",
@@ -3592,56 +3632,16 @@
     "difficulty": "medium"
   },
   {
-    "id": 450,
-    "team_name": "Paris Saint-Germain",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Ligue 1",
-    "difficulty": "medium"
-  },
-  {
-    "id": 451,
-    "team_name": "Juventus",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
-    "id": 452,
-    "team_name": "Inter Milan",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
-    "id": 453,
-    "team_name": "AC Milan",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
-    "id": 454,
-    "team_name": "Manchester United",
+    "id": 455,
+    "team_name": "Manchester City",
     "season": "2024/2025",
     "season_id": "2024",
     "league": "Premier League",
     "difficulty": "medium"
   },
   {
-    "id": 455,
-    "team_name": "Borussia Dortmund",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Bundesliga",
-    "difficulty": "medium"
-  },
-  {
     "id": 456,
-    "team_name": "Arsenal",
+    "team_name": "Liverpool",
     "season": "2024/2025",
     "season_id": "2024",
     "league": "Premier League",
@@ -3649,6 +3649,62 @@
   },
   {
     "id": 457,
+    "team_name": "Paris Saint-Germain",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Ligue 1",
+    "difficulty": "medium"
+  },
+  {
+    "id": 458,
+    "team_name": "Juventus",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Serie A",
+    "difficulty": "medium"
+  },
+  {
+    "id": 459,
+    "team_name": "Inter Milan",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Serie A",
+    "difficulty": "medium"
+  },
+  {
+    "id": 460,
+    "team_name": "AC Milan",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Serie A",
+    "difficulty": "medium"
+  },
+  {
+    "id": 461,
+    "team_name": "Manchester United",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 462,
+    "team_name": "Borussia Dortmund",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Bundesliga",
+    "difficulty": "medium"
+  },
+  {
+    "id": 463,
+    "team_name": "Arsenal",
+    "season": "2024/2025",
+    "season_id": "2024",
+    "league": "Premier League",
+    "difficulty": "medium"
+  },
+  {
+    "id": 464,
     "team_name": "Chelsea",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3656,7 +3712,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 458,
+    "id": 465,
     "team_name": "Tottenham Hotspur",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3664,7 +3720,7 @@
     "difficulty": "medium"
   },
   {
-    "id": 459,
+    "id": 466,
     "team_name": "Atletico Madrid",
     "season": "2024/2025",
     "season_id": "2024",
@@ -3672,67 +3728,11 @@
     "difficulty": "medium"
   },
   {
-    "id": 460,
+    "id": 467,
     "team_name": "Bayer Leverkusen",
     "season": "2024/2025",
     "season_id": "2024",
     "league": "Bundesliga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 461,
-    "team_name": "RB Leipzig",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Bundesliga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 462,
-    "team_name": "Sevilla",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 463,
-    "team_name": "Valencia",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 464,
-    "team_name": "Villarreal",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "La Liga",
-    "difficulty": "medium"
-  },
-  {
-    "id": 465,
-    "team_name": "Roma",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
-    "id": 466,
-    "team_name": "Napoli",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
-    "difficulty": "medium"
-  },
-  {
-    "id": 467,
-    "team_name": "Lazio",
-    "season": "2024/2025",
-    "season_id": "2024",
-    "league": "Serie A",
     "difficulty": "medium"
   },
   {

@@ -116,7 +116,8 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Sporting CP', league: 'Liga Portugal' },
     { team_name: 'Athletic Bilbao', league: 'La Liga' },
     { team_name: 'Real Sociedad', league: 'La Liga' },
-    { team_name: 'Newcastle United', league: 'Premier League' },
+    { team_name: 'Newcastle United', league: 'Premier League', excludeYears: [2016] },
+    { team_name: 'West Ham United', league: 'Premier League' },
     { team_name: 'Everton', league: 'Premier League' },
   ],
   hard: [
