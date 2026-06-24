@@ -208,6 +208,7 @@ export class GameSessionService {
 }
 
 function createSessionClient(): SupabaseClient | null {
+  if (env.NODE_ENV === 'test') return null;
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
 
   return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);

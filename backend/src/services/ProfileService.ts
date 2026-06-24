@@ -256,7 +256,7 @@ function mapProfile(row: ProfileRow): PublicProfile {
   };
 }
 
-function applyProgress(
+export function applyProgress(
   profile: PublicProfile,
   playMode: PlayMode,
   matchType: GameSession['matchType'],
@@ -294,11 +294,11 @@ function applyProgress(
   };
 }
 
-function getLevelFromXP(xp: number): number {
+export function getLevelFromXP(xp: number): number {
   return Math.floor(xp / 500) + 1;
 }
 
-function getRankFromLP(lp: number): Rank {
+export function getRankFromLP(lp: number): Rank {
   const safeLp = Math.max(0, lp);
   for (let i = RANKS.length - 1; i >= 0; i -= 1) {
     if (safeLp >= getRankLowerBound(RANKS[i])) return RANKS[i];

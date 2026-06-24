@@ -9,7 +9,7 @@ export function getCurrentClub(player: PlayerCard): CareerClub | null {
 
 export function getClubInitials(name: string) {
   const parts = name
-    .replace(/\b(FC|CF|SC|SV|VfB|VfL|TSG|RB|Youth)\b/gi, '')
+    .replace(/\b(Football Club|Club de Futbol|Futbol Club|FC|CF|SC|SV|VfB|VfL|TSG|RB|Youth|S\.?p\.?A\.?|Ltd|Limited|Association)\b/gi, '')
     .split(/\s+/)
     .map((part) => part.replace(/[^A-Za-z0-9]/g, ''))
     .filter(Boolean);
