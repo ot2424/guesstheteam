@@ -34,8 +34,8 @@ type ClubPoolItem = {
 
 const DIFFICULTY_RULES: Record<Difficulty, { minYear: number; maxYear: number }> = {
   easy: { minYear: 2018, maxYear: 2025 },
-  medium: { minYear: 2010, maxYear: 2025 },
-  hard: { minYear: 2000, maxYear: 2015 },
+  medium: { minYear: 2016, maxYear: 2025 },
+  hard: { minYear: 2012, maxYear: 2015 },
 };
 const ALLOWED_LEAGUES = new Set([
   'Bundesliga',
@@ -103,13 +103,21 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Napoli', league: 'Serie A' },
     { team_name: 'Lazio', league: 'Serie A' },
     { team_name: 'Atalanta', league: 'Serie A', minYear: 2011 },
+    { team_name: 'Fiorentina', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1', minYear: 2013 },
+    { team_name: 'Lille', league: 'Ligue 1' },
     { team_name: 'Ajax', league: 'Eredivisie' },
+    { team_name: 'PSV', league: 'Eredivisie' },
+    { team_name: 'Feyenoord', league: 'Eredivisie' },
     { team_name: 'Porto', league: 'Liga Portugal' },
     { team_name: 'Benfica', league: 'Liga Portugal' },
     { team_name: 'Sporting CP', league: 'Liga Portugal' },
+    { team_name: 'Athletic Bilbao', league: 'La Liga' },
+    { team_name: 'Real Sociedad', league: 'La Liga' },
+    { team_name: 'Newcastle United', league: 'Premier League' },
+    { team_name: 'Everton', league: 'Premier League' },
   ],
   hard: [
     { team_name: 'Werder Bremen', league: 'Bundesliga' },
@@ -121,6 +129,7 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'VfB Stuttgart', league: 'Bundesliga' },
     { team_name: 'Arsenal', league: 'Premier League' },
     { team_name: 'Manchester United', league: 'Premier League' },
+    { team_name: 'Manchester City', league: 'Premier League' },
     { team_name: 'Chelsea', league: 'Premier League' },
     { team_name: 'Liverpool', league: 'Premier League' },
     { team_name: 'Tottenham Hotspur', league: 'Premier League' },
@@ -130,13 +139,16 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Valencia', league: 'La Liga' },
     { team_name: 'Deportivo La Coruna', league: 'La Liga' },
     { team_name: 'Atletico Madrid', league: 'La Liga', minYear: 2002 },
+    { team_name: 'Athletic Bilbao', league: 'La Liga' },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Villarreal', league: 'La Liga' },
     { team_name: 'AC Milan', league: 'Serie A' },
     { team_name: 'Inter Milan', league: 'Serie A' },
     { team_name: 'Juventus', league: 'Serie A' },
     { team_name: 'Roma', league: 'Serie A' },
+    { team_name: 'Napoli', league: 'Serie A' },
     { team_name: 'Lazio', league: 'Serie A' },
+    { team_name: 'Atalanta', league: 'Serie A', minYear: 2011 },
     { team_name: 'Fiorentina', league: 'Serie A' },
     { team_name: 'Parma', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
@@ -335,8 +347,8 @@ function buildSegmentPrompt(
   const rangeText = difficulty === 'easy'
     ? 'Saisons 2018/2019 bis 2025/2026. Nur sehr bekannte moderne Top-Clubs: Bayern Munich, Real Madrid, Barcelona, Manchester City, Liverpool, PSG, Juventus, Inter Milan, AC Milan, Arsenal, Chelsea, Atletico Madrid, Manchester United, Borussia Dortmund, Tottenham Hotspur, Napoli, Roma, Bayer Leverkusen, Benfica, Porto, RB Leipzig, Ajax.'
     : difficulty === 'medium'
-      ? 'Saisons 2010/2011 bis 2025/2026. Bekannte Euro-Dauergaeste und starke Champions-/Europa-League-Teams. Keine Nischenclubs wie Rennes oder Anderlecht.'
-      : 'Saisons 2000/2001 bis 2014/2015. Legendaere Nostalgie-Teams: Werder Bremen 2003/2004, AC Milan 2004/2005, Arsenal 2003/2004, Valencia 2000/2001, Schalke 2000/2001, Lyon 2004/2005, Deportivo La Coruna, Porto 2003/2004, Inter Milan 2009/2010, Barcelona 2008/2009.';
+      ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Euro-Dauergaeste und starke Champions-/Europa-League-Teams. Keine Nischenclubs wie Rennes oder Anderlecht.'
+      : 'Saisons 2012/2013 bis 2015/2016. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Top- und Nostalgie-Clubs. Noch aeltere 2000er-Ikonen brauchen spaeter einen separaten manuell geprueften Legacy-Seed.';
 
   return `
 Erzeuge Block ${options.block} eines 500er-Katalogs fuer mein Fussball-Quizspiel.

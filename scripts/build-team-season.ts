@@ -130,6 +130,7 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   arsenal: '11',
   'atalanta': '800',
   'atletico madrid': '13',
+  'athletic bilbao': '621',
   barcelona: '131',
   'bayer leverkusen': '15',
   'bayern munich': '27',
@@ -137,6 +138,7 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   'borussia dortmund': '16',
   chelsea: '631',
   'deportivo la coruna': '897',
+  everton: '29',
   feyenoord: '234',
   fiorentina: '430',
   'hamburger sv': '41',
@@ -145,6 +147,7 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   lazio: '398',
   liverpool: '31',
   lyon: '1041',
+  lille: '1082',
   'manchester city': '281',
   'manchester united': '985',
   marseille: '244',
@@ -157,6 +160,7 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   psv: '383',
   'rb leipzig': '23826',
   'real madrid': '418',
+  'real sociedad': '681',
   roma: '12',
   'schalke 04': '33',
   sevilla: '368',
@@ -313,7 +317,7 @@ async function findDatasetFallback(
   if (games.length === 0) return null;
 
   const lineups = await readDatasetLineups(source, new Set(games.map((game) => game.gameId)), club.clubId);
-  const selectedGame = games.find((game) => (lineups.get(game.gameId)?.length ?? 0) >= 11);
+  const selectedGame = selectRepresentativeGame(games, lineups, club, season);
   if (!selectedGame) return null;
 
   const starters = lineups.get(selectedGame.gameId)?.slice(0, 11) ?? [];
@@ -340,6 +344,32 @@ async function findDatasetFallback(
     difficulty: getDifficulty(String(season)),
     players: seedPlayers,
   };
+}
+
+function selectRepresentativeGame(
+  games: DatasetGame[],
+  lineups: Map<string, DatasetLineupPlayer[]>,
+  club: DatasetClub,
+  season: number,
+) {
+  const targetDate = Date.parse(`${season + 1}-03-15T12:00:00Z`);
+
+  return games
+    .filter((game) => (lineups.get(game.gameId)?.length ?? 0) >= 11)
+    .map((game) => {
+      const gameDate = Date.parse(`${game.date}T12:00:00Z`);
+      const daysFromTarget = Number.isFinite(gameDate)
+        ? Math.abs(gameDate - targetDate) / 86_400_000
+        : 365;
+      const domesticLeagueBonus = game.competitionId === club.competitionId ? 1_000 : 0;
+      const lineupsBonus = Math.min(lineups.get(game.gameId)?.length ?? 0, 11);
+
+      return {
+        game,
+        score: domesticLeagueBonus + lineupsBonus - daysFromTarget,
+      };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.game ?? null;
 }
 
 function parseDifficulty(value: string | boolean | undefined): Difficulty | undefined {

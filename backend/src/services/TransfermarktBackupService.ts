@@ -395,14 +395,20 @@ function mergeClubDetails(...details: Array<ClubDetails | null>) {
 
 const CLUB_NAME_ALIASES: Record<string, string> = {
   '27': 'Bayern Munich',
+  '15': 'Bayer Leverkusen',
   '46': 'Inter Milan',
   '5': 'AC Milan',
   '506': 'Juventus',
   '131': 'Barcelona',
   '418': 'Real Madrid',
   '13': 'Atletico Madrid',
+  '621': 'Athletic Bilbao',
+  '681': 'Real Sociedad',
   '583': 'Paris Saint-Germain',
+  '1041': 'Lyon',
+  '1082': 'Lille',
   '244': 'Marseille',
+  '162': 'Monaco',
   '399': 'Leeds United',
   '985': 'Manchester United',
   '631': 'Chelsea',
@@ -411,6 +417,17 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '281': 'Manchester City',
   '762': 'Newcastle United',
   '148': 'Tottenham Hotspur',
+  '29': 'Everton',
+  '294': 'Benfica',
+  '720': 'Porto',
+  '23826': 'RB Leipzig',
+  '610': 'Ajax',
+  '383': 'PSV',
+  '234': 'Feyenoord',
+  '368': 'Sevilla',
+  '1049': 'Valencia',
+  '336': 'Sporting CP',
+  '430': 'Fiorentina',
 };
 
 const PARENT_CLUB_FALLBACKS: Array<{ pattern: RegExp; clubId: string; clubName: string }> = [
