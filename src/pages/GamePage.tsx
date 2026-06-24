@@ -5,6 +5,7 @@ import { MobilePlayerList } from '../components/game/MobilePlayerList';
 import { CareerTipDrawer } from '../components/game/CareerTipDrawer';
 import { CentralSearchField } from '../components/game/CentralSearchField';
 import { GameTimer } from '../components/game/GameTimer';
+import { MatchPrepAnimation } from '../components/game/MatchPrepAnimation';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess } from '../lib/api';
@@ -329,9 +330,12 @@ export function GamePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#06090f' }}>
-        <div className="text-sm text-gray-500">Match wird vorbereitet...</div>
-      </div>
+      <MatchPrepAnimation
+        playMode={playMode}
+        matchType={matchType}
+        difficulty={difficulty}
+        rank={rank}
+      />
     );
   }
 
