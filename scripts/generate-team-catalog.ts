@@ -24,9 +24,17 @@ interface TeamCatalogItem {
   difficulty: Difficulty;
 }
 
+type ClubPoolItem = {
+  team_name: string;
+  league: string;
+  minYear?: number;
+  maxYear?: number;
+  excludeYears?: number[];
+};
+
 const DIFFICULTY_RULES: Record<Difficulty, { minYear: number; maxYear: number }> = {
-  easy: { minYear: 2018, maxYear: 2026 },
-  medium: { minYear: 2010, maxYear: 2026 },
+  easy: { minYear: 2018, maxYear: 2025 },
+  medium: { minYear: 2010, maxYear: 2025 },
   hard: { minYear: 2000, maxYear: 2015 },
 };
 const ALLOWED_LEAGUES = new Set([
@@ -39,7 +47,7 @@ const ALLOWED_LEAGUES = new Set([
   'Liga Portugal',
 ]);
 
-const CLUB_POOLS: Record<Difficulty, Array<{ team_name: string; league: string }>> = {
+const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
   easy: [
     { team_name: 'Bayern Munich', league: 'Bundesliga' },
     { team_name: 'Real Madrid', league: 'La Liga' },
@@ -53,38 +61,52 @@ const CLUB_POOLS: Record<Difficulty, Array<{ team_name: string; league: string }
     { team_name: 'Arsenal', league: 'Premier League' },
     { team_name: 'Chelsea', league: 'Premier League' },
     { team_name: 'Atletico Madrid', league: 'La Liga' },
-  ],
-  medium: [
-    { team_name: 'Borussia Dortmund', league: 'Bundesliga' },
-    { team_name: 'RB Leipzig', league: 'Bundesliga' },
-    { team_name: 'Bayer Leverkusen', league: 'Bundesliga' },
-    { team_name: 'Eintracht Frankfurt', league: 'Bundesliga' },
-    { team_name: 'VfL Wolfsburg', league: 'Bundesliga' },
-    { team_name: 'Borussia Monchengladbach', league: 'Bundesliga' },
-    { team_name: 'Arsenal', league: 'Premier League' },
-    { team_name: 'Tottenham Hotspur', league: 'Premier League' },
-    { team_name: 'Chelsea', league: 'Premier League' },
     { team_name: 'Manchester United', league: 'Premier League' },
-    { team_name: 'Newcastle United', league: 'Premier League' },
-    { team_name: 'Atletico Madrid', league: 'La Liga' },
+    { team_name: 'Borussia Dortmund', league: 'Bundesliga' },
+    { team_name: 'Tottenham Hotspur', league: 'Premier League' },
+    { team_name: 'Napoli', league: 'Serie A' },
+    { team_name: 'Roma', league: 'Serie A' },
+    { team_name: 'Bayer Leverkusen', league: 'Bundesliga' },
+    { team_name: 'Benfica', league: 'Liga Portugal' },
+    { team_name: 'Porto', league: 'Liga Portugal' },
+    { team_name: 'RB Leipzig', league: 'Bundesliga', minYear: 2016 },
+    { team_name: 'Ajax', league: 'Eredivisie' },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Valencia', league: 'La Liga' },
-    { team_name: 'Villarreal', league: 'La Liga' },
-    { team_name: 'Real Sociedad', league: 'La Liga' },
-    { team_name: 'Athletic Bilbao', league: 'La Liga' },
-    { team_name: 'Roma', league: 'Serie A' },
-    { team_name: 'Napoli', league: 'Serie A' },
-    { team_name: 'Lazio', league: 'Serie A' },
-    { team_name: 'Atalanta', league: 'Serie A' },
-    { team_name: 'Fiorentina', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1' },
-    { team_name: 'Lille', league: 'Ligue 1' },
-    { team_name: 'Rennes', league: 'Ligue 1' },
+    { team_name: 'Sporting CP', league: 'Liga Portugal' },
+  ],
+  medium: [
+    { team_name: 'Bayern Munich', league: 'Bundesliga' },
+    { team_name: 'Real Madrid', league: 'La Liga' },
+    { team_name: 'Barcelona', league: 'La Liga' },
+    { team_name: 'Manchester City', league: 'Premier League' },
+    { team_name: 'Liverpool', league: 'Premier League' },
+    { team_name: 'Paris Saint-Germain', league: 'Ligue 1' },
+    { team_name: 'Juventus', league: 'Serie A' },
+    { team_name: 'Inter Milan', league: 'Serie A' },
+    { team_name: 'AC Milan', league: 'Serie A' },
+    { team_name: 'Manchester United', league: 'Premier League' },
+    { team_name: 'Borussia Dortmund', league: 'Bundesliga' },
+    { team_name: 'Arsenal', league: 'Premier League' },
+    { team_name: 'Chelsea', league: 'Premier League' },
+    { team_name: 'Tottenham Hotspur', league: 'Premier League' },
+    { team_name: 'Atletico Madrid', league: 'La Liga' },
+    { team_name: 'Bayer Leverkusen', league: 'Bundesliga' },
+    { team_name: 'RB Leipzig', league: 'Bundesliga', minYear: 2016 },
+    { team_name: 'Sevilla', league: 'La Liga' },
+    { team_name: 'Valencia', league: 'La Liga' },
+    { team_name: 'Villarreal', league: 'La Liga' },
+    { team_name: 'Roma', league: 'Serie A' },
+    { team_name: 'Napoli', league: 'Serie A' },
+    { team_name: 'Lazio', league: 'Serie A' },
+    { team_name: 'Atalanta', league: 'Serie A', minYear: 2011 },
+    { team_name: 'Lyon', league: 'Ligue 1' },
+    { team_name: 'Marseille', league: 'Ligue 1' },
+    { team_name: 'Monaco', league: 'Ligue 1', minYear: 2013 },
     { team_name: 'Ajax', league: 'Eredivisie' },
-    { team_name: 'PSV', league: 'Eredivisie' },
-    { team_name: 'Feyenoord', league: 'Eredivisie' },
     { team_name: 'Porto', league: 'Liga Portugal' },
     { team_name: 'Benfica', league: 'Liga Portugal' },
     { team_name: 'Sporting CP', league: 'Liga Portugal' },
@@ -102,12 +124,12 @@ const CLUB_POOLS: Record<Difficulty, Array<{ team_name: string; league: string }
     { team_name: 'Chelsea', league: 'Premier League' },
     { team_name: 'Liverpool', league: 'Premier League' },
     { team_name: 'Tottenham Hotspur', league: 'Premier League' },
-    { team_name: 'Newcastle United', league: 'Premier League' },
+    { team_name: 'Newcastle United', league: 'Premier League', excludeYears: [2009] },
     { team_name: 'Real Madrid', league: 'La Liga' },
     { team_name: 'Barcelona', league: 'La Liga' },
     { team_name: 'Valencia', league: 'La Liga' },
     { team_name: 'Deportivo La Coruna', league: 'La Liga' },
-    { team_name: 'Atletico Madrid', league: 'La Liga' },
+    { team_name: 'Atletico Madrid', league: 'La Liga', minYear: 2002 },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Villarreal', league: 'La Liga' },
     { team_name: 'AC Milan', league: 'Serie A' },
@@ -119,7 +141,7 @@ const CLUB_POOLS: Record<Difficulty, Array<{ team_name: string; league: string }
     { team_name: 'Parma', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
-    { team_name: 'Monaco', league: 'Ligue 1' },
+    { team_name: 'Monaco', league: 'Ligue 1', excludeYears: [2011, 2012] },
     { team_name: 'Paris Saint-Germain', league: 'Ligue 1' },
     { team_name: 'Lille', league: 'Ligue 1' },
     { team_name: 'Ajax', league: 'Eredivisie' },
@@ -139,7 +161,7 @@ const CLUB_LEAGUES = new Map(
 const args = parseArgs(process.argv.slice(2));
 const apiKey = process.env.OPENAI_API_KEY;
 
-if (!apiKey) {
+if (!args.deterministic && !apiKey) {
   throw new Error('OPENAI_API_KEY is required to generate the team catalog.');
 }
 
@@ -311,9 +333,9 @@ function buildSegmentPrompt(
 ) {
   const endId = startId + count - 1;
   const rangeText = difficulty === 'easy'
-    ? 'Saisons 2018/2019 bis 2025/2026. Nur absolute moderne Elite-Clubs: Bayern Munich, Real Madrid, Barcelona, Manchester City, Liverpool, PSG, Juventus, Inter Milan, AC Milan, Arsenal, Chelsea, Atletico Madrid.'
+    ? 'Saisons 2018/2019 bis 2025/2026. Nur sehr bekannte moderne Top-Clubs: Bayern Munich, Real Madrid, Barcelona, Manchester City, Liverpool, PSG, Juventus, Inter Milan, AC Milan, Arsenal, Chelsea, Atletico Madrid, Manchester United, Borussia Dortmund, Tottenham Hotspur, Napoli, Roma, Bayer Leverkusen, Benfica, Porto, RB Leipzig, Ajax.'
     : difficulty === 'medium'
-      ? 'Saisons 2010/2011 bis 2025/2026. Euro-Dauergaeste und starke Champions-/Europa-League-Teams: Borussia Dortmund, RB Leipzig, Sevilla, Roma, Napoli, Ajax, Porto, Tottenham Hotspur, Bayer Leverkusen, Monaco, Benfica, Sporting CP, Lyon, Marseille, Atletico Madrid, Arsenal.'
+      ? 'Saisons 2010/2011 bis 2025/2026. Bekannte Euro-Dauergaeste und starke Champions-/Europa-League-Teams. Keine Nischenclubs wie Rennes oder Anderlecht.'
       : 'Saisons 2000/2001 bis 2014/2015. Legendaere Nostalgie-Teams: Werder Bremen 2003/2004, AC Milan 2004/2005, Arsenal 2003/2004, Valencia 2000/2001, Schalke 2000/2001, Lyon 2004/2005, Deportivo La Coruna, Porto 2003/2004, Inter Milan 2009/2010, Barcelona 2008/2009.';
 
   return `
@@ -484,6 +506,7 @@ function deterministicSegment(
   for (const year of years) {
     for (const club of CLUB_POOLS[difficulty]) {
       if (teams.length >= count) return teams;
+      if (!isClubSeasonAllowed(club, year)) continue;
       const season = formatSeason(year);
       const key = `${normalizeKey(club.team_name)}-${season}`;
       if (seen.has(key)) continue;
@@ -502,6 +525,13 @@ function deterministicSegment(
 
   if (teams.length >= count) return teams;
   throw new Error(`Deterministic pool could only fill ${teams.length}/${count} ${difficulty} teams.`);
+}
+
+function isClubSeasonAllowed(club: ClubPoolItem, year: number) {
+  if (club.minYear !== undefined && year < club.minYear) return false;
+  if (club.maxYear !== undefined && year > club.maxYear) return false;
+  if (club.excludeYears?.includes(year)) return false;
+  return true;
 }
 
 function getYearsForDifficulty(difficulty: Difficulty) {

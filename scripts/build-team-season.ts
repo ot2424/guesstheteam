@@ -6,7 +6,7 @@ import { createInterface } from 'node:readline';
 import { createGunzip } from 'node:zlib';
 import { createClient } from '@supabase/supabase-js';
 import { TransfermarktBackupService } from '../backend/src/services/TransfermarktBackupService';
-import type { Difficulty, InternalPlayer, Position, TeamData } from '../backend/src/types';
+import type { CareerClub, Difficulty, InternalPlayer, Position, TeamData } from '../backend/src/types';
 
 interface Args {
   club: string;
@@ -123,13 +123,56 @@ interface DatasetLineupPlayer {
 const TRANSFERMARKT_BASE_URL = process.env.TRANSFERMARKT_API_BASE_URL ?? 'https://transfermarkt-api.fly.dev';
 const TRANSFERMARKT_TIMEOUT_MS = Number(process.env.TRANSFERMARKT_API_TIMEOUT_MS ?? 8000);
 const POSITION_VALUES = new Set<Position>(['GK', 'CB', 'LB', 'RB', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'LW', 'RW', 'ST', 'CF']);
+const KNOWN_CLUB_IDS: Record<string, string> = {
+  'ac milan': '5',
+  ajax: '610',
+  arsenal: '11',
+  'atalanta': '800',
+  'atletico madrid': '13',
+  barcelona: '131',
+  'bayer leverkusen': '15',
+  'bayern munich': '27',
+  benfica: '294',
+  'borussia dortmund': '16',
+  chelsea: '631',
+  'deportivo la coruna': '897',
+  feyenoord: '234',
+  fiorentina: '430',
+  'hamburger sv': '41',
+  'inter milan': '46',
+  juventus: '506',
+  lazio: '398',
+  liverpool: '31',
+  lyon: '1041',
+  'manchester city': '281',
+  'manchester united': '985',
+  marseille: '244',
+  monaco: '162',
+  napoli: '6195',
+  'newcastle united': '762',
+  parma: '130',
+  'paris saint-germain': '583',
+  porto: '720',
+  psv: '383',
+  'rb leipzig': '23826',
+  'real madrid': '418',
+  roma: '12',
+  'schalke 04': '33',
+  sevilla: '368',
+  'sporting cp': '336',
+  'tottenham hotspur': '148',
+  valencia: '1049',
+  'vfb stuttgart': '79',
+  villarreal: '1050',
+  'werder bremen': '86',
+};
 const args = parseArgs(process.argv.slice(2));
 
 if (!args.club && !args.clubId) {
   throw new Error('Provide --club "Club Name" or --club-id 123.');
 }
 
-const clubId = args.clubId ?? await searchClubId(args.club) ?? await searchDatasetClubId(args.datasetSource, args.club);
+const clubId = args.clubId ?? getKnownClubId(args.club) ?? await searchClubId(args.club) ?? await searchDatasetClubId(args.datasetSource, args.club);
 if (!clubId) throw new Error(`Could not resolve club "${args.club}".`);
 
 const [profile, squad] = await Promise.all([
@@ -415,6 +458,10 @@ async function searchClubId(clubName: string) {
     ?? null;
 }
 
+function getKnownClubId(clubName: string) {
+  return KNOWN_CLUB_IDS[normalizeReadableName(clubName)] ?? null;
+}
+
 async function searchDatasetClubId(source: string, clubName: string) {
   try {
     const clubs = await readDatasetClubs(source);
@@ -635,7 +682,8 @@ async function buildTeamData(input: {
     players,
   };
 
-  return new TransfermarktBackupService().enrichTeamData(team);
+  const apiEnrichedTeam = await new TransfermarktBackupService().enrichTeamData(team);
+  return enrichThinCareersFromDataset(args.datasetSource, apiEnrichedTeam);
 }
 
 function toTeamSeasonRow(team: TeamData, clubId: string, provider: string, difficulty: Difficulty) {
@@ -669,6 +717,122 @@ async function outputTeam(team: TeamData, clubId: string, provider: string, diff
 
   if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
   console.log(`Built and synced ${team.name} ${team.season} (${team.formation}) with ${team.players.length} starters.`);
+}
+
+async function enrichThinCareersFromDataset(source: string, team: TeamData): Promise<TeamData> {
+  const thinPlayers = team.players.filter((player) => player.career.length <= 1);
+  if (thinPlayers.length === 0) return team;
+
+  const careers = await readDatasetTransfers(source, new Set(thinPlayers.map((player) => player.id)));
+  if (careers.size === 0) return team;
+
+  return {
+    ...team,
+    players: team.players.map((player) => {
+      if (player.career.length > 1) return player;
+
+      const datasetCareer = careers.get(player.id);
+      if (!datasetCareer || datasetCareer.length <= player.career.length) return player;
+
+      return {
+        ...player,
+        career: datasetCareer,
+      };
+    }),
+  };
+}
+
+async function readDatasetTransfers(source: string, playerIds: Set<string>) {
+  const byPlayer = new Map<string, CareerClub[]>();
+
+  try {
+    for await (const row of readCsv(resolveCsv(source, 'transfers'))) {
+      const playerId = get(row, 'player_id');
+      if (!playerIds.has(playerId)) continue;
+
+      const year = getTransferYearFromDataset(get(row, 'transfer_date'), get(row, 'transfer_season'));
+      if (!year || year > new Date().getFullYear()) continue;
+
+      const career = byPlayer.get(playerId) ?? [];
+      const fromClubId = get(row, 'from_club_id');
+      const fromClubName = get(row, 'from_club_name');
+      const toClubId = get(row, 'to_club_id');
+      const toClubName = get(row, 'to_club_name');
+
+      if (fromClubId && fromClubName && !isDatasetFreeAgent(fromClubName)) {
+        career.push({
+          clubId: fromClubId,
+          clubName: normalizeClubName(fromClubName),
+          logoUrl: getTransfermarktLogoUrl(fromClubId),
+          fromYear: year,
+          toYear: year,
+        });
+      }
+
+      if (toClubId && toClubName && !isDatasetFreeAgent(toClubName)) {
+        career.push({
+          clubId: toClubId,
+          clubName: normalizeClubName(toClubName),
+          logoUrl: getTransfermarktLogoUrl(toClubId),
+          fromYear: year,
+          toYear: null,
+        });
+      }
+
+      byPlayer.set(playerId, career);
+    }
+  } catch {
+    return new Map<string, CareerClub[]>();
+  }
+
+  return new Map(
+    [...byPlayer.entries()]
+      .map(([playerId, career]) => [playerId, closeDatasetCareer(compactDatasetCareer(career))] as const)
+      .filter(([, career]) => career.length > 0),
+  );
+}
+
+function compactDatasetCareer(career: CareerClub[]) {
+  const byClub = new Map<string, CareerClub>();
+
+  for (const item of career.sort((a, b) => a.fromYear - b.fromYear)) {
+    const existing = byClub.get(item.clubId);
+    if (!existing) {
+      byClub.set(item.clubId, { ...item });
+      continue;
+    }
+
+    existing.fromYear = Math.min(existing.fromYear, item.fromYear);
+    existing.toYear = item.toYear === null || existing.toYear === null
+      ? null
+      : Math.max(existing.toYear, item.toYear);
+  }
+
+  return [...byClub.values()].sort((a, b) => a.fromYear - b.fromYear);
+}
+
+function closeDatasetCareer(career: CareerClub[]) {
+  for (let index = 0; index < career.length - 1; index += 1) {
+    const current = career[index];
+    const next = career[index + 1];
+    if (current.toYear === null || current.toYear > next.fromYear) {
+      current.toYear = next.fromYear;
+    }
+  }
+
+  return career;
+}
+
+function getTransferYearFromDataset(date: string, season: string) {
+  const dateYear = Number(date.slice(0, 4));
+  if (Number.isFinite(dateYear) && dateYear > 1900) return dateYear;
+  const seasonYear = Number(season.match(/\d{2}\/(\d{2})/)?.[1]);
+  if (Number.isFinite(seasonYear)) return seasonYear > 50 ? 1900 + seasonYear : 2000 + seasonYear;
+  return null;
+}
+
+function isDatasetFreeAgent(name: string) {
+  return ['without club', 'retired', 'vereinslos', 'career break', '-'].includes(name.trim().toLowerCase());
 }
 
 function parseOpenAiJson(body: Record<string, unknown>): OpenAiStarterSelection {
@@ -802,6 +966,16 @@ function normalizeClubName(name: string) {
     .replace(/\s+Football Club$/i, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
+}
+
+function normalizeReadableName(name: string) {
+  return name
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase();
 }
 
 function normalizeName(name: string) {
