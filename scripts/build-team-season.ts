@@ -715,7 +715,12 @@ async function outputTeam(team: TeamData, clubId: string, provider: string, diff
     .from('team_seasons')
     .upsert(row, { onConflict: 'id' });
 
-  if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
+  if (error) {
+    const hint = error.message.includes("Could not find the table 'public.team_seasons'")
+      ? ' Run supabase/migrations/0004_create_team_seasons.sql in the Supabase SQL editor for this project, then retry.'
+      : '';
+    throw new Error(`Supabase upsert failed: ${error.message}.${hint}`);
+  }
   console.log(`Built and synced ${team.name} ${team.season} (${team.formation}) with ${team.players.length} starters.`);
 }
 
