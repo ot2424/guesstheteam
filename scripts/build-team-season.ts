@@ -136,9 +136,12 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   'bayern munich': '27',
   benfica: '294',
   'borussia dortmund': '16',
+  'borussia monchengladbach': '18',
+  'celta vigo': '940',
   chelsea: '631',
   'deportivo la coruna': '897',
   everton: '29',
+  'eintracht frankfurt': '24',
   feyenoord: '234',
   fiorentina: '430',
   'hamburger sv': '41',
@@ -148,6 +151,7 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   liverpool: '31',
   lyon: '1041',
   lille: '1082',
+  'leicester city': '1003',
   'manchester city': '281',
   'manchester united': '985',
   marseille: '244',
@@ -161,15 +165,22 @@ const KNOWN_CLUB_IDS: Record<string, string> = {
   'rb leipzig': '23826',
   'real madrid': '418',
   'real sociedad': '681',
+  'real betis': '150',
   roma: '12',
+  sampdoria: '1038',
+  'saint etienne': '618',
   'schalke 04': '33',
   sevilla: '368',
   'sporting cp': '336',
   'tottenham hotspur': '148',
   valencia: '1049',
   'vfb stuttgart': '79',
+  'vfl wolfsburg': '82',
   villarreal: '1050',
   'werder bremen': '86',
+  'west ham united': '379',
+  nice: '417',
+  torino: '416',
 };
 const args = parseArgs(process.argv.slice(2));
 
@@ -192,6 +203,7 @@ if (!args.apiFirst) {
     requestedClub: args.club,
     season: args.season,
     league,
+    difficulty: args.difficulty,
   });
 
   if (datasetTeam) {
@@ -219,6 +231,7 @@ if (rawPlayers.length < 11) {
       requestedClub: args.club,
       season: args.season,
       league,
+      difficulty: args.difficulty,
     });
 
     if (!datasetTeam) {
@@ -304,7 +317,7 @@ async function findSeedFallback(
 
 async function findDatasetFallback(
   source: string,
-  input: { clubId: string; clubName: string; requestedClub: string; season: string; league: string },
+  input: { clubId: string; clubName: string; requestedClub: string; season: string; league: string; difficulty?: Difficulty },
 ): Promise<SeedTeam | null> {
   const season = Number(input.season);
   if (!Number.isFinite(season)) return null;
@@ -341,7 +354,7 @@ async function findDatasetFallback(
     league: input.league || club.competitionId || selectedGame.competitionId,
     logoUrl: getTransfermarktLogoUrl(club.clubId),
     formation: formation || inferFormation(seedPlayers),
-    difficulty: getDifficulty(String(season)),
+    difficulty: input.difficulty ?? getDifficulty(String(season)),
     players: seedPlayers,
   };
 }

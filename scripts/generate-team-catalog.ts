@@ -35,7 +35,7 @@ type ClubPoolItem = {
 const DIFFICULTY_RULES: Record<Difficulty, { minYear: number; maxYear: number }> = {
   easy: { minYear: 2018, maxYear: 2025 },
   medium: { minYear: 2016, maxYear: 2025 },
-  hard: { minYear: 2012, maxYear: 2015 },
+  hard: { minYear: 2013, maxYear: 2017 },
 };
 const ALLOWED_LEAGUES = new Set([
   'Bundesliga',
@@ -127,6 +127,9 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Bayer Leverkusen', league: 'Bundesliga' },
     { team_name: 'Hamburger SV', league: 'Bundesliga' },
     { team_name: 'VfB Stuttgart', league: 'Bundesliga' },
+    { team_name: 'VfL Wolfsburg', league: 'Bundesliga' },
+    { team_name: 'Borussia Monchengladbach', league: 'Bundesliga' },
+    { team_name: 'Eintracht Frankfurt', league: 'Bundesliga' },
     { team_name: 'Arsenal', league: 'Premier League' },
     { team_name: 'Manchester United', league: 'Premier League' },
     { team_name: 'Manchester City', league: 'Premier League' },
@@ -134,12 +137,17 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Liverpool', league: 'Premier League' },
     { team_name: 'Tottenham Hotspur', league: 'Premier League' },
     { team_name: 'Newcastle United', league: 'Premier League', excludeYears: [2009] },
+    { team_name: 'Leicester City', league: 'Premier League' },
+    { team_name: 'West Ham United', league: 'Premier League' },
+    { team_name: 'Everton', league: 'Premier League' },
     { team_name: 'Real Madrid', league: 'La Liga' },
     { team_name: 'Barcelona', league: 'La Liga' },
     { team_name: 'Valencia', league: 'La Liga' },
-    { team_name: 'Deportivo La Coruna', league: 'La Liga' },
     { team_name: 'Atletico Madrid', league: 'La Liga', minYear: 2002 },
     { team_name: 'Athletic Bilbao', league: 'La Liga' },
+    { team_name: 'Real Sociedad', league: 'La Liga' },
+    { team_name: 'Real Betis', league: 'La Liga' },
+    { team_name: 'Celta Vigo', league: 'La Liga' },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Villarreal', league: 'La Liga' },
     { team_name: 'AC Milan', league: 'Serie A' },
@@ -151,11 +159,15 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Atalanta', league: 'Serie A', minYear: 2011 },
     { team_name: 'Fiorentina', league: 'Serie A' },
     { team_name: 'Parma', league: 'Serie A' },
+    { team_name: 'Sampdoria', league: 'Serie A' },
+    { team_name: 'Torino', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1', excludeYears: [2011, 2012] },
     { team_name: 'Paris Saint-Germain', league: 'Ligue 1' },
     { team_name: 'Lille', league: 'Ligue 1' },
+    { team_name: 'Nice', league: 'Ligue 1' },
+    { team_name: 'Saint-Etienne', league: 'Ligue 1' },
     { team_name: 'Ajax', league: 'Eredivisie' },
     { team_name: 'PSV', league: 'Eredivisie' },
     { team_name: 'Feyenoord', league: 'Eredivisie' },
@@ -348,7 +360,7 @@ function buildSegmentPrompt(
     ? 'Saisons 2018/2019 bis 2025/2026. Nur sehr bekannte moderne Top-Clubs: Bayern Munich, Real Madrid, Barcelona, Manchester City, Liverpool, PSG, Juventus, Inter Milan, AC Milan, Arsenal, Chelsea, Atletico Madrid, Manchester United, Borussia Dortmund, Tottenham Hotspur, Napoli, Roma, Bayer Leverkusen, Benfica, Porto, RB Leipzig, Ajax.'
     : difficulty === 'medium'
       ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Euro-Dauergaeste und starke Champions-/Europa-League-Teams. Keine Nischenclubs wie Rennes oder Anderlecht.'
-      : 'Saisons 2012/2013 bis 2015/2016. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Top- und Nostalgie-Clubs. Noch aeltere 2000er-Ikonen brauchen spaeter einen separaten manuell geprueften Legacy-Seed.';
+      : 'Saisons 2013/2014 bis 2017/2018. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Top- und Nostalgie-Clubs. Noch aeltere 2000er-Ikonen brauchen spaeter einen separaten manuell geprueften Legacy-Seed.';
 
   return `
 Erzeuge Block ${options.block} eines 500er-Katalogs fuer mein Fussball-Quizspiel.

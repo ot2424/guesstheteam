@@ -538,265 +538,265 @@
   {
     "id": 68,
     "team_name": "Werder Bremen",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 69,
     "team_name": "Schalke 04",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 70,
     "team_name": "Bayern Munich",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 71,
     "team_name": "Borussia Dortmund",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 72,
     "team_name": "Bayer Leverkusen",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 73,
     "team_name": "Hamburger SV",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 74,
     "team_name": "VfB Stuttgart",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 75,
-    "team_name": "Arsenal",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Premier League",
+    "team_name": "VfL Wolfsburg",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 76,
-    "team_name": "Manchester United",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Premier League",
+    "team_name": "Borussia Monchengladbach",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 77,
-    "team_name": "Manchester City",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Premier League",
+    "team_name": "Eintracht Frankfurt",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 78,
-    "team_name": "Chelsea",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Arsenal",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 79,
-    "team_name": "Liverpool",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Manchester United",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 80,
-    "team_name": "Tottenham Hotspur",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Manchester City",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 81,
-    "team_name": "Newcastle United",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Chelsea",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 82,
-    "team_name": "Real Madrid",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "Liverpool",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 83,
-    "team_name": "Barcelona",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "Tottenham Hotspur",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 84,
-    "team_name": "Valencia",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "Newcastle United",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 85,
-    "team_name": "Deportivo La Coruna",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "Leicester City",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 86,
-    "team_name": "Atletico Madrid",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "West Ham United",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 87,
-    "team_name": "Athletic Bilbao",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "La Liga",
+    "team_name": "Everton",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 88,
-    "team_name": "Sevilla",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Real Madrid",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 89,
-    "team_name": "Villarreal",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "Barcelona",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 90,
-    "team_name": "AC Milan",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Valencia",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 91,
-    "team_name": "Inter Milan",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Atletico Madrid",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 92,
-    "team_name": "Juventus",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Athletic Bilbao",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 93,
-    "team_name": "Roma",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Real Sociedad",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 94,
-    "team_name": "Napoli",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Real Betis",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 95,
-    "team_name": "Lazio",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Celta Vigo",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 96,
-    "team_name": "Atalanta",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Sevilla",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 97,
-    "team_name": "Fiorentina",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Serie A",
+    "team_name": "Villarreal",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
     "id": 98,
-    "team_name": "Parma",
-    "season": "2012/2013",
-    "season_id": "2012",
+    "team_name": "AC Milan",
+    "season": "2013/2014",
+    "season_id": "2013",
     "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 99,
-    "team_name": "Lyon",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Ligue 1",
+    "team_name": "Inter Milan",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 100,
-    "team_name": "Marseille",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Ligue 1",
+    "team_name": "Juventus",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
@@ -1337,266 +1337,266 @@
   },
   {
     "id": 168,
-    "team_name": "Paris Saint-Germain",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Ligue 1",
+    "team_name": "Roma",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 169,
-    "team_name": "Lille",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Ligue 1",
+    "team_name": "Napoli",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 170,
-    "team_name": "Ajax",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Eredivisie",
+    "team_name": "Lazio",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 171,
-    "team_name": "PSV",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Eredivisie",
+    "team_name": "Atalanta",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 172,
-    "team_name": "Feyenoord",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Eredivisie",
+    "team_name": "Fiorentina",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 173,
-    "team_name": "Porto",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Liga Portugal",
+    "team_name": "Parma",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 174,
-    "team_name": "Benfica",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Liga Portugal",
+    "team_name": "Sampdoria",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 175,
-    "team_name": "Sporting CP",
-    "season": "2012/2013",
-    "season_id": "2012",
-    "league": "Liga Portugal",
+    "team_name": "Torino",
+    "season": "2013/2014",
+    "season_id": "2013",
+    "league": "Serie A",
     "difficulty": "hard"
   },
   {
     "id": 176,
-    "team_name": "Werder Bremen",
+    "team_name": "Lyon",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 177,
-    "team_name": "Schalke 04",
+    "team_name": "Marseille",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 178,
-    "team_name": "Bayern Munich",
+    "team_name": "Monaco",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 179,
-    "team_name": "Borussia Dortmund",
+    "team_name": "Paris Saint-Germain",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 180,
-    "team_name": "Bayer Leverkusen",
+    "team_name": "Lille",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 181,
-    "team_name": "Hamburger SV",
+    "team_name": "Nice",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 182,
-    "team_name": "VfB Stuttgart",
+    "team_name": "Saint-Etienne",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Bundesliga",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
     "id": 183,
-    "team_name": "Arsenal",
+    "team_name": "Ajax",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Eredivisie",
     "difficulty": "hard"
   },
   {
     "id": 184,
-    "team_name": "Manchester United",
+    "team_name": "PSV",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Eredivisie",
     "difficulty": "hard"
   },
   {
     "id": 185,
-    "team_name": "Manchester City",
+    "team_name": "Feyenoord",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Eredivisie",
     "difficulty": "hard"
   },
   {
     "id": 186,
-    "team_name": "Chelsea",
+    "team_name": "Porto",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Liga Portugal",
     "difficulty": "hard"
   },
   {
     "id": 187,
-    "team_name": "Liverpool",
+    "team_name": "Benfica",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Liga Portugal",
     "difficulty": "hard"
   },
   {
     "id": 188,
-    "team_name": "Tottenham Hotspur",
+    "team_name": "Sporting CP",
     "season": "2013/2014",
     "season_id": "2013",
-    "league": "Premier League",
+    "league": "Liga Portugal",
     "difficulty": "hard"
   },
   {
     "id": 189,
-    "team_name": "Newcastle United",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Premier League",
+    "team_name": "Werder Bremen",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 190,
-    "team_name": "Real Madrid",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Schalke 04",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 191,
-    "team_name": "Barcelona",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Bayern Munich",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 192,
-    "team_name": "Valencia",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Borussia Dortmund",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 193,
-    "team_name": "Deportivo La Coruna",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Bayer Leverkusen",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 194,
-    "team_name": "Atletico Madrid",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Hamburger SV",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 195,
-    "team_name": "Athletic Bilbao",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "VfB Stuttgart",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 196,
-    "team_name": "Sevilla",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "VfL Wolfsburg",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 197,
-    "team_name": "Villarreal",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "La Liga",
+    "team_name": "Borussia Monchengladbach",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 198,
-    "team_name": "AC Milan",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
+    "team_name": "Eintracht Frankfurt",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Bundesliga",
     "difficulty": "hard"
   },
   {
     "id": 199,
-    "team_name": "Inter Milan",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
+    "team_name": "Arsenal",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
     "id": 200,
-    "team_name": "Juventus",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
+    "team_name": "Manchester United",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Premier League",
     "difficulty": "hard"
   },
   {
@@ -2137,214 +2137,6 @@
   },
   {
     "id": 268,
-    "team_name": "Roma",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 269,
-    "team_name": "Napoli",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 270,
-    "team_name": "Lazio",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 271,
-    "team_name": "Atalanta",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 272,
-    "team_name": "Fiorentina",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 273,
-    "team_name": "Parma",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 274,
-    "team_name": "Lyon",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 275,
-    "team_name": "Marseille",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 276,
-    "team_name": "Monaco",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 277,
-    "team_name": "Paris Saint-Germain",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 278,
-    "team_name": "Lille",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 279,
-    "team_name": "Ajax",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Eredivisie",
-    "difficulty": "hard"
-  },
-  {
-    "id": 280,
-    "team_name": "PSV",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Eredivisie",
-    "difficulty": "hard"
-  },
-  {
-    "id": 281,
-    "team_name": "Feyenoord",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Eredivisie",
-    "difficulty": "hard"
-  },
-  {
-    "id": 282,
-    "team_name": "Porto",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Liga Portugal",
-    "difficulty": "hard"
-  },
-  {
-    "id": 283,
-    "team_name": "Benfica",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Liga Portugal",
-    "difficulty": "hard"
-  },
-  {
-    "id": 284,
-    "team_name": "Sporting CP",
-    "season": "2013/2014",
-    "season_id": "2013",
-    "league": "Liga Portugal",
-    "difficulty": "hard"
-  },
-  {
-    "id": 285,
-    "team_name": "Werder Bremen",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 286,
-    "team_name": "Schalke 04",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 287,
-    "team_name": "Bayern Munich",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 288,
-    "team_name": "Borussia Dortmund",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 289,
-    "team_name": "Bayer Leverkusen",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 290,
-    "team_name": "Hamburger SV",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 291,
-    "team_name": "VfB Stuttgart",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Bundesliga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 292,
-    "team_name": "Arsenal",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 293,
-    "team_name": "Manchester United",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 294,
     "team_name": "Manchester City",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2352,7 +2144,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 295,
+    "id": 269,
     "team_name": "Chelsea",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2360,7 +2152,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 296,
+    "id": 270,
     "team_name": "Liverpool",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2368,7 +2160,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 297,
+    "id": 271,
     "team_name": "Tottenham Hotspur",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2376,7 +2168,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 298,
+    "id": 272,
     "team_name": "Newcastle United",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2384,7 +2176,31 @@
     "difficulty": "hard"
   },
   {
-    "id": 299,
+    "id": 273,
+    "team_name": "Leicester City",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 274,
+    "team_name": "West Ham United",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 275,
+    "team_name": "Everton",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 276,
     "team_name": "Real Madrid",
     "season": "2014/2015",
     "season_id": "2014",
@@ -2392,11 +2208,195 @@
     "difficulty": "hard"
   },
   {
-    "id": 300,
+    "id": 277,
     "team_name": "Barcelona",
     "season": "2014/2015",
     "season_id": "2014",
     "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 278,
+    "team_name": "Valencia",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 279,
+    "team_name": "Atletico Madrid",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 280,
+    "team_name": "Athletic Bilbao",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 281,
+    "team_name": "Real Sociedad",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 282,
+    "team_name": "Real Betis",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 283,
+    "team_name": "Celta Vigo",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 284,
+    "team_name": "Sevilla",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 285,
+    "team_name": "Villarreal",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 286,
+    "team_name": "AC Milan",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 287,
+    "team_name": "Inter Milan",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 288,
+    "team_name": "Juventus",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 289,
+    "team_name": "Roma",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 290,
+    "team_name": "Napoli",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 291,
+    "team_name": "Lazio",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 292,
+    "team_name": "Atalanta",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 293,
+    "team_name": "Fiorentina",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 294,
+    "team_name": "Parma",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 295,
+    "team_name": "Sampdoria",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 296,
+    "team_name": "Torino",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 297,
+    "team_name": "Lyon",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 298,
+    "team_name": "Marseille",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 299,
+    "team_name": "Monaco",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 300,
+    "team_name": "Paris Saint-Germain",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
     "difficulty": "hard"
   },
   {
@@ -2937,158 +2937,6 @@
   },
   {
     "id": 368,
-    "team_name": "Valencia",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 369,
-    "team_name": "Deportivo La Coruna",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 370,
-    "team_name": "Atletico Madrid",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 371,
-    "team_name": "Athletic Bilbao",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 372,
-    "team_name": "Sevilla",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 373,
-    "team_name": "Villarreal",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 374,
-    "team_name": "AC Milan",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 375,
-    "team_name": "Inter Milan",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 376,
-    "team_name": "Juventus",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 377,
-    "team_name": "Roma",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 378,
-    "team_name": "Napoli",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 379,
-    "team_name": "Lazio",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 380,
-    "team_name": "Atalanta",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 381,
-    "team_name": "Fiorentina",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 382,
-    "team_name": "Parma",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Serie A",
-    "difficulty": "hard"
-  },
-  {
-    "id": 383,
-    "team_name": "Lyon",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 384,
-    "team_name": "Marseille",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 385,
-    "team_name": "Monaco",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 386,
-    "team_name": "Paris Saint-Germain",
-    "season": "2014/2015",
-    "season_id": "2014",
-    "league": "Ligue 1",
-    "difficulty": "hard"
-  },
-  {
-    "id": 387,
     "team_name": "Lille",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3096,7 +2944,23 @@
     "difficulty": "hard"
   },
   {
-    "id": 388,
+    "id": 369,
+    "team_name": "Nice",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 370,
+    "team_name": "Saint-Etienne",
+    "season": "2014/2015",
+    "season_id": "2014",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 371,
     "team_name": "Ajax",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3104,7 +2968,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 389,
+    "id": 372,
     "team_name": "PSV",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3112,7 +2976,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 390,
+    "id": 373,
     "team_name": "Feyenoord",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3120,7 +2984,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 391,
+    "id": 374,
     "team_name": "Porto",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3128,7 +2992,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 392,
+    "id": 375,
     "team_name": "Benfica",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3136,7 +3000,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 393,
+    "id": 376,
     "team_name": "Sporting CP",
     "season": "2014/2015",
     "season_id": "2014",
@@ -3144,7 +3008,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 394,
+    "id": 377,
     "team_name": "Werder Bremen",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3152,7 +3016,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 395,
+    "id": 378,
     "team_name": "Schalke 04",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3160,7 +3024,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 396,
+    "id": 379,
     "team_name": "Bayern Munich",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3168,7 +3032,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 397,
+    "id": 380,
     "team_name": "Borussia Dortmund",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3176,7 +3040,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 398,
+    "id": 381,
     "team_name": "Bayer Leverkusen",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3184,7 +3048,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 399,
+    "id": 382,
     "team_name": "Hamburger SV",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3192,11 +3056,147 @@
     "difficulty": "hard"
   },
   {
-    "id": 400,
+    "id": 383,
     "team_name": "VfB Stuttgart",
     "season": "2015/2016",
     "season_id": "2015",
     "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 384,
+    "team_name": "VfL Wolfsburg",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 385,
+    "team_name": "Borussia Monchengladbach",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 386,
+    "team_name": "Eintracht Frankfurt",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 387,
+    "team_name": "Arsenal",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 388,
+    "team_name": "Manchester United",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 389,
+    "team_name": "Manchester City",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 390,
+    "team_name": "Chelsea",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 391,
+    "team_name": "Liverpool",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 392,
+    "team_name": "Tottenham Hotspur",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 393,
+    "team_name": "Newcastle United",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 394,
+    "team_name": "Leicester City",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 395,
+    "team_name": "West Ham United",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 396,
+    "team_name": "Everton",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Premier League",
+    "difficulty": "hard"
+  },
+  {
+    "id": 397,
+    "team_name": "Real Madrid",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 398,
+    "team_name": "Barcelona",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 399,
+    "team_name": "Valencia",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 400,
+    "team_name": "Atletico Madrid",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
     "difficulty": "hard"
   },
   {
@@ -3737,102 +3737,6 @@
   },
   {
     "id": 468,
-    "team_name": "Arsenal",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 469,
-    "team_name": "Manchester United",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 470,
-    "team_name": "Manchester City",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 471,
-    "team_name": "Chelsea",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 472,
-    "team_name": "Liverpool",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 473,
-    "team_name": "Tottenham Hotspur",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 474,
-    "team_name": "Newcastle United",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "Premier League",
-    "difficulty": "hard"
-  },
-  {
-    "id": 475,
-    "team_name": "Real Madrid",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 476,
-    "team_name": "Barcelona",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 477,
-    "team_name": "Valencia",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 478,
-    "team_name": "Deportivo La Coruna",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 479,
-    "team_name": "Atletico Madrid",
-    "season": "2015/2016",
-    "season_id": "2015",
-    "league": "La Liga",
-    "difficulty": "hard"
-  },
-  {
-    "id": 480,
     "team_name": "Athletic Bilbao",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3840,7 +3744,31 @@
     "difficulty": "hard"
   },
   {
-    "id": 481,
+    "id": 469,
+    "team_name": "Real Sociedad",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 470,
+    "team_name": "Real Betis",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 471,
+    "team_name": "Celta Vigo",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "La Liga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 472,
     "team_name": "Sevilla",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3848,7 +3776,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 482,
+    "id": 473,
     "team_name": "Villarreal",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3856,7 +3784,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 483,
+    "id": 474,
     "team_name": "AC Milan",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3864,7 +3792,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 484,
+    "id": 475,
     "team_name": "Inter Milan",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3872,7 +3800,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 485,
+    "id": 476,
     "team_name": "Juventus",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3880,7 +3808,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 486,
+    "id": 477,
     "team_name": "Roma",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3888,7 +3816,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 487,
+    "id": 478,
     "team_name": "Napoli",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3896,7 +3824,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 488,
+    "id": 479,
     "team_name": "Lazio",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3904,7 +3832,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 489,
+    "id": 480,
     "team_name": "Atalanta",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3912,7 +3840,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 490,
+    "id": 481,
     "team_name": "Fiorentina",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3920,7 +3848,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 491,
+    "id": 482,
     "team_name": "Parma",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3928,7 +3856,23 @@
     "difficulty": "hard"
   },
   {
-    "id": 492,
+    "id": 483,
+    "team_name": "Sampdoria",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 484,
+    "team_name": "Torino",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Serie A",
+    "difficulty": "hard"
+  },
+  {
+    "id": 485,
     "team_name": "Lyon",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3936,7 +3880,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 493,
+    "id": 486,
     "team_name": "Marseille",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3944,7 +3888,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 494,
+    "id": 487,
     "team_name": "Monaco",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3952,7 +3896,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 495,
+    "id": 488,
     "team_name": "Paris Saint-Germain",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3960,7 +3904,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 496,
+    "id": 489,
     "team_name": "Lille",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3968,7 +3912,23 @@
     "difficulty": "hard"
   },
   {
-    "id": 497,
+    "id": 490,
+    "team_name": "Nice",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 491,
+    "team_name": "Saint-Etienne",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Ligue 1",
+    "difficulty": "hard"
+  },
+  {
+    "id": 492,
     "team_name": "Ajax",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3976,7 +3936,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 498,
+    "id": 493,
     "team_name": "PSV",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3984,7 +3944,7 @@
     "difficulty": "hard"
   },
   {
-    "id": 499,
+    "id": 494,
     "team_name": "Feyenoord",
     "season": "2015/2016",
     "season_id": "2015",
@@ -3992,11 +3952,51 @@
     "difficulty": "hard"
   },
   {
-    "id": 500,
+    "id": 495,
     "team_name": "Porto",
     "season": "2015/2016",
     "season_id": "2015",
     "league": "Liga Portugal",
+    "difficulty": "hard"
+  },
+  {
+    "id": 496,
+    "team_name": "Benfica",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Liga Portugal",
+    "difficulty": "hard"
+  },
+  {
+    "id": 497,
+    "team_name": "Sporting CP",
+    "season": "2015/2016",
+    "season_id": "2015",
+    "league": "Liga Portugal",
+    "difficulty": "hard"
+  },
+  {
+    "id": 498,
+    "team_name": "Werder Bremen",
+    "season": "2016/2017",
+    "season_id": "2016",
+    "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 499,
+    "team_name": "Schalke 04",
+    "season": "2016/2017",
+    "season_id": "2016",
+    "league": "Bundesliga",
+    "difficulty": "hard"
+  },
+  {
+    "id": 500,
+    "team_name": "Hamburger SV",
+    "season": "2016/2017",
+    "season_id": "2016",
+    "league": "Bundesliga",
     "difficulty": "hard"
   }
 ]

@@ -57,6 +57,8 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '13': 'Atletico Madrid',
   '621': 'Athletic Bilbao',
   '681': 'Real Sociedad',
+  '150': 'Real Betis',
+  '940': 'Celta Vigo',
   '583': 'Paris Saint-Germain',
   '244': 'Marseille',
   '1041': 'Lyon',
@@ -70,6 +72,8 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '281': 'Manchester City',
   '762': 'Newcastle United',
   '148': 'Tottenham Hotspur',
+  '1003': 'Leicester City',
+  '379': 'West Ham United',
   '29': 'Everton',
   '294': 'Benfica',
   '720': 'Porto',
@@ -80,6 +84,10 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '1049': 'Valencia',
   '336': 'Sporting CP',
   '430': 'Fiorentina',
+  '1038': 'Sampdoria',
+  '416': 'Torino',
+  '417': 'Nice',
+  '618': 'Saint-Etienne',
 };
 
 export class TeamSeedService {
