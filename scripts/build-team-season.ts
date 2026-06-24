@@ -18,6 +18,7 @@ interface Args {
   provider: string;
   seedPath: string;
   datasetSource: string;
+  apiFirst: boolean;
 }
 
 interface ClubSearchResponse {
@@ -175,14 +176,28 @@ if (!args.club && !args.clubId) {
 const clubId = args.clubId ?? getKnownClubId(args.club) ?? await searchClubId(args.club) ?? await searchDatasetClubId(args.datasetSource, args.club);
 if (!clubId) throw new Error(`Could not resolve club "${args.club}".`);
 
-const [profile, squad] = await Promise.all([
-  fetchJson<ClubProfileResponse>(`/clubs/${encodeURIComponent(clubId)}/profile`),
-  fetchJson<ClubPlayersResponse>(`/clubs/${encodeURIComponent(clubId)}/players?season_id=${encodeURIComponent(args.season)}`),
-]);
-
+const profile = await fetchJson<ClubProfileResponse>(`/clubs/${encodeURIComponent(clubId)}/profile`);
 const clubName = normalizeClubName(profile?.name ?? args.club);
 const logoUrl = profile?.image ?? '';
 const league = args.league ?? profile?.league?.name ?? profile?.league?.id ?? 'Unknown League';
+
+if (!args.apiFirst) {
+  const datasetTeam = await findDatasetFallback(args.datasetSource, {
+    clubId,
+    clubName,
+    requestedClub: args.club,
+    season: args.season,
+    league,
+  });
+
+  if (datasetTeam) {
+    const enrichedDatasetTeam = await new TransfermarktBackupService().enrichTeamData(datasetTeam);
+    await outputTeam(enrichedDatasetTeam, datasetTeam.clubId ?? clubId, args.provider, args.difficulty ?? datasetTeam.difficulty ?? getDifficulty(args.season));
+    process.exit(0);
+  }
+}
+
+const squad = await fetchJson<ClubPlayersResponse>(`/clubs/${encodeURIComponent(clubId)}/players?season_id=${encodeURIComponent(args.season)}`);
 const rawPlayers = squad?.players ?? [];
 
 if (rawPlayers.length < 11) {
@@ -255,6 +270,7 @@ function parseArgs(argv: string[]): Args {
     provider: String(values.get('provider') ?? 'transfermarkt-openai-builder'),
     seedPath: String(values.get('seed') ?? 'data/seeds/guesstheteam-seed.json'),
     datasetSource: String(values.get('dataset-source') ?? 'data/transfermarkt'),
+    apiFirst: values.has('api-first'),
   };
 }
 
