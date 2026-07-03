@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: guesstheteam-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm run backend:start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        value: https://guesstheteam.de,https://www.guesstheteam.de
+      - key: GUESSTHETEAM_TEAM_SOURCE
+        value: supabase
+      - key: TRANSFERMARKT_BACKUP_ENABLED
+        value: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

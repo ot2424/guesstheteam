@@ -8,11 +8,19 @@ import { createGameRouter } from './routes/game';
 import { createPlayersRouter } from './routes/players';
 import { createProfileRouter } from './routes/profile';
 
+function getCorsOrigins() {
+  const origins = env.CORS_ORIGIN.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 1 ? origins : origins[0];
+}
+
 export function createApp() {
   const app = express();
 
   app.use(helmet());
-  app.use(cors({ origin: env.CORS_ORIGIN }));
+  app.use(cors({ origin: getCorsOrigins() }));
   app.use(express.json());
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
