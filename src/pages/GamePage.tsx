@@ -461,16 +461,16 @@ export function GamePage() {
           {/* Game header */}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3"
                style={{ background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
-              <div>
-                <h1 className="bebas text-xl tracking-wider text-white leading-none">{team.name}</h1>
+              <div className="min-w-0">
+                <h1 className="bebas truncate text-xl tracking-wider text-white leading-none">{team.name}</h1>
                 <div className="text-xs text-gray-500">{team.season}</div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
               <GameTimer key={startedAt} startedAt={startedAt} active={!finished} />
-              <div className="flex gap-2 text-xs">
+              <div className="flex min-w-0 flex-wrap justify-end gap-2 text-xs">
                 <span className="px-2.5 py-1 rounded-lg capitalize border" style={{ background: '#161d29', borderColor: 'rgba(255,255,255,0.1)', color: '#e5e9f0' }}>
                   {effectiveDifficulty === 'easy' ? '🟢' : effectiveDifficulty === 'medium' ? '🟡' : '🔴'} {effectiveDifficulty}
                 </span>

@@ -20,6 +20,22 @@
 
 * { box-sizing: border-box; }
 
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas,
+video {
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   background: var(--night);
