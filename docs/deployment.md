@@ -49,6 +49,14 @@ OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 
 Render setzt `PORT` selbst. Nicht hart überschreiben, außer Render verlangt es.
 
+Falls Render manuell konfiguriert wird:
+
+```text
+Build Command: npm ci --include=dev
+Start Command: npm run backend:start
+Health Check Path: /health
+```
+
 Nach dem Deploy prüfen:
 
 ```text
