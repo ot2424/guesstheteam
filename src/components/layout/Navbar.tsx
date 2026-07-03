@@ -45,15 +45,17 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 border-b backdrop-blur-md"
          style={{ background: 'rgba(6,9,15,0.82)', borderColor: 'rgba(255,255,255,0.08)' }}>
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 min-h-14 sm:h-14 flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 py-2 sm:py-0">
         {/* Logo — Trikot-Icon */}
-        <Link to="/" className="flex items-center gap-2.5 mr-4">
-          <JerseyIcon size={30} color="#22c55e" />
-          <span className="font-extrabold text-[15px] tracking-[0.14em] text-white">GUESSTHETEAM</span>
+        <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-2.5 mr-auto sm:mr-4">
+          <JerseyIcon size={28} color="#22c55e" />
+          <span className="hidden min-[360px]:inline truncate font-extrabold text-[13px] min-[430px]:text-[15px] tracking-[0.12em] sm:tracking-[0.14em] text-white">
+            GUESSTHETEAM
+          </span>
         </Link>
 
         {/* Nav links */}
-        <div className="flex gap-1 flex-1">
+        <div className="hidden sm:flex gap-1 flex-1">
           {NAV_LINKS.map(({ to, label }) => {
             const active = pathname === to || (to !== '/' && pathname.startsWith(to));
             return (
@@ -77,10 +79,30 @@ export function Navbar() {
           })}
         </div>
 
+        <div className="order-3 grid w-full grid-cols-3 gap-1 sm:hidden">
+          {NAV_LINKS.map(({ to, label }) => {
+            const active = pathname === to || (to !== '/' && pathname.startsWith(to));
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`rounded-lg px-2 py-2 text-center text-xs font-semibold transition-colors ${
+                  active ? 'text-white' : 'text-gray-500'
+                }`}
+                style={active ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' } : { border: '1px solid transparent' }}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+
         {/* Rechts: eingeloggt → Avatar-Menü mit Logout · sonst → Einloggen */}
         {isAuthenticated ? (
-          <div className="flex items-center gap-3 relative">
-            {activeProfile && <RankBadge rank={activeProfile.rank} size="sm" />}
+          <div className="relative flex items-center gap-2 sm:gap-3">
+            <div className="hidden min-[420px]:block">
+              {activeProfile && <RankBadge rank={activeProfile.rank} size="sm" />}
+            </div>
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
