@@ -17,9 +17,15 @@ describe('ProgressionService', () => {
   });
 
   it('awards base, accuracy, perfect and speed XP for wins', () => {
-    expect(service.calcXP({ difficulty: 'easy', solved: 9, total: 11, durationSec: 200, isWin: true })).toBe(105);
+    expect(service.calcXP({ difficulty: 'easy', solved: 9, total: 11, durationSec: 200, isWin: true })).toBe(87);
     expect(service.calcXP({ difficulty: 'medium', solved: 11, total: 11, durationSec: 90, isWin: true })).toBe(305);
     expect(service.calcXP({ difficulty: 'hard', solved: 11, total: 11, durationSec: 130, isWin: true })).toBe(375);
+  });
+
+  it('scales XP and ranked LP by solved players for early completion', () => {
+    expect(service.calcXP({ difficulty: 'hard', solved: 4, total: 11, durationSec: 200, isWin: true })).toBe(91);
+    expect(service.calcLP({ playMode: 'ranked', difficulty: 'easy', matchType: 'single', isWin: true, solved: 4, total: 11 })).toBe(5);
+    expect(service.calcLP({ playMode: 'ranked', difficulty: 'easy', matchType: 'single', isWin: true, solved: 11, total: 11 })).toBe(14);
   });
 
   it('keeps LP out of casual and world cup modes', () => {

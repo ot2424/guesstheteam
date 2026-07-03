@@ -2,10 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
 import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
-import { ProgressionService } from './ProgressionService';
+import { MIN_SOLVED_TO_COMPLETE, ProgressionService } from './ProgressionService';
 
 export type FinishReason = 'complete' | 'surrender';
-const WIN_THRESHOLD = 0.8;
 
 type ActiveGameSessionRow = {
   session: GameSession;
@@ -142,7 +141,8 @@ export class GameSessionService {
     const total = Object.keys(session.players).length;
     const durationSec = Math.floor((Date.now() - session.startedAt) / 1000);
     const completionRatio = total > 0 ? solved / total : 0;
-    const isWin = reason !== 'surrender' && completionRatio >= WIN_THRESHOLD;
+    const minimumSolved = Math.min(MIN_SOLVED_TO_COMPLETE, total);
+    const isWin = reason !== 'surrender' && solved >= minimumSolved;
     const series = session.series
       ? getNextSeriesState(session.series, isWin)
       : undefined;
@@ -163,6 +163,8 @@ export class GameSessionService {
       isWin: rankedOutcome ?? false,
       winStreak: session.winStreak,
       isSeriesComplete: series?.isComplete ?? true,
+      solved,
+      total,
     });
 
     const finished = {

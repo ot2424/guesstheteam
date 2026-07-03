@@ -90,6 +90,49 @@ describe('GameSessionService', () => {
     expect(finished?.progression.lpChange).toBe(-14);
   });
 
+  it('allows completing a team from four solved players with scaled rewards', async () => {
+    const service = new GameSessionService();
+    const session = await service.create('user-1', team(), {
+      playMode: 'ranked',
+      matchType: 'single',
+      difficulty: 'easy',
+      rank: 'Bronze 3',
+      winStreak: 0,
+    });
+
+    for (const id of Object.keys(session.players).slice(0, 4)) {
+      await service.markSolved(session.sessionId, 'user-1', id);
+    }
+
+    vi.advanceTimersByTime(150_000);
+    const finished = await service.finish(session.sessionId, 'user-1');
+
+    expect(finished?.result).toMatchObject({ solved: 4, total: 11, isWin: true, isPerfect: false });
+    expect(finished?.progression.xpGained).toBe(36);
+    expect(finished?.progression.lpChange).toBe(5);
+  });
+
+  it('does not complete below four solved players', async () => {
+    const service = new GameSessionService();
+    const session = await service.create('user-1', team(), {
+      playMode: 'ranked',
+      matchType: 'single',
+      difficulty: 'easy',
+      rank: 'Bronze 3',
+      winStreak: 0,
+    });
+
+    for (const id of Object.keys(session.players).slice(0, 3)) {
+      await service.markSolved(session.sessionId, 'user-1', id);
+    }
+
+    const finished = await service.finish(session.sessionId, 'user-1');
+
+    expect(finished?.result.isWin).toBe(false);
+    expect(finished?.progression.xpGained).toBe(0);
+    expect(finished?.progression.lpChange).toBe(-10);
+  });
+
   it('keeps 3er-series LP pending until the series is decided', async () => {
     const service = new GameSessionService();
     const firstRound = await service.create('user-1', team(), {
@@ -126,7 +169,7 @@ describe('GameSessionService', () => {
     const complete = await service.finish(secondRound.sessionId, 'user-1');
 
     expect(complete?.result.series).toMatchObject({ played: 2, wins: 2, isComplete: true, isWin: true });
-    expect(complete?.progression.lpChange).toBe(27);
+    expect(complete?.progression.lpChange).toBe(22);
   });
 
   it('increments wrong attempts only on unsolved players', async () => {

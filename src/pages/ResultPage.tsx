@@ -116,7 +116,7 @@ export function ResultPage() {
         {isWin && (
           <div className="px-6 py-3 border-t border-white/5 text-center">
             <div className="text-xs font-semibold text-green-300">
-              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 80 Prozent abgeschlossen. Mehr Treffer geben mehr XP-Bonus.'}
+              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 4 Spielern abgeschlossen. Mehr Treffer geben mehr XP und LP.'}
             </div>
           </div>
         )}

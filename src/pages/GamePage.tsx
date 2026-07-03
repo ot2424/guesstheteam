@@ -16,7 +16,7 @@ import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Tea
 import { getPositionLabel } from '../utils/footballDisplay';
 import { getClubInitials, getCurrentClub } from '../utils/playerHints';
 
-const COMPLETION_THRESHOLD = 0.8;
+const MIN_SOLVED_TO_COMPLETE = 4;
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -140,8 +140,8 @@ export function GamePage() {
     [guesses]
   );
   const total = team?.players.length ?? 0;
-  const completionRatio = total > 0 ? solved / total : 0;
-  const canCompleteLevel = completionRatio >= COMPLETION_THRESHOLD && solved < total && !finished;
+  const minimumSolvedToComplete = Math.min(MIN_SOLVED_TO_COMPLETE, total);
+  const canCompleteLevel = solved >= minimumSolvedToComplete && solved < total && !finished;
   const rankedLossText = `${surrenderLpChange ?? getRankedSurrenderLpChange(effectiveDifficulty, matchType)} LP`;
   const inventory = profile?.inventory ?? { skipShields: 0, autoSolveJokers: 0 };
 
@@ -460,8 +460,11 @@ export function GamePage() {
                   className="px-5 py-2.5 rounded-xl text-sm font-bold border border-green-500/50 bg-green-500/10 text-green-300 hover:bg-green-500/15 transition-colors"
                   style={{ boxShadow: '0 0 18px rgba(34,197,94,0.2)' }}
                 >
-                  Level abschließen · {Math.round(completionRatio * 100)}%
+                  Level abschließen · {solved}/{total}
                 </button>
+                <div className="ml-3 self-center text-xs text-gray-500">
+                  Mehr Treffer geben mehr XP{playMode === 'ranked' ? ' & LP' : ''}.
+                </div>
               </div>
             )}
           </div>
