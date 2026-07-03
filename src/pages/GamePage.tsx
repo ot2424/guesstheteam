@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FormationGrid } from '../components/game/FormationGrid';
 import { MobilePlayerList } from '../components/game/MobilePlayerList';
@@ -17,6 +17,10 @@ import { getPositionLabel } from '../utils/footballDisplay';
 import { getClubInitials, getCurrentClub } from '../utils/playerHints';
 
 const MIN_SOLVED_TO_COMPLETE = 4;
+const RANKED_INACTIVITY_WARNING_MS = 75_000;
+const RANKED_ANTI_CHEAT_COUNTDOWN_SEC = 15;
+
+type AntiCheatReason = 'tab' | 'blur' | 'inactive';
 
 export function GamePage() {
   const navigate = useNavigate();
@@ -46,6 +50,8 @@ export function GamePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSurrenderModal, setShowSurrenderModal] = useState(false);
+  const [antiCheatWarning, setAntiCheatWarning] = useState<{ reason: AntiCheatReason; countdown: number } | null>(null);
+  const antiCheatTriggeredRef = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,6 +60,8 @@ export function GamePage() {
       try {
         setLoading(true);
         setError(null);
+        setAntiCheatWarning(null);
+        antiCheatTriggeredRef.current = false;
         const saved = loadSavedGame();
 
         if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, leagueId })) {
@@ -249,6 +257,92 @@ export function GamePage() {
       navigate('/');
     }
   }, [finished, goToResult, navigate, sessionId, team]);
+
+  const triggerAntiCheatWarning = useCallback((reason: AntiCheatReason) => {
+    if (playMode !== 'ranked' || finished || loading || !sessionId || !team || antiCheatTriggeredRef.current) return;
+
+    setAntiCheatWarning((current) => current ?? {
+      reason,
+      countdown: RANKED_ANTI_CHEAT_COUNTDOWN_SEC,
+    });
+  }, [finished, loading, playMode, sessionId, team]);
+
+  const clearAntiCheatWarning = useCallback(() => {
+    if (document.hidden || !document.hasFocus()) return;
+    setAntiCheatWarning(null);
+  }, []);
+
+  useEffect(() => {
+    if (playMode !== 'ranked' || finished || loading || !sessionId || !team) {
+      return;
+    }
+
+    let idleTimer: number | undefined;
+    const resetIdleTimer = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(() => {
+        triggerAntiCheatWarning('inactive');
+      }, RANKED_INACTIVITY_WARNING_MS);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        triggerAntiCheatWarning('tab');
+      } else {
+        clearAntiCheatWarning();
+        resetIdleTimer();
+      }
+    };
+    const handleBlur = () => triggerAntiCheatWarning('blur');
+    const handleFocus = () => {
+      clearAntiCheatWarning();
+      resetIdleTimer();
+    };
+    const handleActivity = () => {
+      clearAntiCheatWarning();
+      resetIdleTimer();
+    };
+
+    resetIdleTimer();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('pointerdown', handleActivity);
+    window.addEventListener('pointermove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+
+    return () => {
+      window.clearTimeout(idleTimer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pointerdown', handleActivity);
+      window.removeEventListener('pointermove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+    };
+  }, [clearAntiCheatWarning, finished, loading, playMode, sessionId, team, triggerAntiCheatWarning]);
+
+  useEffect(() => {
+    if (!antiCheatWarning || playMode !== 'ranked' || finished) return;
+
+    const interval = window.setInterval(() => {
+      setAntiCheatWarning((current) => {
+        if (!current) return null;
+        if (current.countdown <= 1) {
+          antiCheatTriggeredRef.current = true;
+          window.clearInterval(interval);
+          window.setTimeout(() => void handleSurrender(), 0);
+          return { ...current, countdown: 0 };
+        }
+
+        return { ...current, countdown: current.countdown - 1 };
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [antiCheatWarning, finished, handleSurrender, playMode]);
 
   const handleSkipShield = useCallback(async () => {
     if (!sessionId || !team || playMode !== 'ranked' || inventory.skipShields <= 0 || finished) return;
@@ -544,6 +638,28 @@ export function GamePage() {
         />
       </div>
 
+      {antiCheatWarning && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.76)', backdropFilter: 'blur(5px)' }}>
+          <div className="w-full max-w-md rounded-2xl border p-5 text-center"
+               style={{ background: '#111827', borderColor: 'rgba(245,158,11,0.45)', boxShadow: '0 0 40px rgba(245,158,11,0.18)' }}>
+            <div className="bebas text-3xl tracking-wider" style={{ color: '#facc15' }}>Fairplay-Warnung</div>
+            <p className="mt-2 text-sm text-gray-300">
+              {getAntiCheatWarningText(antiCheatWarning.reason)}
+            </p>
+            <div className="my-5 flex items-center justify-center">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border text-4xl font-black"
+                   style={{ borderColor: 'rgba(245,158,11,0.55)', color: '#facc15', background: 'rgba(245,158,11,0.08)' }}>
+                {antiCheatWarning.countdown}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Kehre ins Spiel zurück und interagiere weiter. Läuft der Countdown ab, wird das Ranked-Match automatisch aufgegeben
+              {` (${rankedLossText}).`}
+            </p>
+          </div>
+        </div>
+      )}
+
       {showSurrenderModal && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
           <div className="w-full max-w-sm rounded-2xl border border-white/12 p-5" style={{ background: '#111827' }}>
@@ -577,6 +693,12 @@ export function GamePage() {
       )}
     </div>
   );
+}
+
+function getAntiCheatWarningText(reason: AntiCheatReason) {
+  if (reason === 'tab') return 'Du hast den Spiel-Tab verlassen. In Ranked muss das Match aktiv im Vordergrund bleiben.';
+  if (reason === 'blur') return 'Das Browserfenster ist nicht mehr aktiv. Bitte bleib im Spiel, damit das Match gewertet werden kann.';
+  return 'Du warst zu lange inaktiv. Bewege die Maus, tippe oder spiele weiter, um den Countdown zu stoppen.';
 }
 
 function ClubProgressLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
