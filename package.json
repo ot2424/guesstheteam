@@ -15,6 +15,7 @@
     "data:build:team": "tsx scripts/build-team-season.ts",
     "data:generate:catalog": "tsx scripts/generate-team-catalog.ts",
     "data:build:catalog": "tsx scripts/build-teams-from-catalog.ts",
+    "data:build:catalog:auto": "tsx scripts/build-teams-from-catalog.ts --continue-on-error --retry-attempts 1",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
