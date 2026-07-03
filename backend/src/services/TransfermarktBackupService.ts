@@ -399,11 +399,22 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '15': 'Bayer Leverkusen',
   '18': 'Borussia Monchengladbach',
   '24': 'Eintracht Frankfurt',
+  '3': '1. FC Koln',
+  '4': '1. FC Nurnberg',
   '33': 'Schalke 04',
+  '35': 'St. Pauli',
+  '38': 'Fortuna Dusseldorf',
+  '39': 'Mainz 05',
   '41': 'Hamburger SV',
+  '42': 'Hannover 96',
+  '44': 'Hertha BSC',
+  '60': 'SC Freiburg',
   '79': 'VfB Stuttgart',
+  '80': 'VfL Bochum',
   '82': 'VfL Wolfsburg',
   '86': 'Werder Bremen',
+  '167': 'FC Augsburg',
+  '533': 'TSG Hoffenheim',
   '46': 'Inter Milan',
   '5': 'AC Milan',
   '506': 'Juventus',
@@ -432,6 +443,10 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '762': 'Newcastle United',
   '148': 'Tottenham Hotspur',
   '1003': 'Leicester City',
+  '405': 'Aston Villa',
+  '703': 'Nottingham Forest',
+  '180': 'Southampton',
+  '289': 'Sunderland',
   '379': 'West Ham United',
   '29': 'Everton',
   '294': 'Benfica',
@@ -445,6 +460,7 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '1050': 'Villarreal',
   '336': 'Sporting CP',
   '430': 'Fiorentina',
+  '1025': 'Bologna',
   '897': 'Deportivo La Coruna',
   '130': 'Parma',
   '1038': 'Sampdoria',
@@ -514,6 +530,22 @@ function getDisplayClubName(clubId: string | undefined, name: string) {
     .replace(/^Borussia\s+Verein\s+f[uü]r\s+Leibes[uü]bungen.*M[oö]nchengladbach.*$/i, 'Borussia Monchengladbach')
     .replace(/^Eintracht\s+Frankfurt\s+Fu[sß]ball.*$/i, 'Eintracht Frankfurt')
     .replace(/^RasenBallsport\s+Leipzig.*$/i, 'RB Leipzig')
+    .replace(/^1\.\s*Fu[sß]ball-Club\s+K[oö]ln.*$/i, '1. FC Koln')
+    .replace(/^Hertha\s+BSC.*$/i, 'Hertha BSC')
+    .replace(/^Hannover\s+96.*$/i, 'Hannover 96')
+    .replace(/^Fortuna\s+D[uü]sseldorf.*$/i, 'Fortuna Dusseldorf')
+    .replace(/^VfL\s+Bochum.*$/i, 'VfL Bochum')
+    .replace(/^1\.\s*Fu[sß]ball-\s*und\s*Sportverein\s+Mainz\s+05.*$/i, 'Mainz 05')
+    .replace(/^Sport-Club\s+Freiburg.*$/i, 'SC Freiburg')
+    .replace(/^Turn-\s*und\s*Sportgemeinschaft\s+1899\s+Hoffenheim.*$/i, 'TSG Hoffenheim')
+    .replace(/^Fu[sß]ball-Club\s+Augsburg.*$/i, 'FC Augsburg')
+    .replace(/^1\.?FC\s+Nuremberg$/i, '1. FC Nurnberg')
+    .replace(/^Fu[sß]ball-Club\s+St\.\s*Pauli.*$/i, 'St. Pauli')
+    .replace(/^Aston\s+Villa\s+Football\s+Club$/i, 'Aston Villa')
+    .replace(/^Nottingham\s+Forest\s+Football\s+Club$/i, 'Nottingham Forest')
+    .replace(/^Southampton\s+FC$/i, 'Southampton')
+    .replace(/^Sunderland\s+Association\s+Football\s+Club$/i, 'Sunderland')
+    .replace(/^Bologna\s+Football\s+Club.*$/i, 'Bologna')
     .replace(/^Bar[cç]a\s+Atl[eè]tic$/i, 'Barca Atletic')
     .replace(/^Leeds\s+United\s+Association\s+FC$/i, 'Leeds United')
     .replace(/^Newcastle\s+United\s+FC$/i, 'Newcastle United')

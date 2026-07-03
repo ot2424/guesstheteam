@@ -39,12 +39,11 @@ const DIFFICULTY_RULES: Record<Difficulty, { minYear: number; maxYear: number }>
 };
 const ALLOWED_LEAGUES = new Set([
   'Bundesliga',
+  '2. Bundesliga',
   'Premier League',
   'La Liga',
   'Serie A',
   'Ligue 1',
-  'Eredivisie',
-  'Liga Portugal',
 ]);
 
 const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
@@ -67,16 +66,20 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Napoli', league: 'Serie A' },
     { team_name: 'Roma', league: 'Serie A' },
     { team_name: 'Bayer Leverkusen', league: 'Bundesliga' },
-    { team_name: 'Benfica', league: 'Liga Portugal' },
-    { team_name: 'Porto', league: 'Liga Portugal' },
     { team_name: 'RB Leipzig', league: 'Bundesliga', minYear: 2016 },
-    { team_name: 'Ajax', league: 'Eredivisie' },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Valencia', league: 'La Liga' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1' },
-    { team_name: 'Sporting CP', league: 'Liga Portugal' },
+    { team_name: 'Lazio', league: 'Serie A' },
+    { team_name: 'Atalanta', league: 'Serie A', minYear: 2018 },
+    { team_name: 'Schalke 04', league: 'Bundesliga', maxYear: 2020 },
+    { team_name: 'Werder Bremen', league: 'Bundesliga' },
+    { team_name: 'VfB Stuttgart', league: 'Bundesliga' },
+    { team_name: 'Eintracht Frankfurt', league: 'Bundesliga' },
+    { team_name: 'West Ham United', league: 'Premier League' },
+    { team_name: 'Newcastle United', league: 'Premier League' },
   ],
   medium: [
     { team_name: 'Bayern Munich', league: 'Bundesliga' },
@@ -107,15 +110,15 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1', minYear: 2013 },
-    { team_name: 'Lille', league: 'Ligue 1' },
-    { team_name: 'Ajax', league: 'Eredivisie' },
-    { team_name: 'PSV', league: 'Eredivisie' },
-    { team_name: 'Feyenoord', league: 'Eredivisie' },
-    { team_name: 'Porto', league: 'Liga Portugal' },
-    { team_name: 'Benfica', league: 'Liga Portugal' },
-    { team_name: 'Sporting CP', league: 'Liga Portugal' },
-    { team_name: 'Athletic Bilbao', league: 'La Liga' },
-    { team_name: 'Real Sociedad', league: 'La Liga' },
+    { team_name: 'Schalke 04', league: 'Bundesliga', maxYear: 2020 },
+    { team_name: 'Werder Bremen', league: 'Bundesliga' },
+    { team_name: 'Hamburger SV', league: 'Bundesliga', maxYear: 2017 },
+    { team_name: 'VfB Stuttgart', league: 'Bundesliga' },
+    { team_name: 'Hertha BSC', league: 'Bundesliga', maxYear: 2022 },
+    { team_name: '1. FC Koln', league: 'Bundesliga' },
+    { team_name: 'Eintracht Frankfurt', league: 'Bundesliga' },
+    { team_name: 'VfL Wolfsburg', league: 'Bundesliga' },
+    { team_name: 'Borussia Monchengladbach', league: 'Bundesliga' },
     { team_name: 'Newcastle United', league: 'Premier League', excludeYears: [2016] },
     { team_name: 'West Ham United', league: 'Premier League' },
     { team_name: 'Everton', league: 'Premier League' },
@@ -145,10 +148,6 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Barcelona', league: 'La Liga' },
     { team_name: 'Valencia', league: 'La Liga' },
     { team_name: 'Atletico Madrid', league: 'La Liga', minYear: 2002 },
-    { team_name: 'Athletic Bilbao', league: 'La Liga' },
-    { team_name: 'Real Sociedad', league: 'La Liga' },
-    { team_name: 'Real Betis', league: 'La Liga' },
-    { team_name: 'Celta Vigo', league: 'La Liga' },
     { team_name: 'Sevilla', league: 'La Liga' },
     { team_name: 'Villarreal', league: 'La Liga' },
     { team_name: 'AC Milan', league: 'Serie A' },
@@ -160,21 +159,27 @@ const CLUB_POOLS: Record<Difficulty, ClubPoolItem[]> = {
     { team_name: 'Atalanta', league: 'Serie A', minYear: 2011 },
     { team_name: 'Fiorentina', league: 'Serie A' },
     { team_name: 'Parma', league: 'Serie A' },
-    { team_name: 'Sampdoria', league: 'Serie A' },
-    { team_name: 'Torino', league: 'Serie A' },
     { team_name: 'Lyon', league: 'Ligue 1' },
     { team_name: 'Marseille', league: 'Ligue 1' },
     { team_name: 'Monaco', league: 'Ligue 1', excludeYears: [2011, 2012] },
     { team_name: 'Paris Saint-Germain', league: 'Ligue 1' },
-    { team_name: 'Lille', league: 'Ligue 1' },
-    { team_name: 'Nice', league: 'Ligue 1' },
-    { team_name: 'Saint-Etienne', league: 'Ligue 1' },
-    { team_name: 'Ajax', league: 'Eredivisie' },
-    { team_name: 'PSV', league: 'Eredivisie' },
-    { team_name: 'Feyenoord', league: 'Eredivisie' },
-    { team_name: 'Porto', league: 'Liga Portugal' },
-    { team_name: 'Benfica', league: 'Liga Portugal' },
-    { team_name: 'Sporting CP', league: 'Liga Portugal' },
+    { team_name: 'Hertha BSC', league: 'Bundesliga' },
+    { team_name: '1. FC Koln', league: 'Bundesliga' },
+    { team_name: 'Hannover 96', league: 'Bundesliga' },
+    { team_name: 'Fortuna Dusseldorf', league: 'Bundesliga' },
+    { team_name: 'VfL Bochum', league: 'Bundesliga' },
+    { team_name: 'Mainz 05', league: 'Bundesliga' },
+    { team_name: 'SC Freiburg', league: 'Bundesliga' },
+    { team_name: 'TSG Hoffenheim', league: 'Bundesliga' },
+    { team_name: 'FC Augsburg', league: 'Bundesliga' },
+    { team_name: '1. FC Nurnberg', league: 'Bundesliga' },
+    { team_name: 'St. Pauli', league: '2. Bundesliga' },
+    { team_name: 'Aston Villa', league: 'Premier League' },
+    { team_name: 'Leeds United', league: 'Premier League' },
+    { team_name: 'Nottingham Forest', league: 'Premier League' },
+    { team_name: 'Southampton', league: 'Premier League' },
+    { team_name: 'Sunderland', league: 'Premier League' },
+    { team_name: 'Bologna', league: 'Serie A' },
   ],
 };
 const CLUB_LEAGUES = new Map(
@@ -358,10 +363,10 @@ function buildSegmentPrompt(
 ) {
   const endId = startId + count - 1;
   const rangeText = difficulty === 'easy'
-    ? 'Saisons 2018/2019 bis 2025/2026. Nur sehr bekannte moderne Top-Clubs: Bayern Munich, Real Madrid, Barcelona, Manchester City, Liverpool, PSG, Juventus, Inter Milan, AC Milan, Arsenal, Chelsea, Atletico Madrid, Manchester United, Borussia Dortmund, Tottenham Hotspur, Napoli, Roma, Bayer Leverkusen, Benfica, Porto, RB Leipzig, Ajax.'
+    ? 'Saisons 2018/2019 bis 2025/2026. Nur absolute Mainstream-Clubs: Bayern Munich, Borussia Dortmund, RB Leipzig, Bayer Leverkusen, Schalke 04, Werder Bremen, VfB Stuttgart, Eintracht Frankfurt, Real Madrid, Barcelona, Atletico Madrid, Sevilla, Valencia, Manchester City, Liverpool, Manchester United, Arsenal, Chelsea, Tottenham Hotspur, Newcastle United, West Ham United, Juventus, Inter Milan, AC Milan, Napoli, Roma, Lazio, Atalanta, PSG, Lyon, Marseille, Monaco.'
     : difficulty === 'medium'
-      ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Euro-Dauergaeste und starke Champions-/Europa-League-Teams. Keine Nischenclubs wie Rennes oder Anderlecht.'
-      : 'Saisons 2013/2014 bis 2017/2018. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Top- und Nostalgie-Clubs. Noch aeltere 2000er-Ikonen brauchen spaeter einen separaten manuell geprueften Legacy-Seed.';
+      ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Mainstream-Clubs aus Bundesliga, Premier League, La Liga, Serie A und Ligue 1. Deutsche Traditionsvereine sind ausdruecklich erlaubt. Keine Nischenclubs wie Rennes, Anderlecht, Real Sociedad, Athletic Bilbao, Celta Vigo, Nice, Saint-Etienne, PSV oder Feyenoord.'
+      : 'Saisons 2013/2014 bis 2017/2018. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Mainstream- und Nostalgie-Clubs. Fokus auf deutsche Traditionsvereine, Big-Six England, Real/Barca/Atletico/Sevilla/Valencia/Villarreal, grosse italienische Clubs und PSG/Lyon/Marseille/Monaco.';
 
   return `
 Erzeuge Block ${options.block} eines 500er-Katalogs fuer mein Fussball-Quizspiel.
@@ -375,12 +380,14 @@ Datenstruktur:
 - team_name: Transfermarkt-tauglicher Vereinsname, z.B. "Real Madrid", "Bayern Munich", "Inter Milan"
 - season: Anzeigeformat "YYYY/YYYY", z.B. "2003/2004"
 - season_id: erstes Jahr der Saison als Transfermarkt season_id, z.B. "2003"
-- league: "Bundesliga", "Premier League", "La Liga", "Serie A", "Ligue 1", "Eredivisie" oder "Liga Portugal"
+- league: "Bundesliga", "2. Bundesliga", "Premier League", "La Liga", "Serie A" oder "Ligue 1"
 - difficulty: exakt "${difficulty}"
 
 Regeln:
 - Keine Nationalteams.
 - Keine Fantasienamen.
+- Keine Randclubs oder Expertenvereine, die fuer normale Fussballfans fast unmoeglich wirken.
+- Lieber mehr Saison-Varianten von bekannten Vereinen als neue unbekannte Vereine.
 - Keine doppelten Kombinationen aus team_name + season.
 - Die folgenden Team-Saisons sind VERBOTEN und duerfen exakt nicht nochmal vorkommen: ${excluded.length > 0 ? excluded.map((team) => `${team.team_name} ${team.season}`).join('; ') : 'keine'}.
 - Pruefe vor der Antwort selbst, dass in deinen ${count} Eintraegen keine team_name + season Kombination doppelt ist.
