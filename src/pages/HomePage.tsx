@@ -448,9 +448,9 @@ function Dashboard() {
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 90px' }}>
         {/* Begrüßung */}
         <div style={{ animation: 'gttHeroIn .5s ease both', marginBottom: 28 }}>
-          <div style={{ fontSize: 13, letterSpacing: '0.24em', color: '#22c55e', marginBottom: 10 }}>WILLKOMMEN ZURÜCK</div>
+          <div style={{ fontSize: 13, letterSpacing: '0.24em', color: '#22c55e', marginBottom: 10 }}>STARTSEITE</div>
           <h1 style={{ fontFamily: 'Anton, sans-serif', fontSize: 'clamp(40px,6vw,68px)', lineHeight: 0.92, margin: 0, color: '#fff' }}>
-            Wer spielt heute, {name}?
+            Willkommen zurück, {name}
           </h1>
           <p style={{ fontSize: 16.5, color: '#9aa4b2', maxWidth: 540, margin: '14px 0 0' }}>
             Erkenne Fußballer an Karriere und Nationalität. Steige auf, sammle Ränge, schalte Inhalte frei.
