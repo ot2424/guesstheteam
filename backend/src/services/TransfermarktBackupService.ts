@@ -16,6 +16,10 @@ interface ClubDetails {
   logoUrl: string;
 }
 
+interface EnrichmentOptions {
+  force?: boolean;
+}
+
 interface PlayerProfileResponse {
   isRetired?: boolean;
   is_retired?: boolean;
@@ -68,12 +72,12 @@ export class TransfermarktBackupService {
     return this.enrichTeamData(team);
   }
 
-  async enrichTeamData(team: TeamData): Promise<TeamData> {
+  async enrichTeamData(team: TeamData, options: EnrichmentOptions = {}): Promise<TeamData> {
     const seedTeam = team as TeamData & { clubId?: string };
     const teamDetails = await this.getClubDetails(seedTeam.clubId, team.name);
     const players = await Promise.all(team.players.map(async (player) => ({
       ...player,
-      career: await this.getCareer(player.id, player.name, player.career),
+      career: await this.getCareer(player.id, player.name, player.career, options),
     })));
 
     return {
@@ -84,8 +88,8 @@ export class TransfermarktBackupService {
     };
   }
 
-  async enrichCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[]): Promise<CareerClub[]> {
-    return this.getCareer(playerId, playerName, fallbackCareer);
+  async enrichCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[], options: EnrichmentOptions = {}): Promise<CareerClub[]> {
+    return this.getCareer(playerId, playerName, fallbackCareer, options);
   }
 
   async enrichClub(clubId: string | undefined, clubName: string): Promise<ClubDetails> {
@@ -138,8 +142,8 @@ export class TransfermarktBackupService {
     return { name: name || fallbackName, logoUrl };
   }
 
-  private async getCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[]): Promise<CareerClub[]> {
-    if (!shouldEnrichCareer(fallbackCareer)) return fallbackCareer;
+  private async getCareer(playerId: string, playerName: string, fallbackCareer: CareerClub[], options: EnrichmentOptions = {}): Promise<CareerClub[]> {
+    if (!options.force && !shouldEnrichCareer(fallbackCareer)) return fallbackCareer;
 
     const cached = this.playerCareerCache.get(playerId);
     if (cached) return cached;
@@ -157,7 +161,8 @@ export class TransfermarktBackupService {
       }
     }
 
-    const enrichedCareer = await this.addClubLogos(career.length > 0 ? career : fallbackCareer);
+    const selectedCareer = selectBestCareer(career, fallbackCareer, options);
+    const enrichedCareer = await this.addClubLogos(selectedCareer);
     this.playerCareerCache.set(playerId, enrichedCareer);
 
     return enrichedCareer;
@@ -223,6 +228,23 @@ export class TransfermarktBackupService {
 
 function shouldEnrichCareer(career: CareerClub[]) {
   return career.length <= 1 || career.every((club) => !club.logoUrl);
+}
+
+function selectBestCareer(apiCareer: CareerClub[], fallbackCareer: CareerClub[], options: EnrichmentOptions) {
+  if (apiCareer.length === 0) return fallbackCareer;
+  if (!options.force) return apiCareer;
+
+  const apiRealClubs = countRealCareerClubs(apiCareer);
+  const fallbackRealClubs = countRealCareerClubs(fallbackCareer);
+
+  if (apiRealClubs >= 2) return apiCareer;
+  if (fallbackRealClubs <= 1 && apiRealClubs > 0) return apiCareer;
+  if (apiRealClubs >= fallbackRealClubs && apiRealClubs > 0) return apiCareer;
+  return fallbackCareer;
+}
+
+function countRealCareerClubs(career: CareerClub[]) {
+  return career.filter((club) => !isVirtualCareerClub(club.clubId)).length;
 }
 
 function buildCareerFromApi(

@@ -13,6 +13,7 @@
     "data:import:transfermarkt": "tsx scripts/import-transfermarkt-seed.ts",
     "data:enrich:transfermarkt": "tsx scripts/enrich-transfermarkt-seed.ts",
     "data:sync:supabase": "tsx scripts/sync-teams-to-supabase.ts",
+    "data:enrich:supabase-careers": "tsx scripts/enrich-supabase-careers.ts",
     "data:build:team": "tsx scripts/build-team-season.ts",
     "data:generate:catalog": "tsx scripts/generate-team-catalog.ts",
     "data:build:catalog": "tsx scripts/build-teams-from-catalog.ts",
