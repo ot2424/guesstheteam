@@ -79,14 +79,17 @@ describe('OnlineMatchupService', () => {
     expect(joined?.status).toBe('active');
 
     const firstGuess = await service.guess('token-a', created.id, 'Neuer');
+    await service.guess('token-a', created.id, 'Thomas Mueller');
     const secondGuess = await service.guess('token-a', created.id, 'Toni Kroos');
+    const perfectGuess = await service.guess('token-a', created.id, 'Kai Havertz');
     const rivalGuess = await service.guess('token-b', created.id, 'Kai Havertz');
     expect(firstGuess?.correct).toBe(true);
-    expect(secondGuess?.matchup.self.solved).toBe(2);
+    expect(secondGuess?.matchup.self.solved).toBe(3);
+    expect(perfectGuess?.matchup.self.solved).toBe(4);
+    expect(perfectGuess?.matchup.self.finished).toBe(true);
+    expect(perfectGuess?.matchup.status).toBe('active');
     expect(rivalGuess?.matchup.self.solved).toBe(1);
 
-    const aFinished = await service.finish('token-a', created.id);
-    expect(aFinished?.self.finished).toBe(true);
     const completed = await service.finish('token-b', created.id);
 
     expect(completed?.status).toBe('completed');

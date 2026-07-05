@@ -216,6 +216,7 @@ export class OnlineMatchupService {
     const next = { ...row };
     const nextState = cloneState(state);
     if (match) nextState.players[match.playerId].solved = true;
+    if (isPerfect(nextState)) nextState.finishedAt = Date.now();
     setState(next, side, nextState);
     clearLeftAt(next, profile.id);
 
@@ -508,6 +509,11 @@ function setState(row: OnlineMatchupRow, side: Side, state: OnlineSideState) {
 
 function cloneState(state: OnlineSideState): OnlineSideState {
   return JSON.parse(JSON.stringify(state)) as OnlineSideState;
+}
+
+function isPerfect(state: OnlineSideState) {
+  const players = Object.values(state.players);
+  return players.length > 0 && players.every((player) => player.solved);
 }
 
 function isParticipant(row: OnlineMatchupRow, userId: string) {
