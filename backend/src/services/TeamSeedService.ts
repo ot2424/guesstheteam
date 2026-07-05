@@ -2,7 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
-import { GERMANY_2024, REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
+import { REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
+import { WORLD_CUP_TEAMS } from '../data/worldCupTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
 import { TransfermarktBackupService } from './TransfermarktBackupService';
 
@@ -109,7 +110,7 @@ export class TeamSeedService {
   ) {}
 
   async selectTeam(options: TeamSelectionOptions): Promise<TeamData> {
-    if (options.playMode === 'worldcup') return this.toDisplayTeam(GERMANY_2024);
+    if (options.playMode === 'worldcup') return this.selectWorldCupTeam(options);
 
     const teams = await this.getTeams();
     if (teams.length === 0) return REAL_MADRID_2223;
@@ -137,13 +138,28 @@ export class TeamSeedService {
     const teamPlayers = (await this.getTeams())
       .flatMap((team) => team.players)
       .map((player) => player.name);
+    const worldCupPlayers = (await this.getWorldCupTeams())
+      .flatMap((team) => team.players)
+      .map((player) => player.name);
     const seedPlayers = this.getSeed()?.players?.map((player) => player.name) ?? [];
-    const pool = uniqueNames(teamPlayers.length > 0 ? teamPlayers : seedPlayers.length > 0 ? seedPlayers : PLAYER_SEARCH_POOL);
+    const pool = uniqueNames([
+      ...teamPlayers,
+      ...worldCupPlayers,
+      ...(seedPlayers.length > 0 ? seedPlayers : PLAYER_SEARCH_POOL),
+    ]);
 
     return pool
       .filter((name) => name.toLowerCase().includes(normalizedQuery))
       .slice(0, limit)
       .map((name) => ({ name }));
+  }
+
+  private async selectWorldCupTeam(options: TeamSelectionOptions): Promise<TeamData> {
+    const teams = await this.getWorldCupTeams();
+    const withoutRecent = excludeTeams(teams, options.excludeTeamIds ?? []);
+    const pool = withoutRecent.length > 0 ? withoutRecent : teams;
+    const index = Math.floor(Math.random() * pool.length);
+    return this.toDisplayTeam(pool[index] ?? WORLD_CUP_TEAMS[0]);
   }
 
   private filterTeams(teams: SeedTeam[], options: TeamSelectionOptions) {
@@ -164,6 +180,16 @@ export class TeamSeedService {
     }
 
     return this.getSeed()?.teams ?? [];
+  }
+
+  private async getWorldCupTeams() {
+    if (env.GUESSTHETEAM_TEAM_SOURCE === 'supabase') {
+      const supabaseTeams = await this.getSupabaseTeams();
+      const nationalTeams = supabaseTeams.filter(isWorldCupTeam);
+      if (nationalTeams.length > 0) return nationalTeams;
+    }
+
+    return WORLD_CUP_TEAMS;
   }
 
   private async getSupabaseTeams() {
@@ -249,6 +275,10 @@ function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {
 
 function uniqueNames(names: string[]) {
   return [...new Set(names)];
+}
+
+function isWorldCupTeam(team: SeedTeam) {
+  return team.league === 'WM-Modus' || team.id.startsWith('worldcup-') || team.id.startsWith('national-');
 }
 
 function getDisplayClubName(clubId: string | undefined, name: string) {
