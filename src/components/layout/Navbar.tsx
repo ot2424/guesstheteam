@@ -10,6 +10,7 @@ import type { UserProfile } from '../../types';
 const NAV_LINKS = [
   { to: '/',        label: 'Home'    },
   { to: '/play',    label: 'Spielen' },
+  { to: '/online', label: 'Online' },
   { to: '/leaderboard', label: 'Rangliste' },
   { to: '/profile', label: 'Profil'  },
 ];
@@ -88,14 +89,14 @@ export function Navbar() {
           })}
         </div>
 
-        <div className="order-3 grid w-full grid-cols-4 gap-1 sm:hidden">
+        <div className="order-3 grid w-full grid-cols-5 gap-1 sm:hidden">
           {NAV_LINKS.map(({ to, label }) => {
             const active = pathname === to || (to !== '/' && pathname.startsWith(to));
             return (
               <Link
                 key={to}
                 to={to}
-                className={`rounded-lg px-2 py-2 text-center text-xs font-semibold transition-colors ${
+                className={`rounded-lg px-1 py-2 text-center text-[11px] font-semibold transition-colors ${
                   active ? 'text-white' : 'text-gray-500'
                 }`}
                 style={active ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' } : { border: '1px solid transparent' }}

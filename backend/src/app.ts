@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { createGameRouter } from './routes/game';
+import { createOnlineRouter } from './routes/online';
 import { createPlayersRouter } from './routes/players';
 import { createProfileRouter } from './routes/profile';
 
@@ -29,6 +30,7 @@ export function createApp() {
   });
 
   app.use('/api/v1/game', createGameRouter());
+  app.use('/api/v1/online', createOnlineRouter());
   app.use('/api/v1/players', createPlayersRouter());
   app.use('/api/v1/profile', createProfileRouter());
 

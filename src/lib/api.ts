@@ -1,4 +1,4 @@
-import type { Difficulty, FriendRequestSummary, MatchHistoryItem, MatchResult, MatchType, PlayMode, PublicUserSummary, Rank, Team } from '../types';
+import type { Difficulty, FriendRequestSummary, MatchHistoryItem, MatchResult, MatchType, OnlineMatchup, PlayMode, PublicUserSummary, Rank, Team } from '../types';
 import type { UserProfile } from '../types';
 import { hasSupabase, supabase } from './supabase';
 
@@ -101,6 +101,21 @@ export interface SocialOverviewResponse {
   notificationCount: number;
 }
 
+export interface OnlineMatchupsResponse {
+  matchups: OnlineMatchup[];
+}
+
+export interface OnlineMatchupResponse {
+  matchup: OnlineMatchup;
+}
+
+export interface OnlineGuessResponse {
+  correct: boolean;
+  matchedPlayerId?: string;
+  name?: string;
+  matchup: OnlineMatchup;
+}
+
 export function startGame(payload: {
   playMode: PlayMode;
   matchType: MatchType;
@@ -148,6 +163,46 @@ export function respondToFriendRequest(requestId: string, action: 'accept' | 'de
   return request<{ ok: true }>(`/profile/friends/${requestId}/respond`, {
     method: 'POST',
     body: JSON.stringify({ action }),
+  });
+}
+
+export function getOnlineMatchups() {
+  return request<OnlineMatchupsResponse>('/online/matchups');
+}
+
+export function createOnlineMatchup(opponentId: string) {
+  return request<OnlineMatchupResponse>('/online/matchups', {
+    method: 'POST',
+    body: JSON.stringify({ opponentId }),
+  });
+}
+
+export function getOnlineMatchup(matchupId: string) {
+  return request<OnlineMatchupResponse>(`/online/matchups/${matchupId}`);
+}
+
+export function joinOnlineMatchup(matchupId: string) {
+  return request<OnlineMatchupResponse>(`/online/matchups/${matchupId}/join`, {
+    method: 'POST',
+  });
+}
+
+export function leaveOnlineMatchup(matchupId: string) {
+  return request<OnlineMatchupResponse>(`/online/matchups/${matchupId}/leave`, {
+    method: 'POST',
+  });
+}
+
+export function guessOnlineMatchup(matchupId: string, input: string) {
+  return request<OnlineGuessResponse>(`/online/matchups/${matchupId}/guess`, {
+    method: 'POST',
+    body: JSON.stringify({ input }),
+  });
+}
+
+export function finishOnlineMatchup(matchupId: string) {
+  return request<OnlineMatchupResponse>(`/online/matchups/${matchupId}/finish`, {
+    method: 'POST',
   });
 }
 

@@ -108,6 +108,35 @@ export interface FriendRequestSummary {
   user: PublicUserSummary;
 }
 
+export interface OnlineScore {
+  userId: string;
+  solved: number;
+  total: number;
+  durationSec: number;
+  finished: boolean;
+  leftAt: string | null;
+}
+
+export interface OnlineMatchup {
+  id: string;
+  status: 'pending' | 'active' | 'completed' | 'expired';
+  role: 'challenger' | 'opponent';
+  opponent: PublicUserSummary;
+  team: Team;
+  self: OnlineScore;
+  rival: OnlineScore;
+  selfSolvedPlayerIds: string[];
+  rivalSolvedPlayerIds: string[];
+  winnerId: string | null;
+  winReason: string | null;
+  expiresAt: string;
+  reconnectDeadlineAt: string | null;
+  pairScore: {
+    selfWins: number;
+    opponentWins: number;
+  };
+}
+
 export interface UserInventory {
   skipShields: number;
   autoSolveJokers: number;
