@@ -17,8 +17,23 @@ type ProfileRow = {
   matches_played: number;
   matches_won: number;
   win_streak: number;
+  best_win_streak?: number | null;
   skip_shields?: number | null;
   auto_solve_jokers?: number | null;
+};
+
+type LeaderboardType = 'rank' | 'streak' | 'xp' | 'wins';
+type FriendRequestStatus = 'pending' | 'accepted' | 'declined';
+
+type FriendRequestRow = {
+  id: string;
+  requester_id: string;
+  addressee_id: string;
+  status: FriendRequestStatus;
+  created_at: string;
+  responded_at: string | null;
+  requester?: ProfileRow | ProfileRow[] | null;
+  addressee?: ProfileRow | ProfileRow[] | null;
 };
 
 type MatchResultRow = {
@@ -52,9 +67,32 @@ export type PublicProfile = {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  bestWinStreak: number;
   inventory: UserInventory;
   unlockedRewards: ProgressionReward[];
   prestige: PrestigeVisual;
+};
+
+export type PublicUserSummary = {
+  id: string;
+  username: string;
+  level: number;
+  lp: number;
+  rank: Rank;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  bestWinStreak: number;
+  prestige: PrestigeVisual;
+};
+
+export type FriendRequestSummary = {
+  id: string;
+  status: FriendRequestStatus;
+  createdAt: string;
+  respondedAt: string | null;
+  direction: 'incoming' | 'outgoing' | 'friend';
+  user: PublicUserSummary;
 };
 
 export type MatchPersistencePayload = {
@@ -83,6 +121,8 @@ const RANKS: Rank[] = [
   'Gold 3', 'Gold 2', 'Gold 1',
   'Platinum 3', 'Platinum 2', 'Platinum 1',
 ];
+
+const PROFILE_SELECT = 'id, username, first_name, last_name, email, xp, level, lp, rank, badges, matches_played, matches_won, win_streak, best_win_streak, skip_shields, auto_solve_jokers';
 
 export class ProfileService {
   async getProfile(accessToken?: string): Promise<PublicProfile | null> {
@@ -141,6 +181,7 @@ export class ProfileService {
         matches_played: nextProfile.matchesPlayed,
         matches_won: nextProfile.matchesWon,
         win_streak: nextProfile.winStreak,
+        best_win_streak: nextProfile.bestWinStreak,
         skip_shields: nextProfile.inventory.skipShields,
         auto_solve_jokers: nextProfile.inventory.autoSolveJokers,
       })
@@ -163,6 +204,127 @@ export class ProfileService {
 
     if (error || !data) return [];
     return data.map(mapMatchHistoryItem);
+  }
+
+  async getLeaderboards(type: LeaderboardType = 'rank', limit = 50): Promise<PublicUserSummary[]> {
+    const supabase = createAdminClient();
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PROFILE_SELECT)
+      .order(getLeaderboardSortColumn(type), { ascending: false })
+      .order('matches_won', { ascending: false })
+      .limit(Math.min(Math.max(limit, 1), 100))
+      .returns<ProfileRow[]>();
+
+    if (error || !data) return [];
+    return data.map(mapUserSummary);
+  }
+
+  async searchUsers(accessToken: string | undefined, query: string, limit = 12): Promise<PublicUserSummary[]> {
+    const currentProfile = await this.getProfile(accessToken);
+    const supabase = createAdminClient();
+    if (!supabase || !currentProfile || query.trim().length < 2) return [];
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select(PROFILE_SELECT)
+      .ilike('username', `%${query.trim()}%`)
+      .neq('id', currentProfile.id)
+      .order('username', { ascending: true })
+      .limit(Math.min(Math.max(limit, 1), 25))
+      .returns<ProfileRow[]>();
+
+    if (error || !data) return [];
+    return data.map(mapUserSummary);
+  }
+
+  async getSocialOverview(accessToken?: string) {
+    const currentProfile = await this.getProfile(accessToken);
+    const supabase = createAdminClient();
+    if (!supabase || !currentProfile) {
+      return { friends: [], incoming: [], outgoing: [], notificationCount: 0 };
+    }
+
+    const { data, error } = await supabase
+      .from('friend_requests')
+      .select(`
+        id,
+        requester_id,
+        addressee_id,
+        status,
+        created_at,
+        responded_at,
+        requester:requester_id(${PROFILE_SELECT}),
+        addressee:addressee_id(${PROFILE_SELECT})
+      `)
+      .or(`requester_id.eq.${currentProfile.id},addressee_id.eq.${currentProfile.id}`)
+      .order('created_at', { ascending: false })
+      .returns<FriendRequestRow[]>();
+
+    if (error || !data) return { friends: [], incoming: [], outgoing: [], notificationCount: 0 };
+
+    const items = data
+      .map((request) => mapFriendRequest(request, currentProfile.id))
+      .filter((request): request is FriendRequestSummary => Boolean(request));
+
+    const incoming = items.filter((request) => request.status === 'pending' && request.direction === 'incoming');
+    const outgoing = items.filter((request) => request.status === 'pending' && request.direction === 'outgoing');
+    const friends = items.filter((request) => request.status === 'accepted');
+
+    return {
+      friends,
+      incoming,
+      outgoing,
+      notificationCount: incoming.length,
+    };
+  }
+
+  async sendFriendRequest(accessToken: string | undefined, addresseeId: string) {
+    const currentProfile = await this.getProfile(accessToken);
+    const supabase = createAdminClient();
+    if (!supabase || !currentProfile) return { error: 'Profil nicht gefunden.' };
+    if (currentProfile.id === addresseeId) return { error: 'Du kannst dir selbst keine Anfrage senden.' };
+
+    const { data: existing } = await supabase
+      .from('friend_requests')
+      .select('id, status')
+      .or(`and(requester_id.eq.${currentProfile.id},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${currentProfile.id})`)
+      .maybeSingle<{ id: string; status: FriendRequestStatus }>();
+
+    if (existing?.status === 'accepted') return { error: 'Ihr seid bereits Freunde.' };
+    if (existing?.status === 'pending') return { error: 'Es gibt bereits eine offene Anfrage.' };
+
+    const { error } = await supabase
+      .from('friend_requests')
+      .insert({
+        requester_id: currentProfile.id,
+        addressee_id: addresseeId,
+        status: 'pending',
+      });
+
+    if (error) return { error: error.message };
+    return { error: null };
+  }
+
+  async respondToFriendRequest(accessToken: string | undefined, requestId: string, action: 'accept' | 'decline') {
+    const currentProfile = await this.getProfile(accessToken);
+    const supabase = createAdminClient();
+    if (!supabase || !currentProfile) return { error: 'Profil nicht gefunden.' };
+
+    const { error } = await supabase
+      .from('friend_requests')
+      .update({
+        status: action === 'accept' ? 'accepted' : 'declined',
+        responded_at: new Date().toISOString(),
+      })
+      .eq('id', requestId)
+      .eq('addressee_id', currentProfile.id)
+      .eq('status', 'pending');
+
+    if (error) return { error: error.message };
+    return { error: null };
   }
 
   async consumeSkipShield(accessToken?: string): Promise<PublicProfile | null> {
@@ -232,6 +394,11 @@ function createUserClient(accessToken?: string): SupabaseClient | null {
   });
 }
 
+function createAdminClient(): SupabaseClient | null {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function mapProfile(row: ProfileRow): PublicProfile {
   return {
     id: row.id,
@@ -247,6 +414,7 @@ function mapProfile(row: ProfileRow): PublicProfile {
     matchesPlayed: row.matches_played,
     matchesWon: row.matches_won,
     winStreak: row.win_streak,
+    bestWinStreak: row.best_win_streak ?? row.win_streak,
     inventory: {
       skipShields: row.skip_shields ?? 0,
       autoSolveJokers: row.auto_solve_jokers ?? 0,
@@ -254,6 +422,46 @@ function mapProfile(row: ProfileRow): PublicProfile {
     unlockedRewards: getUnlockedRewards(row.level),
     prestige: getPrestigeVisual(row.rank),
   };
+}
+
+function mapUserSummary(row: ProfileRow): PublicUserSummary {
+  return {
+    id: row.id,
+    username: row.username,
+    level: row.level,
+    lp: row.lp,
+    rank: row.rank,
+    matchesPlayed: row.matches_played,
+    matchesWon: row.matches_won,
+    winStreak: row.win_streak,
+    bestWinStreak: row.best_win_streak ?? row.win_streak,
+    prestige: getPrestigeVisual(row.rank),
+  };
+}
+
+function mapFriendRequest(row: FriendRequestRow, currentUserId: string): FriendRequestSummary | null {
+  const requester = Array.isArray(row.requester) ? row.requester[0] : row.requester;
+  const addressee = Array.isArray(row.addressee) ? row.addressee[0] : row.addressee;
+  const otherProfile = row.requester_id === currentUserId ? addressee : requester;
+  if (!otherProfile) return null;
+
+  return {
+    id: row.id,
+    status: row.status,
+    createdAt: row.created_at,
+    respondedAt: row.responded_at,
+    direction: row.status === 'accepted'
+      ? 'friend'
+      : row.addressee_id === currentUserId ? 'incoming' : 'outgoing',
+    user: mapUserSummary(otherProfile),
+  };
+}
+
+function getLeaderboardSortColumn(type: LeaderboardType) {
+  if (type === 'streak') return 'best_win_streak';
+  if (type === 'xp') return 'xp';
+  if (type === 'wins') return 'matches_won';
+  return 'lp';
 }
 
 export function applyProgress(
@@ -276,6 +484,9 @@ export function applyProgress(
   const rankedOutcome = matchType === 'series' && result.series?.isComplete
     ? result.series.isWin
     : result.isWin;
+  const winStreak = playMode === 'ranked' && !rankedSeriesPending
+    ? (rankedOutcome ? profile.winStreak + 1 : 0)
+    : profile.winStreak;
 
   return {
     ...profile,
@@ -288,9 +499,8 @@ export function applyProgress(
     prestige: getPrestigeVisual(nextRank),
     matchesPlayed: profile.matchesPlayed + 1,
     matchesWon: profile.matchesWon + (result.isWin ? 1 : 0),
-    winStreak: playMode === 'ranked' && !rankedSeriesPending
-      ? (rankedOutcome ? profile.winStreak + 1 : 0)
-      : profile.winStreak,
+    winStreak,
+    bestWinStreak: Math.max(profile.bestWinStreak, winStreak),
   };
 }
 

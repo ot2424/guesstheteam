@@ -80,9 +80,32 @@ export interface UserProfile {
   matchesPlayed: number;
   matchesWon: number;
   winStreak: number;
+  bestWinStreak: number;
   inventory: UserInventory;
   unlockedRewards: ProgressionReward[];
   prestige: PrestigeVisual;
+}
+
+export interface PublicUserSummary {
+  id: string;
+  username: string;
+  level: number;
+  lp: number;
+  rank: Rank;
+  matchesPlayed: number;
+  matchesWon: number;
+  winStreak: number;
+  bestWinStreak: number;
+  prestige: PrestigeVisual;
+}
+
+export interface FriendRequestSummary {
+  id: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: string;
+  respondedAt: string | null;
+  direction: 'incoming' | 'outgoing' | 'friend';
+  user: PublicUserSummary;
 }
 
 export interface UserInventory {

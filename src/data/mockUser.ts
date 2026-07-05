@@ -47,6 +47,7 @@ export const MOCK_USER: UserProfile = {
   matchesPlayed: 24,
   matchesWon: 14,
   winStreak: 3,
+  bestWinStreak: 5,
   inventory: {
     skipShields: 0,
     autoSolveJokers: 0,

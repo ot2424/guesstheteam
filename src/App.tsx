@@ -7,6 +7,7 @@ import { ResultPage } from './pages/ResultPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { TutorialPage } from './pages/TutorialPage';
 import { AuthPage } from './pages/AuthPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="/play"     element={<GamePage />} />
           <Route path="/result"   element={<ResultPage />} />
           <Route path="/profile"  element={<ProfilePage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/tutorial" element={<TutorialPage />} />
           <Route path="/auth"     element={<AuthPage />} />
         </Routes>

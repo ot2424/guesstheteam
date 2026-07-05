@@ -16,6 +16,7 @@ function profile(overrides: Partial<PublicProfile> = {}): PublicProfile {
     matchesPlayed: 0,
     matchesWon: 0,
     winStreak: 0,
+    bestWinStreak: 0,
     inventory: { skipShields: 0, autoSolveJokers: 0 },
     unlockedRewards: [],
     prestige: { emblem: 'bronze', nameGlow: null },
@@ -95,6 +96,7 @@ describe('ProfileService progression helpers', () => {
     expect(loss.lp).toBe(0);
     expect(loss.rank).toBe('Bronze 3');
     expect(loss.winStreak).toBe(0);
+    expect(loss.bestWinStreak).toBe(2);
   });
 
   it('keeps ranked streak unchanged while a series is not complete', () => {
@@ -109,5 +111,29 @@ describe('ProfileService progression helpers', () => {
     expect(next.winStreak).toBe(3);
     expect(next.lp).toBe(800);
     expect(next.matchesWon).toBe(1);
+  });
+
+  it('keeps the best ranked streak record after a later loss', () => {
+    const win = applyProgress(
+      profile({ winStreak: 4, bestWinStreak: 4 }),
+      'ranked',
+      'single',
+      { isWin: true },
+      { xpGained: 100, lpChange: 20 },
+    );
+
+    expect(win.winStreak).toBe(5);
+    expect(win.bestWinStreak).toBe(5);
+
+    const loss = applyProgress(
+      win,
+      'ranked',
+      'single',
+      { isWin: false },
+      { xpGained: 0, lpChange: -20 },
+    );
+
+    expect(loss.winStreak).toBe(0);
+    expect(loss.bestWinStreak).toBe(5);
   });
 });

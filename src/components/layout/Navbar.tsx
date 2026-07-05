@@ -4,12 +4,13 @@ import { motion } from 'framer-motion';
 import { RankBadge } from '../ui/RankBadge';
 import { JerseyIcon } from '../ui/JerseyIcon';
 import { useAuth } from '../../lib/useAuth';
-import { getProfile } from '../../lib/api';
+import { getProfile, getSocialOverview } from '../../lib/api';
 import type { UserProfile } from '../../types';
 
 const NAV_LINKS = [
   { to: '/',        label: 'Home'    },
   { to: '/play',    label: 'Spielen' },
+  { to: '/leaderboard', label: 'Rangliste' },
   { to: '/profile', label: 'Profil'  },
 ];
 
@@ -19,6 +20,7 @@ export function Navbar() {
   const { user, isAuthenticated, displayName, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
   const activeProfile = profile?.id === user?.id ? profile : null;
 
   useEffect(() => {
@@ -31,6 +33,13 @@ export function Navbar() {
       })
       .catch(() => {
         if (active) setProfile(null);
+      });
+    getSocialOverview()
+      .then((response) => {
+        if (active) setNotificationCount(response.notificationCount);
+      })
+      .catch(() => {
+        if (active) setNotificationCount(0);
       });
 
     return () => { active = false; };
@@ -79,7 +88,7 @@ export function Navbar() {
           })}
         </div>
 
-        <div className="order-3 grid w-full grid-cols-3 gap-1 sm:hidden">
+        <div className="order-3 grid w-full grid-cols-4 gap-1 sm:hidden">
           {NAV_LINKS.map(({ to, label }) => {
             const active = pathname === to || (to !== '/' && pathname.startsWith(to));
             return (
@@ -103,6 +112,19 @@ export function Navbar() {
             <div className="hidden min-[420px]:block">
               {activeProfile && <RankBadge rank={activeProfile.rank} size="sm" />}
             </div>
+            <Link
+              to="/leaderboard"
+              className="relative hidden h-8 w-8 items-center justify-center rounded-full border text-sm text-gray-400 transition-colors hover:text-white sm:flex"
+              style={{ borderColor: 'rgba(255,255,255,0.1)', background: '#111827' }}
+              aria-label="Benachrichtigungen"
+            >
+              🔔
+              {notificationCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-black text-black">
+                  {notificationCount}
+                </span>
+              )}
+            </Link>
             <button
               onClick={() => setMenuOpen((o) => !o)}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"

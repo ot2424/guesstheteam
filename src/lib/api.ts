@@ -1,4 +1,4 @@
-import type { Difficulty, MatchHistoryItem, MatchResult, MatchType, PlayMode, Rank, Team } from '../types';
+import type { Difficulty, FriendRequestSummary, MatchHistoryItem, MatchResult, MatchType, PlayMode, PublicUserSummary, Rank, Team } from '../types';
 import type { UserProfile } from '../types';
 import { hasSupabase, supabase } from './supabase';
 
@@ -86,6 +86,21 @@ export interface MatchHistoryResponse {
   matches: MatchHistoryItem[];
 }
 
+export interface LeaderboardResponse {
+  entries: PublicUserSummary[];
+}
+
+export interface UserSearchResponse {
+  users: PublicUserSummary[];
+}
+
+export interface SocialOverviewResponse {
+  friends: FriendRequestSummary[];
+  incoming: FriendRequestSummary[];
+  outgoing: FriendRequestSummary[];
+  notificationCount: number;
+}
+
 export function startGame(payload: {
   playMode: PlayMode;
   matchType: MatchType;
@@ -106,6 +121,34 @@ export function getProfile() {
 
 export function getMatchHistory() {
   return request<MatchHistoryResponse>('/profile/matches');
+}
+
+export function getLeaderboards(type: 'rank' | 'streak' | 'xp' | 'wins', limit = 50) {
+  const params = new URLSearchParams({ type, limit: String(limit) });
+  return request<LeaderboardResponse>(`/profile/leaderboards?${params.toString()}`);
+}
+
+export function searchUsers(query: string, limit = 12) {
+  const params = new URLSearchParams({ q: query, limit: String(limit) });
+  return request<UserSearchResponse>(`/profile/users/search?${params.toString()}`);
+}
+
+export function getSocialOverview() {
+  return request<SocialOverviewResponse>('/profile/social');
+}
+
+export function sendFriendRequest(profileId: string) {
+  return request<{ ok: true }>('/profile/friends/request', {
+    method: 'POST',
+    body: JSON.stringify({ profileId }),
+  });
+}
+
+export function respondToFriendRequest(requestId: string, action: 'accept' | 'decline') {
+  return request<{ ok: true }>(`/profile/friends/${requestId}/respond`, {
+    method: 'POST',
+    body: JSON.stringify({ action }),
+  });
 }
 
 export function submitGuess(payload: { sessionId: string; input: string }) {

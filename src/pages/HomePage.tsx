@@ -404,6 +404,7 @@ function Dashboard() {
     matchesPlayed: 0,
     matchesWon: 0,
     winStreak: 0,
+    bestWinStreak: 0,
     inventory: {
       skipShields: 0,
       autoSolveJokers: 0,

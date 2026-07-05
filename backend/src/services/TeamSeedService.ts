@@ -78,7 +78,6 @@ const CLUB_NAME_ALIASES: Record<string, string> = {
   '148': 'Tottenham Hotspur',
   '1003': 'Leicester City',
   '405': 'Aston Villa',
-  '399': 'Leeds United',
   '703': 'Nottingham Forest',
   '180': 'Southampton',
   '289': 'Sunderland',
