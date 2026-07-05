@@ -8,6 +8,12 @@ describe('TeamSeedService', () => {
     env.GUESSTHETEAM_TEAM_SOURCE = 'seed';
   });
 
+  it('keeps a varied World Cup pool across countries and years', () => {
+    expect(WORLD_CUP_TEAMS.length).toBeGreaterThanOrEqual(20);
+    expect(new Set(WORLD_CUP_TEAMS.map((team) => team.name)).size).toBeGreaterThanOrEqual(8);
+    expect(new Set(WORLD_CUP_TEAMS.map((team) => team.season)).size).toBeGreaterThanOrEqual(8);
+  });
+
   it('selects World Cup teams from the national-team pool', async () => {
     const enrichTeam = vi.fn();
     const service = new TeamSeedService('/tmp/missing-guesstheteam-seed.json', { enrichTeam } as never);
