@@ -64,6 +64,11 @@ function mapAuthError(message: string) {
   return message || 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
 }
 
+function getAuthRedirectUrl() {
+  if (typeof window === 'undefined') return undefined;
+  return `${window.location.origin}/auth`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -113,6 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: email.trim(),
       password,
       options: {
+        emailRedirectTo: getAuthRedirectUrl(),
         data: {
           username: username.trim(),
           first_name: firstName.trim(),
