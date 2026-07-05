@@ -5,7 +5,7 @@ import { useAuth } from '../lib/useAuth';
 import { RankBadge } from '../components/ui/RankBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { getProfile } from '../lib/api';
-import { RANKED_UNLOCK_LEVEL, WORLD_CUP_UNLOCK_LEVEL } from '../lib/progression';
+import { ONLINE_UNLOCK_LEVEL, RANKED_UNLOCK_LEVEL, WORLD_CUP_UNLOCK_LEVEL } from '../lib/progression';
 import { getPrestigeVisual, getUnlockedRewards } from '../lib/rewards';
 import { clearSavedGame, getSavedGameUrl, loadSavedGame, type SavedGame } from '../lib/savedGame';
 import type { UserProfile } from '../types';
@@ -414,6 +414,7 @@ function Dashboard() {
   };
   const isRankedUnlocked = dashboardUser.level >= RANKED_UNLOCK_LEVEL;
   const isWorldCupUnlocked = dashboardUser.level >= WORLD_CUP_UNLOCK_LEVEL;
+  const isOnlineUnlocked = dashboardUser.level >= ONLINE_UNLOCK_LEVEL;
 
   useEffect(() => {
     let active = true;
@@ -585,6 +586,36 @@ function Dashboard() {
                 </div>
               </div>
               <span style={{ fontSize: 12, color: '#2bd46a', fontFamily: 'JetBrains Mono, monospace' }}>XP</span>
+            </button>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle, marginTop: 18, animation: 'gttHeroIn .5s ease .22s both' }}>
+          <div style={{ padding: '16px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontFamily: 'Anton, sans-serif', fontSize: 19, letterSpacing: '0.04em', color: '#fff' }}>ONLINE-MODUS</div>
+            <span style={{ marginLeft: 'auto', fontSize: 11.5, padding: '3px 10px', borderRadius: 999, background: isOnlineUnlocked ? 'rgba(34,197,94,0.12)' : 'rgba(148,163,184,0.12)', color: isOnlineUnlocked ? '#2bd46a' : '#94a3b8', border: `1px solid ${isOnlineUnlocked ? 'rgba(34,197,94,0.35)' : 'rgba(148,163,184,0.24)'}` }}>
+              {isOnlineUnlocked ? 'Freigeschaltet' : `Ab Level ${ONLINE_UNLOCK_LEVEL}`}
+            </span>
+          </div>
+          <div style={{ padding: 14 }}>
+            <button
+              disabled={!isOnlineUnlocked || profileLoading}
+              onClick={() => navigate('/online')}
+              className="gtt-row"
+              style={{
+                ...rowStyle,
+                cursor: isOnlineUnlocked && !profileLoading ? 'pointer' : 'not-allowed',
+                opacity: isOnlineUnlocked && !profileLoading ? 1 : 0.55,
+              }}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0 }}>⚔</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14.5, fontWeight: 600, color: '#fff' }}>Freunde herausfordern</div>
+                <div style={{ fontSize: 12, color: '#8b95a5' }}>
+                  Gleiches Team, 45 Minuten Limit, Gewinner nach Treffern und Zeit.
+                </div>
+              </div>
+              <span style={{ fontSize: 12, color: '#2bd46a', fontFamily: 'JetBrains Mono, monospace' }}>VS</span>
             </button>
           </div>
         </div>

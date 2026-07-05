@@ -4,6 +4,7 @@ import { env } from '../config/env';
 import type { Difficulty, GameSession, PublicPlayer, Rank, TeamData } from '../types';
 import { PlayerMatchService } from './PlayerMatchService';
 import { ProfileService, type PublicUserSummary } from './ProfileService';
+import { ONLINE_UNLOCK_LEVEL } from './ProgressionService';
 import { TeamSeedService } from './TeamSeedService';
 
 const MATCH_LIMIT_MS = 45 * 60 * 1000;
@@ -119,6 +120,7 @@ export class OnlineMatchupService {
   async create(accessToken: string | undefined, opponentId: string): Promise<OnlineMatchupView | { error: string }> {
     const profile = await this.profileService.getProfile(accessToken);
     if (!profile) return { error: 'Profil nicht gefunden.' };
+    if (profile.level < ONLINE_UNLOCK_LEVEL) return { error: `Online-Modus wird ab Level ${ONLINE_UNLOCK_LEVEL} freigeschaltet.` };
     if (profile.id === opponentId) return { error: 'Du kannst dich nicht selbst herausfordern.' };
     if (!(await this.areFriends(profile.id, opponentId))) return { error: 'Online-Matches gehen vorerst nur gegen Freunde.' };
 

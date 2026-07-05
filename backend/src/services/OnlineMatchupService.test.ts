@@ -14,7 +14,7 @@ function profile(id: string, username: string): PublicProfile {
     lastName: '',
     email: `${username}@example.com`,
     xp: 0,
-    level: 10,
+    level: 25,
     lp: 0,
     rank: 'Bronze 3',
     badges: [],

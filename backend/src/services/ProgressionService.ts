@@ -6,6 +6,7 @@ export const MIN_SOLVED_TO_COMPLETE = 4;
 const BONUS_THRESHOLD = 0.8;
 export const RANKED_UNLOCK_LEVEL = 5;
 export const WORLD_CUP_UNLOCK_LEVEL = 10;
+export const ONLINE_UNLOCK_LEVEL = 25;
 
 export class ProgressionService {
   getDifficultyForRank(rank: Rank): Difficulty {

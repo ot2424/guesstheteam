@@ -6,13 +6,15 @@ import {
   finishOnlineMatchup,
   getOnlineMatchup,
   getOnlineMatchups,
+  getProfile,
   getSocialOverview,
   guessOnlineMatchup,
   joinOnlineMatchup,
   leaveOnlineMatchup,
 } from '../lib/api';
+import { ONLINE_UNLOCK_LEVEL } from '../lib/progression';
 import { useAuth } from '../lib/useAuth';
-import type { FriendRequestSummary, OnlineMatchup } from '../types';
+import type { FriendRequestSummary, OnlineMatchup, UserProfile } from '../types';
 
 const cardStyle = {
   background: 'linear-gradient(180deg,#0e141d,#0a0e16)',
@@ -26,6 +28,8 @@ export function OnlinePage() {
   const [friends, setFriends] = useState<FriendRequestSummary[]>([]);
   const [matchups, setMatchups] = useState<OnlineMatchup[]>([]);
   const [active, setActive] = useState<OnlineMatchup | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [guess, setGuess] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -35,7 +39,20 @@ export function OnlinePage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    void refreshLobby();
+    let mounted = true;
+    setProfileLoading(true);
+    getProfile()
+      .then((response) => {
+        if (mounted) setProfile(response.profile);
+        if (response.profile.level >= ONLINE_UNLOCK_LEVEL) void refreshLobby();
+      })
+      .catch(() => {
+        if (mounted) setProfile(null);
+      })
+      .finally(() => {
+        if (mounted) setProfileLoading(false);
+      });
+    return () => { mounted = false; };
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -127,7 +144,7 @@ export function OnlinePage() {
     }
   }
 
-  if (loading) return <PageShell><div className="text-gray-500">Online-Modus wird geladen...</div></PageShell>;
+  if (loading || profileLoading) return <PageShell><div className="text-gray-500">Online-Modus wird geladen...</div></PageShell>;
 
   if (!isAuthenticated) {
     return (
@@ -137,6 +154,29 @@ export function OnlinePage() {
           <p className="mt-2 text-sm text-gray-500">Online-Matches funktionieren vorerst nur gegen Freunde.</p>
           <Link to="/auth" className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-extrabold" style={{ background: '#22C55E', color: '#04130a' }}>
             Einloggen
+          </Link>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (!profile || profile.level < ONLINE_UNLOCK_LEVEL) {
+    return (
+      <PageShell>
+        <div className="max-w-md rounded-2xl border p-6 text-center" style={cardStyle}>
+          <div className="text-xs font-black uppercase tracking-[0.2em] text-green-400">Gesperrt</div>
+          <div className="bebas mt-2 text-4xl text-white">Online ab Level {ONLINE_UNLOCK_LEVEL}</div>
+          <p className="mt-2 text-sm text-gray-500">
+            Spiele Freizeit, WM oder Ranked, bis du Level {ONLINE_UNLOCK_LEVEL} erreichst. Danach kannst du Freunde herausfordern.
+          </p>
+          {profile && (
+            <div className="mt-5 rounded-xl border p-4 text-left" style={{ background: '#111827', borderColor: 'rgba(255,255,255,0.08)' }}>
+              <div className="text-sm font-black text-white">Aktuell Level {profile.level}</div>
+              <div className="mt-1 text-xs text-gray-500">{Math.max(0, ONLINE_UNLOCK_LEVEL - profile.level)} Level fehlen noch.</div>
+            </div>
+          )}
+          <Link to="/" className="mt-5 inline-flex rounded-xl px-5 py-3 text-sm font-extrabold" style={{ background: '#22C55E', color: '#04130a' }}>
+            Zur Startseite
           </Link>
         </div>
       </PageShell>
