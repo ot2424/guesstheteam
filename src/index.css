@@ -43,6 +43,23 @@ body {
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+#root {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  html,
+  body {
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
+  }
+
+  #root {
+    overflow-x: clip;
+  }
 }
 
 .bebas { font-family: 'Bebas Neue', sans-serif; }

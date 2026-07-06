@@ -59,7 +59,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
   const flash = lastResult === 'correct' ? 'green' : lastResult === 'wrong' ? 'red' : null;
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg min-w-0 mx-auto">
       {/* Search bar */}
       <motion.div
         animate={lastResult === 'wrong' ? { x: [0, -6, 6, -4, 4, 0] } : { x: 0 }}
@@ -67,7 +67,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
         className="relative"
       >
         <div
-          className="flex items-center gap-2 rounded-2xl border-2 transition-all duration-200 px-4"
+          className="flex min-w-0 items-center gap-2 rounded-2xl border-2 px-3 transition-all duration-200 sm:px-4"
           style={{
             background: flash === 'green'
               ? 'rgba(34,197,94,0.12)'
@@ -99,7 +99,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
             onBlur={() => setTimeout(() => { setFocused(false); setSuggestions([]); }, 150)}
             placeholder="Spieler erraten – Nachname oder vollständiger Name…"
             disabled={disabled}
-            className="flex-1 bg-transparent py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none"
+            className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none"
             autoComplete="new-password"
             autoCorrect="off"
             autoCapitalize="none"
@@ -114,7 +114,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
           <button
             onClick={() => submit(input)}
             disabled={!input.trim() || disabled}
-            className="flex-shrink-0 px-4 py-1.5 rounded-xl text-sm font-extrabold transition-all active:scale-95 disabled:opacity-30"
+            className="flex-shrink-0 rounded-xl px-3 py-1.5 text-sm font-extrabold transition-all active:scale-95 disabled:opacity-30 sm:px-4"
             style={{ background: '#22C55E', color: '#04130a' }}
           >
             Raten
@@ -139,7 +139,7 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
                   >
                     {/* Anti-spoiler: name only */}
                     <span className="text-gray-500 text-xs">👤</span>
-                    <span>{s}</span>
+                    <span className="min-w-0 truncate">{s}</span>
                   </button>
                 </li>
               ))}

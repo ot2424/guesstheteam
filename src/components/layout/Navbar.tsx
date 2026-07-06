@@ -23,6 +23,7 @@ export function Navbar() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const activeProfile = profile?.id === user?.id ? profile : null;
+  const hideOnMobileDuringPlay = pathname.startsWith('/play');
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -53,7 +54,7 @@ export function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 border-b backdrop-blur-md"
+    <nav className={`${hideOnMobileDuringPlay ? 'hidden sm:block' : ''} sticky top-0 z-50 border-b backdrop-blur-md`}
          style={{ background: 'rgba(6,9,15,0.82)', borderColor: 'rgba(255,255,255,0.08)' }}>
       <div className="max-w-6xl mx-auto px-3 sm:px-4 min-h-14 sm:h-14 flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 py-2 sm:py-0">
         {/* Logo — Trikot-Icon */}

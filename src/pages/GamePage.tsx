@@ -452,14 +452,14 @@ export function GamePage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#06090f' }}>
-      <div className="max-w-6xl mx-auto px-4 py-4 flex gap-6">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden" style={{ background: '#06090f' }}>
+      <div className="mx-auto flex w-full max-w-6xl gap-6 px-3 py-3 sm:px-4 sm:py-4">
 
         {/* ─── Main column ─── */}
         <main className="flex-1 min-w-0 flex flex-col gap-4">
 
           {/* Game header */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3"
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-3 sm:px-4"
                style={{ background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' }}>
             <div className="flex min-w-0 items-center gap-3">
               <TeamBadge name={team.name} logoUrl={team.logoUrl} size={36} />
@@ -491,7 +491,7 @@ export function GamePage() {
           </div>
 
           {/* ─── Central search field — FIXED on mobile ─── */}
-          <div className="sticky top-14 z-30 py-2 -mx-4 px-4 sm:static sm:p-0 sm:mx-0"
+          <div className="sticky top-0 z-30 -mx-3 px-3 py-2 sm:static sm:mx-0 sm:p-0"
                style={{ background: 'rgba(6,9,15,0.95)', backdropFilter: 'blur(8px)' }}>
             <CentralSearchField
               onGuess={handleGuess}
@@ -575,7 +575,7 @@ export function GamePage() {
             />
           </div>
 
-          <div className="sm:hidden">
+          <div className="sm:hidden min-w-0">
             <MobilePlayerList
               players={team.players}
               guesses={guesses}
