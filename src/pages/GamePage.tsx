@@ -143,6 +143,14 @@ export function GamePage() {
     });
   }, [effectiveDifficulty, effectiveRank, finished, guesses, leagueId, loading, matchType, playMode, sessionId, startedAt, surrenderLpChange, team]);
 
+  useEffect(() => {
+    if (loading || !team) return;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    });
+  }, [loading, team?.id]);
+
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
     [guesses]
