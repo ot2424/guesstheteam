@@ -21,3 +21,6 @@ data/cache/
 data/import-failures/
 data/seeds/*.json
 !data/seeds/.gitkeep
+
+# Locally generated admin credentials
+.admin-test-account.json

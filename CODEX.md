@@ -1,3 +1,5 @@
+> Historisches Architekturkonzept: Die aktuelle Implementierung nutzt eigene Express-Auth mit Cookies und PostgreSQL auf Hetzner. Supabase-, Bearer-Token- und Render-Beispiele unten sind überholt. Maßgeblich sind `docs/migration.md` und der aktuelle Code.
+
 # GuessTheTeam – Backend & Infrastruktur Spezifikation für Codex
 
 > **Scope dieses Dokuments:** Alles außerhalb des React-Frontends – Backend-Server, Datenbank-Schema, Auth, Caching, API-Integration und Deployment.

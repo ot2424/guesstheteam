@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { JerseyIcon } from '../components/ui/JerseyIcon';
+import { request } from '../lib/api';
+import { parseAuthLink } from '../lib/authLinks';
 import { useAuth } from '../lib/useAuth';
 
-type Mode = 'login' | 'register';
+type Mode = 'login' | 'register' | 'forgot-password' | 'reset-password' | 'verify-email';
 
 const cardStyle = { background: 'linear-gradient(180deg,#0e141d,#0a0e16)', borderColor: 'rgba(255,255,255,0.08)' } as const;
 const inputStyle = { background: '#0f1722', borderColor: 'rgba(255,255,255,0.1)' } as const;
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { authReady, signIn, signUp } = useAuth();
-  const [mode, setMode] = useState<Mode>('login');
+  const { authReady, signIn, signUp, signOut } = useAuth();
+  const [link, setLink] = useState(() => parseAuthLink(window.location.hash));
+  const [mode, setMode] = useState<Mode>(() => parseAuthLink(window.location.hash)?.action ?? 'login');
+  const [confirmation, setConfirmation] = useState('');
+  useEffect(() => {
+    if (window.location.hash) window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }, []);
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -32,7 +39,7 @@ export function AuthPage() {
         const { error } = await signIn(email, password);
         if (error) { setError(error); return; }
         navigate('/');
-      } else {
+      } else if (mode === 'register') {
         const { error, needsEmailConfirmation } = await signUp({
           email,
           password,
@@ -47,6 +54,24 @@ export function AuthPage() {
         } else {
           navigate('/');
         }
+      } else if (mode === 'forgot-password') {
+        const response = await request<{ message: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+        setInfo(response.message);
+        setMode('login');
+      } else if (mode === 'verify-email') {
+        await request('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token: link?.token }) });
+        setInfo('Deine E-Mail ist bestätigt. Du kannst dich jetzt einloggen.');
+        setLink(null);
+        setMode('login');
+      } else {
+        if (password !== confirmation) { setError('Die Passwörter stimmen nicht überein.'); return; }
+        await request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token: link?.token, password }) });
+        await signOut();
+        setPassword('');
+        setConfirmation('');
+        setLink(null);
+        setInfo('Dein Passwort wurde geändert. Bitte melde dich neu an.');
+        setMode('login');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Etwas ist schiefgelaufen.');
@@ -79,7 +104,7 @@ export function AuthPage() {
 
           <div className="relative mt-auto pt-12">
             <h2 className="bebas text-white leading-[0.94] tracking-wide mb-4" style={{ fontSize: 'clamp(40px, 5vw, 54px)' }}>
-              {mode === 'login' ? <>Willkommen<br />zurück</> : <>Werde<br />zur Legende</>}
+              {mode === 'register' ? <>Werde<br />zur Legende</> : <>Willkommen<br />zurück</>}
             </h2>
             <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: '#9aa4b2' }}>
               {mode === 'login'
@@ -103,7 +128,7 @@ export function AuthPage() {
             {(['login', 'register'] as Mode[]).map((m) => (
               <button
                 key={m}
-                onClick={() => { setMode(m); setError(null); }}
+                onClick={() => { setMode(m); setLink(null); setError(null); setInfo(null); }}
                 className="flex-1 text-center py-2.5 rounded-lg text-sm font-bold transition-all"
                 style={mode === m
                   ? { background: '#22C55E', color: '#04130a' }
@@ -159,10 +184,13 @@ export function AuthPage() {
 
             {mode === 'login' && (
               <div className="text-xs mb-4 rounded-xl border px-3.5 py-3" style={{ color: '#8b95a5', borderColor: 'rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.025)' }}>
-                Nutze deine bestätigte E-Mail-Adresse und dein Passwort.
+                Nutze deine E-Mail-Adresse und dein Passwort.
               </div>
             )}
 
+            {mode === 'verify-email' && <p className="text-sm text-gray-300 mb-5">Bestätige deine E-Mail-Adresse, um deinen Account freizuschalten.</p>}
+            {mode === 'forgot-password' && <p className="text-sm text-gray-300 mb-5">Wir senden dir einen Link, mit dem du ein neues Passwort setzen kannst.</p>}
+            {['login', 'register', 'forgot-password'].includes(mode) && <>
             <label className="text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Email</label>
             <input
               type="email"
@@ -175,7 +203,9 @@ export function AuthPage() {
               required
             />
 
-            <label className="text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>Passwort</label>
+            </>}
+            {['login', 'register', 'reset-password'].includes(mode) && <>
+            <label className="text-xs font-semibold mb-1.5" style={{ color: '#8b95a5' }}>{mode === 'login' ? 'Passwort' : 'Passwort (mindestens 12 Zeichen)'}</label>
             <input
               type="password"
               value={password}
@@ -183,15 +213,24 @@ export function AuthPage() {
               placeholder="••••••••"
               className="h-12 rounded-xl border px-3.5 mb-6 text-[15px] text-white placeholder-gray-600 focus:outline-none focus:border-green-500/50 transition-colors"
               style={inputStyle}
+              minLength={mode === 'login' ? 1 : 12}
+              maxLength={256}
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               required
             />
 
+            </>}
+            {mode === 'reset-password' && <>
+              <label className="text-xs font-semibold mb-1.5 text-gray-400">Neues Passwort wiederholen</label>
+              <input type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)}
+                minLength={12} maxLength={256} autoComplete="new-password" required
+                className="h-12 rounded-xl border px-3.5 mb-6 text-white" style={inputStyle} />
+            </>}
             {error && <div className="text-sm text-red-400 mb-4">{error}</div>}
             {info && <div className="text-sm mb-4" style={{ color: '#2bd46a' }}>{info}</div>}
             {!authReady && (
               <div className="text-sm text-yellow-300 mb-4">
-                Supabase ist noch nicht konfiguriert. Bitte setze die VITE_SUPABASE_* Variablen.
+                Der Anmeldedienst ist gerade nicht verfügbar.
               </div>
             )}
 
@@ -201,9 +240,23 @@ export function AuthPage() {
               className="h-13 py-3.5 rounded-xl font-extrabold text-base transition-all active:scale-95 disabled:opacity-50"
               style={{ background: '#22C55E', color: '#04130a', boxShadow: '0 12px 28px rgba(34,197,94,0.3)' }}
             >
-              {loading ? 'Bitte warten…' : mode === 'login' ? 'Einloggen' : 'Account erstellen'}
+              {loading ? 'Bitte warten…' : mode === 'login' ? 'Einloggen' : mode === 'register' ? 'Account erstellen' : mode === 'forgot-password' ? 'Reset-Link senden' : mode === 'verify-email' ? 'E-Mail bestätigen' : 'Neues Passwort speichern'}
             </button>
 
+            {mode === 'login' && <>
+              <button type="button" disabled={loading} onClick={() => { setMode('forgot-password'); setError(null); setInfo(null); }}
+                className="mt-4 text-sm text-green-400">Passwort vergessen?</button>
+              <button type="button" disabled={loading} className="mt-3 text-sm text-gray-400" onClick={async () => {
+                setError(null); setInfo(null);
+                if (!email.trim()) { setError('Bitte gib oben deine E-Mail-Adresse ein.'); return; }
+                setLoading(true);
+                try {
+                  const result = await request<{ message: string }>('/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email: email.trim() }) });
+                  setInfo(result.message);
+                } catch (error) { setError(error instanceof Error ? error.message : 'Versand fehlgeschlagen.'); }
+                finally { setLoading(false); }
+              }}>Bestätigungs-Mail erneut senden</button>
+            </>}
             <button
               type="button"
               onClick={() => navigate('/')}

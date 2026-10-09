@@ -56,7 +56,7 @@ export function createGameRouter(
     const payload = startSchema.parse(req.body);
     const matchType = (payload.mode && payload.mode !== 'tutorial' ? payload.mode : payload.matchType) as MatchType;
     const playMode = payload.playMode as PlayMode;
-    const profile = await profileService.getProfile(req.user?.accessToken);
+    const profile = await profileService.getProfile(req.user?.id);
     if (playMode === 'ranked' && (!profile || profile.level < RANKED_UNLOCK_LEVEL)) {
       throw new HttpError(403, `Ranked wird ab Level ${RANKED_UNLOCK_LEVEL} freigeschaltet.`);
     }
@@ -141,7 +141,7 @@ export function createGameRouter(
       throw new HttpError(400, 'Diese Karte kann nicht automatisch gelöst werden.');
     }
 
-    const profile = await profileService.consumeAutoSolveJoker(req.user?.accessToken);
+    const profile = await profileService.consumeAutoSolveJoker(req.user?.id);
     if (!profile) throw new HttpError(400, 'Kein Auto-Solve-Joker verfügbar.');
     const solved = await sessionService.autoSolve(payload.sessionId, req.user?.id, payload.playerId);
     if (!solved) throw new HttpError(400, 'Diese Karte kann nicht automatisch gelöst werden.');
@@ -158,7 +158,7 @@ export function createGameRouter(
     if (!session) throw new HttpError(404, 'Session not found');
     if (session.playMode !== 'ranked') throw new HttpError(400, 'Team-Skip-Schilde sind nur im Ranked-Modus nutzbar.');
 
-    const profile = await profileService.consumeSkipShield(req.user?.accessToken);
+    const profile = await profileService.consumeSkipShield(req.user?.id);
     if (!profile) throw new HttpError(400, 'Kein Team-Skip-Schild verfügbar.');
 
     await sessionService.skip(payload.sessionId, req.user?.id);
@@ -174,14 +174,17 @@ export function createGameRouter(
     const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
 
-    const result = await sessionService.finish(payload.sessionId, req.user?.id, payload.reason);
+    const result = await sessionService.finish(payload.sessionId, req.user?.id, payload.reason, false);
     if (!result) throw new HttpError(404, 'Session not found');
 
-    const profile = await profileService.persistMatch(req.user?.accessToken, {
+    const profile = await profileService.persistMatch(req.user?.id, {
       session,
       result: result.result,
       progression: result.progression,
     });
+
+    if (!profile) throw new HttpError(500, 'Match konnte nicht gespeichert werden.');
+    await sessionService.skip(payload.sessionId, req.user?.id);
 
     res.json({
       ...result,

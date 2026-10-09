@@ -1,7 +1,9 @@
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { pool, query } from '../backend/src/db/pool';
 import { TransfermarktBackupService } from '../backend/src/services/TransfermarktBackupService';
 import type { TeamData } from '../backend/src/types';
+
+try {
 
 interface Args {
   dryRun: boolean;
@@ -22,9 +24,9 @@ interface TeamSeasonRow {
 
 const args = parseArgs(process.argv.slice(2));
 if (!args.dryRun && !args.write) {
-  throw new Error('Refusing to write without --write. Use --dry-run to preview or --write to update Supabase.');
+  throw new Error('Refusing to write without --write. Use --dry-run to preview or --write to update PostgreSQL.');
 }
-const supabase = createSupabaseClient();
+
 const transfermarkt = new TransfermarktBackupService();
 const rows = await readTeamRows(args);
 
@@ -51,16 +53,8 @@ for (let index = 0; index < rows.length; index += 1) {
     continue;
   }
 
-  const { error } = await supabase
-    .from('team_seasons')
-    .update({
-      name: after.name,
-      logo_url: after.logoUrl ?? '',
-      team: after,
-    })
-    .eq('id', row.id);
+  await query('UPDATE team_seasons SET name=$2, logo_url=$3, team=$4 WHERE id=$1', [row.id, after.name, after.logoUrl ?? '', JSON.stringify(after)]);
 
-  if (error) throw new Error(`Supabase update failed for ${row.id}: ${error.message}`);
 }
 
 console.log(
@@ -94,15 +88,6 @@ function parseArgs(argv: string[]): Args {
   };
 }
 
-function createSupabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
-  }
-
-  return createClient(url, serviceRoleKey);
-}
 
 async function readTeamRows(options: Args) {
   const pageSize = options.filter || options.teamId ? 1000 : options.limit > 0 ? Math.min(options.limit, 1000) : 1000;
@@ -110,16 +95,9 @@ async function readTeamRows(options: Args) {
   let from = options.offset;
 
   while (true) {
-    let query = supabase
-      .from('team_seasons')
-      .select('id, name, season, team')
-      .order('id', { ascending: true })
-      .range(from, from + pageSize - 1);
-
-    if (options.teamId) query = query.eq('id', options.teamId);
-
-    const { data, error } = await query.returns<TeamSeasonRow[]>();
-    if (error) throw new Error(`Supabase read failed: ${error.message}`);
+    const data = await query<TeamSeasonRow>(`SELECT id,name,season,team FROM team_seasons
+      ${options.teamId ? 'WHERE id=$3' : ''} ORDER BY id LIMIT $1 OFFSET $2`,
+      options.teamId ? [pageSize, from, options.teamId] : [pageSize, from]);
 
     const page = (data ?? []).filter((row) => matchesFilter(row, options.filter));
     rows.push(...page);
@@ -169,3 +147,5 @@ function normalize(value: string) {
     .replace(/[^a-z0-9]/gi, '')
     .toLowerCase();
 }
+
+} finally { await pool.end(); }

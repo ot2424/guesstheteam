@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { query, upsertRows } from '../db/pool';
 import { env } from '../config/env';
 import type { Difficulty, GameSession, PublicPlayer, Rank, TeamData } from '../types';
 import { PlayerMatchService } from './PlayerMatchService';
@@ -106,7 +106,6 @@ type OnlineResultRow = {
   outcome: 'win' | 'loss' | 'draw';
 };
 
-const PROFILE_SELECT = 'id, username, first_name, last_name, email, xp, level, lp, rank, badges, matches_played, matches_won, win_streak, best_win_streak, skip_shields, auto_solve_jokers';
 
 export class OnlineMatchupService {
   private rows = new Map<string, OnlineMatchupRow>();
@@ -117,8 +116,8 @@ export class OnlineMatchupService {
     private teamSeedService = new TeamSeedService(),
   ) {}
 
-  async create(accessToken: string | undefined, opponentId: string): Promise<OnlineMatchupView | { error: string }> {
-    const profile = await this.profileService.getProfile(accessToken);
+  async create(authenticatedUserId: string | undefined, opponentId: string): Promise<OnlineMatchupView | { error: string }> {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     if (!profile) return { error: 'Profil nicht gefunden.' };
     if (profile.level < ONLINE_UNLOCK_LEVEL) return { error: `Online-Modus wird ab Level ${ONLINE_UNLOCK_LEVEL} freigeschaltet.` };
     if (profile.id === opponentId) return { error: 'Du kannst dich nicht selbst herausfordern.' };
@@ -154,18 +153,18 @@ export class OnlineMatchupService {
     return this.toView(saved, profile.id);
   }
 
-  async list(accessToken?: string): Promise<{ matchups: OnlineMatchupView[] }> {
-    const profile = await this.profileService.getProfile(accessToken);
+  async list(authenticatedUserId?: string): Promise<{ matchups: OnlineMatchupView[] }> {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     if (!profile) return { matchups: [] };
 
-    const supabase = createAdminClient();
-    const rows = supabase ? await this.fetchRows(profile.id) : [...this.rows.values()].filter((row) => isParticipant(row, profile.id));
+    const useDatabase = env.NODE_ENV !== 'test';
+    const rows = useDatabase ? await this.fetchRows(profile.id) : [...this.rows.values()].filter((row) => isParticipant(row, profile.id));
     const views = await Promise.all(rows.map((row) => this.toView(row, profile.id)));
     return { matchups: views.sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed')) };
   }
 
-  async get(accessToken: string | undefined, matchupId: string) {
-    const profile = await this.profileService.getProfile(accessToken);
+  async get(authenticatedUserId: string | undefined, matchupId: string) {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
 
@@ -173,8 +172,8 @@ export class OnlineMatchupService {
     return this.toView(await this.touchPresence(checked, profile.id), profile.id);
   }
 
-  async join(accessToken: string | undefined, matchupId: string) {
-    const profile = await this.profileService.getProfile(accessToken);
+  async join(authenticatedUserId: string | undefined, matchupId: string) {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
     if (row.status === 'completed' || row.status === 'expired') return this.toView(row, profile.id);
@@ -191,8 +190,8 @@ export class OnlineMatchupService {
     return this.toView(await this.save(next), profile.id);
   }
 
-  async leave(accessToken: string | undefined, matchupId: string) {
-    const profile = await this.profileService.getProfile(accessToken);
+  async leave(authenticatedUserId: string | undefined, matchupId: string) {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
     if (row.status !== 'active') return this.toView(row, profile.id);
@@ -202,8 +201,8 @@ export class OnlineMatchupService {
     return this.toView(await this.save(next), profile.id);
   }
 
-  async guess(accessToken: string | undefined, matchupId: string, input: string) {
-    const profile = await this.profileService.getProfile(accessToken);
+  async guess(authenticatedUserId: string | undefined, matchupId: string, input: string) {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row || row.status !== 'active') return null;
 
@@ -229,8 +228,8 @@ export class OnlineMatchupService {
     };
   }
 
-  async finish(accessToken: string | undefined, matchupId: string) {
-    const profile = await this.profileService.getProfile(accessToken);
+  async finish(authenticatedUserId: string | undefined, matchupId: string) {
+    const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row || row.status !== 'active') return null;
 
@@ -288,8 +287,8 @@ export class OnlineMatchupService {
   }
 
   private async persistResults(row: OnlineMatchupRow) {
-    const supabase = createAdminClient();
-    if (!supabase) return;
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) return;
 
     const challengerScore = getScore(row, 'challenger');
     const opponentScore = getScore(row, 'opponent');
@@ -317,48 +316,32 @@ export class OnlineMatchupService {
         win_reason: row.win_reason,
       },
     ];
-    await supabase.from('online_matchup_results').upsert(rows, { onConflict: 'matchup_id,user_id' });
+    await upsertRows('online_matchup_results', rows, ['matchup_id', 'user_id']);
   }
 
   private async areFriends(userId: string, otherId: string) {
-    const supabase = createAdminClient();
-    if (!supabase) return true;
-    const { data } = await supabase
-      .from('friend_requests')
-      .select('id')
-      .eq('status', 'accepted')
-      .or(`and(requester_id.eq.${userId},addressee_id.eq.${otherId}),and(requester_id.eq.${otherId},addressee_id.eq.${userId})`)
-      .maybeSingle<{ id: string }>();
-    return Boolean(data);
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) return true;
+    const rows = await query(`SELECT id FROM friend_requests WHERE status='accepted' AND
+      ((requester_id=$1 AND addressee_id=$2) OR (requester_id=$2 AND addressee_id=$1))`, [userId, otherId]);
+    return rows.length > 0;
   }
 
   private async fetchRows(userId: string) {
-    const supabase = createAdminClient();
-    if (!supabase) return [];
-    const { data } = await supabase
-      .from('online_matchups')
-      .select(`*, challenger:challenger_id(${PROFILE_SELECT}), opponent:opponent_id(${PROFILE_SELECT})`)
-      .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
-      .order('updated_at', { ascending: false })
-      .limit(30)
-      .returns<OnlineMatchupRow[]>();
-    return data ?? [];
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) return [];
+    return query<OnlineMatchupRow>(`${MATCHUP_SELECT} WHERE m.challenger_id=$1 OR m.opponent_id=$1 ORDER BY m.updated_at DESC LIMIT 30`, [userId]);
   }
 
   private async getRow(matchupId: string, userId: string) {
-    const supabase = createAdminClient();
-    if (!supabase) {
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) {
       const row = this.rows.get(matchupId);
       return row && isParticipant(row, userId) ? row : null;
     }
 
-    const { data } = await supabase
-      .from('online_matchups')
-      .select(`*, challenger:challenger_id(${PROFILE_SELECT}), opponent:opponent_id(${PROFILE_SELECT})`)
-      .eq('id', matchupId)
-      .or(`challenger_id.eq.${userId},opponent_id.eq.${userId}`)
-      .maybeSingle<OnlineMatchupRow>();
-    return data ?? null;
+    const [row] = await query<OnlineMatchupRow>(`${MATCHUP_SELECT} WHERE m.id=$1 AND (m.challenger_id=$2 OR m.opponent_id=$2)`, [matchupId, userId]);
+    return row ?? null;
   }
 
   private async touchPresence(row: OnlineMatchupRow, userId: string) {
@@ -370,19 +353,15 @@ export class OnlineMatchupService {
 
   private async save(row: OnlineMatchupRow): Promise<OnlineMatchupRow> {
     const next = { ...row, updated_at: new Date().toISOString() };
-    const supabase = createAdminClient();
-    if (!supabase) {
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) {
       this.rows.set(next.id, next);
       return next;
     }
 
-    const { data, error } = await supabase
-      .from('online_matchups')
-      .upsert(toDbRow(next), { onConflict: 'id' })
-      .select(`*, challenger:challenger_id(${PROFILE_SELECT}), opponent:opponent_id(${PROFILE_SELECT})`)
-      .single<OnlineMatchupRow>();
-    if (error || !data) throw new Error(error?.message ?? 'Online matchup could not be saved.');
-    return data;
+    await upsertRows('online_matchups', [toDbRow(next)]);
+    const [saved] = await query<OnlineMatchupRow>(`${MATCHUP_SELECT} WHERE m.id=$1`, [next.id]);
+    return saved;
   }
 
   private async toView(row: OnlineMatchupRow, userId: string): Promise<OnlineMatchupView> {
@@ -411,13 +390,10 @@ export class OnlineMatchupService {
   }
 
   private async getPairScore(userId: string, opponentId: string) {
-    const supabase = createAdminClient();
-    if (!supabase) return { selfWins: 0, opponentWins: 0 };
-    const { data } = await supabase
-      .from('online_matchup_results')
-      .select('user_id, opponent_id, outcome')
-      .or(`and(user_id.eq.${userId},opponent_id.eq.${opponentId}),and(user_id.eq.${opponentId},opponent_id.eq.${userId})`)
-      .returns<OnlineResultRow[]>();
+    const useDatabase = env.NODE_ENV !== 'test';
+    if (!useDatabase) return { selfWins: 0, opponentWins: 0 };
+    const data = await query<OnlineResultRow>(`SELECT user_id, opponent_id, outcome FROM online_matchup_results
+      WHERE (user_id=$1 AND opponent_id=$2) OR (user_id=$2 AND opponent_id=$1)`, [userId, opponentId]);
     return {
       selfWins: (data ?? []).filter((row) => row.user_id === userId && row.outcome === 'win').length,
       opponentWins: (data ?? []).filter((row) => row.user_id === opponentId && row.outcome === 'win').length,
@@ -597,8 +573,6 @@ function toDbRow(row: OnlineMatchupRow) {
   };
 }
 
-function createAdminClient(): SupabaseClient | null {
-  if (env.NODE_ENV === 'test') return null;
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-}
+
+const MATCHUP_SELECT = `SELECT m.*, row_to_json(c) AS challenger, row_to_json(o) AS opponent
+ FROM online_matchups m JOIN profiles c ON c.id=m.challenger_id JOIN profiles o ON o.id=m.opponent_id`;

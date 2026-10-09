@@ -1,5 +1,4 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import { env } from '../config/env';
+import { query, transaction } from '../db/pool';
 import type { GameSession, MatchHistoryItem, PlayMode, PrestigeVisual, ProgressionReward, Rank, UserInventory } from '../types';
 import { getInventoryRewardDelta, getPrestigeVisual, getUnlockedRewards } from './RewardService';
 
@@ -125,241 +124,93 @@ const RANKS: Rank[] = [
 const PROFILE_SELECT = 'id, username, first_name, last_name, email, xp, level, lp, rank, badges, matches_played, matches_won, win_streak, best_win_streak, skip_shields, auto_solve_jokers';
 
 export class ProfileService {
-  async getProfile(accessToken?: string): Promise<PublicProfile | null> {
-    const supabase = createUserClient(accessToken);
-    if (!supabase) return null;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .maybeSingle<ProfileRow>();
-
-    if (error || !data) return null;
-    return mapProfile(data);
+  async getProfile(userId?: string): Promise<PublicProfile | null> {
+    if (!userId) return null;
+    const [row] = await query<ProfileRow>('SELECT * FROM profiles WHERE id = $1', [userId]);
+    return row ? mapProfile(row) : null;
   }
 
-  async persistMatch(accessToken: string | undefined, payload: MatchPersistencePayload): Promise<PublicProfile | null> {
-    const supabase = createUserClient(accessToken);
-    if (!supabase) return null;
-
-    const currentProfile = await this.getProfile(accessToken);
-    if (!currentProfile) return null;
-
-    const nextProfile = applyProgress(currentProfile, payload.session.playMode, payload.session.matchType, payload.result, payload.progression);
-
-    const { error: matchError } = await supabase.from('match_results').insert({
-      user_id: currentProfile.id,
-      session_id: payload.session.sessionId,
-      team_id: payload.session.team.id,
-      team_name: payload.session.team.name,
-      season: payload.session.team.season,
-      league: payload.session.team.league,
-      play_mode: payload.session.playMode,
-      match_type: payload.session.matchType,
-      difficulty: payload.session.difficulty,
-      rank_at_start: payload.session.rank,
-      solved: payload.result.solved,
-      total: payload.result.total,
-      duration_sec: payload.result.durationSec,
-      completion_ratio: payload.result.completionRatio,
-      is_win: payload.result.isWin,
-      is_perfect: payload.result.isPerfect,
-      xp_gained: payload.progression.xpGained,
-      lp_change: payload.progression.lpChange,
+  async persistMatch(userId: string | undefined, payload: MatchPersistencePayload): Promise<PublicProfile | null> {
+    if (!userId || payload.session.userId !== userId) return null;
+    return transaction(async client => {
+      const { rows: [row] } = await client.query<ProfileRow>('SELECT * FROM profiles WHERE id = $1 FOR UPDATE', [userId]);
+      if (!row) return null;
+      const current = mapProfile(row);
+      const { session, result, progression } = payload;
+      const inserted = await client.query(`INSERT INTO match_results
+        (user_id, session_id, team_id, team_name, season, league, play_mode, match_type, difficulty, rank_at_start,
+         solved, total, duration_sec, completion_ratio, is_win, is_perfect, xp_gained, lp_change)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+        ON CONFLICT (user_id, session_id) DO NOTHING RETURNING id`,
+        [userId, session.sessionId, session.team.id, session.team.name, session.team.season, session.team.league,
+         session.playMode, session.matchType, session.difficulty, session.rank, result.solved, result.total,
+         result.durationSec, result.completionRatio, result.isWin, result.isPerfect, progression.xpGained, progression.lpChange]);
+      if (!inserted.rowCount) return current;
+      const next = applyProgress(current, session.playMode, session.matchType, result, progression);
+      await client.query(`UPDATE profiles SET xp=$2, level=$3, lp=$4, rank=$5, badges=$6,
+        matches_played=$7, matches_won=$8, win_streak=$9, best_win_streak=$10, skip_shields=$11, auto_solve_jokers=$12 WHERE id=$1`,
+        [userId, next.xp, next.level, next.lp, next.rank, next.badges, next.matchesPlayed, next.matchesWon,
+         next.winStreak, next.bestWinStreak, next.inventory.skipShields, next.inventory.autoSolveJokers]);
+      return next;
     });
-
-    if (matchError) return null;
-
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({
-        xp: nextProfile.xp,
-        level: nextProfile.level,
-        lp: nextProfile.lp,
-        rank: nextProfile.rank,
-        badges: nextProfile.badges,
-        matches_played: nextProfile.matchesPlayed,
-        matches_won: nextProfile.matchesWon,
-        win_streak: nextProfile.winStreak,
-        best_win_streak: nextProfile.bestWinStreak,
-        skip_shields: nextProfile.inventory.skipShields,
-        auto_solve_jokers: nextProfile.inventory.autoSolveJokers,
-      })
-      .eq('id', currentProfile.id);
-
-    if (profileError) return null;
-    return nextProfile;
   }
 
-  async getMatchHistory(accessToken?: string, limit = 12): Promise<MatchHistoryItem[]> {
-    const supabase = createUserClient(accessToken);
-    if (!supabase) return [];
-
-    const { data, error } = await supabase
-      .from('match_results')
-      .select('id, team_name, season, league, play_mode, match_type, solved, total, duration_sec, is_win, is_perfect, xp_gained, lp_change, created_at')
-      .order('created_at', { ascending: false })
-      .limit(limit)
-      .returns<MatchResultRow[]>();
-
-    if (error || !data) return [];
-    return data.map(mapMatchHistoryItem);
+  async getMatchHistory(userId?: string, limit = 12): Promise<MatchHistoryItem[]> {
+    if (!userId) return [];
+    return (await query<MatchResultRow>('SELECT * FROM match_results WHERE user_id=$1 ORDER BY created_at DESC LIMIT $2', [userId, limit])).map(mapMatchHistoryItem);
   }
 
   async getLeaderboards(type: LeaderboardType = 'rank', limit = 50): Promise<PublicUserSummary[]> {
-    const supabase = createAdminClient();
-    if (!supabase) return [];
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(PROFILE_SELECT)
-      .order(getLeaderboardSortColumn(type), { ascending: false })
-      .order('matches_won', { ascending: false })
-      .limit(Math.min(Math.max(limit, 1), 100))
-      .returns<ProfileRow[]>();
-
-    if (error || !data) return [];
-    return data.map(mapUserSummary);
+    const column = getLeaderboardSortColumn(type);
+    return (await query<ProfileRow>(`SELECT ${PROFILE_SELECT} FROM profiles ORDER BY ${column} DESC, matches_won DESC LIMIT $1`, [Math.min(Math.max(limit, 1), 100)])).map(mapUserSummary);
   }
 
-  async searchUsers(accessToken: string | undefined, query: string, limit = 12): Promise<PublicUserSummary[]> {
-    const currentProfile = await this.getProfile(accessToken);
-    const supabase = createAdminClient();
-    if (!supabase || !currentProfile || query.trim().length < 2) return [];
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(PROFILE_SELECT)
-      .ilike('username', `%${query.trim()}%`)
-      .neq('id', currentProfile.id)
-      .order('username', { ascending: true })
-      .limit(Math.min(Math.max(limit, 1), 25))
-      .returns<ProfileRow[]>();
-
-    if (error || !data) return [];
-    return data.map(mapUserSummary);
+  async searchUsers(userId: string | undefined, search: string, limit = 12): Promise<PublicUserSummary[]> {
+    if (!userId || search.trim().length < 2) return [];
+    return (await query<ProfileRow>(`SELECT ${PROFILE_SELECT} FROM profiles WHERE username ILIKE $1 AND id <> $2 ORDER BY username LIMIT $3`, [`%${search.trim()}%`, userId, Math.min(Math.max(limit, 1), 25)])).map(mapUserSummary);
   }
 
-  async getSocialOverview(accessToken?: string) {
-    const currentProfile = await this.getProfile(accessToken);
-    const supabase = createAdminClient();
-    if (!supabase || !currentProfile) {
-      return { friends: [], incoming: [], outgoing: [], notificationCount: 0 };
-    }
-
-    const { data, error } = await supabase
-      .from('friend_requests')
-      .select(`
-        id,
-        requester_id,
-        addressee_id,
-        status,
-        created_at,
-        responded_at,
-        requester:requester_id(${PROFILE_SELECT}),
-        addressee:addressee_id(${PROFILE_SELECT})
-      `)
-      .or(`requester_id.eq.${currentProfile.id},addressee_id.eq.${currentProfile.id}`)
-      .order('created_at', { ascending: false })
-      .returns<FriendRequestRow[]>();
-
-    if (error || !data) return { friends: [], incoming: [], outgoing: [], notificationCount: 0 };
-
-    const items = data
-      .map((request) => mapFriendRequest(request, currentProfile.id))
-      .filter((request): request is FriendRequestSummary => Boolean(request));
-
-    const incoming = items.filter((request) => request.status === 'pending' && request.direction === 'incoming');
-    const outgoing = items.filter((request) => request.status === 'pending' && request.direction === 'outgoing');
-    const friends = items.filter((request) => request.status === 'accepted');
-
+  async getSocialOverview(userId?: string) {
+    if (!userId) return { friends: [], incoming: [], outgoing: [], notificationCount: 0 };
+    const rows = await query<FriendRequestRow>(`SELECT f.*, row_to_json(r) AS requester, row_to_json(a) AS addressee
+      FROM friend_requests f JOIN profiles r ON r.id=f.requester_id JOIN profiles a ON a.id=f.addressee_id
+      WHERE f.requester_id=$1 OR f.addressee_id=$1 ORDER BY f.created_at DESC`, [userId]);
+    const items = rows.map(row => mapFriendRequest(row, userId)).filter((item): item is FriendRequestSummary => Boolean(item));
+    const incoming = items.filter(item => item.status === 'pending' && item.direction === 'incoming');
     return {
-      friends,
-      incoming,
-      outgoing,
+      friends: items.filter(item => item.status === 'accepted'), incoming,
+      outgoing: items.filter(item => item.status === 'pending' && item.direction === 'outgoing'),
       notificationCount: incoming.length,
     };
   }
 
-  async sendFriendRequest(accessToken: string | undefined, addresseeId: string) {
-    const currentProfile = await this.getProfile(accessToken);
-    const supabase = createAdminClient();
-    if (!supabase || !currentProfile) return { error: 'Profil nicht gefunden.' };
-    if (currentProfile.id === addresseeId) return { error: 'Du kannst dir selbst keine Anfrage senden.' };
-
-    const { data: existing } = await supabase
-      .from('friend_requests')
-      .select('id, status')
-      .or(`and(requester_id.eq.${currentProfile.id},addressee_id.eq.${addresseeId}),and(requester_id.eq.${addresseeId},addressee_id.eq.${currentProfile.id})`)
-      .maybeSingle<{ id: string; status: FriendRequestStatus }>();
-
-    if (existing?.status === 'accepted') return { error: 'Ihr seid bereits Freunde.' };
-    if (existing?.status === 'pending') return { error: 'Es gibt bereits eine offene Anfrage.' };
-
-    const { error } = await supabase
-      .from('friend_requests')
-      .insert({
-        requester_id: currentProfile.id,
-        addressee_id: addresseeId,
-        status: 'pending',
-      });
-
-    if (error) return { error: error.message };
-    return { error: null };
+  async sendFriendRequest(userId: string | undefined, addresseeId: string) {
+    if (!userId) return { error: 'Profil nicht gefunden.' };
+    if (userId === addresseeId) return { error: 'Du kannst dir selbst keine Anfrage senden.' };
+    const rows = await query(`INSERT INTO friend_requests(requester_id, addressee_id) VALUES ($1,$2)
+      ON CONFLICT (least(requester_id,addressee_id), greatest(requester_id,addressee_id))
+      DO UPDATE SET requester_id=EXCLUDED.requester_id, addressee_id=EXCLUDED.addressee_id,
+      status='pending', responded_at=NULL, created_at=now() WHERE friend_requests.status='declined' RETURNING id`, [userId, addresseeId]);
+    return { error: rows.length ? null : 'Es gibt bereits eine Anfrage oder Freundschaft.' };
   }
 
-  async respondToFriendRequest(accessToken: string | undefined, requestId: string, action: 'accept' | 'decline') {
-    const currentProfile = await this.getProfile(accessToken);
-    const supabase = createAdminClient();
-    if (!supabase || !currentProfile) return { error: 'Profil nicht gefunden.' };
-
-    const { error } = await supabase
-      .from('friend_requests')
-      .update({
-        status: action === 'accept' ? 'accepted' : 'declined',
-        responded_at: new Date().toISOString(),
-      })
-      .eq('id', requestId)
-      .eq('addressee_id', currentProfile.id)
-      .eq('status', 'pending');
-
-    if (error) return { error: error.message };
-    return { error: null };
+  async respondToFriendRequest(userId: string | undefined, requestId: string, action: 'accept' | 'decline') {
+    if (!userId) return { error: 'Profil nicht gefunden.' };
+    const rows = await query(`UPDATE friend_requests SET status=$3, responded_at=now()
+      WHERE id=$1 AND addressee_id=$2 AND status='pending' RETURNING id`, [requestId, userId, action === 'accept' ? 'accepted' : 'declined']);
+    return { error: rows.length ? null : 'Offene Anfrage nicht gefunden.' };
   }
 
-  async consumeSkipShield(accessToken?: string): Promise<PublicProfile | null> {
-    return this.consumeInventoryItem(accessToken, 'skipShields');
+  async consumeSkipShield(userId?: string): Promise<PublicProfile | null> {
+    return this.consumeInventoryItem(userId, 'skip_shields');
   }
-
-  async consumeAutoSolveJoker(accessToken?: string): Promise<PublicProfile | null> {
-    return this.consumeInventoryItem(accessToken, 'autoSolveJokers');
+  async consumeAutoSolveJoker(userId?: string): Promise<PublicProfile | null> {
+    return this.consumeInventoryItem(userId, 'auto_solve_jokers');
   }
-
-  private async consumeInventoryItem(accessToken: string | undefined, item: keyof UserInventory): Promise<PublicProfile | null> {
-    const supabase = createUserClient(accessToken);
-    if (!supabase) return null;
-
-    const currentProfile = await this.getProfile(accessToken);
-    if (!currentProfile || currentProfile.inventory[item] <= 0) return null;
-
-    const nextInventory = {
-      ...currentProfile.inventory,
-      [item]: currentProfile.inventory[item] - 1,
-    };
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        skip_shields: nextInventory.skipShields,
-        auto_solve_jokers: nextInventory.autoSolveJokers,
-      })
-      .eq('id', currentProfile.id);
-
-    if (error) return null;
-    return {
-      ...currentProfile,
-      inventory: nextInventory,
-    };
+  private async consumeInventoryItem(userId: string | undefined, column: 'skip_shields' | 'auto_solve_jokers'): Promise<PublicProfile | null> {
+    if (!userId) return null;
+    const [row] = await query<ProfileRow>(`UPDATE profiles SET ${column}=${column}-1 WHERE id=$1 AND ${column}>0 RETURNING *`, [userId]);
+    return row ? mapProfile(row) : null;
   }
 }
 
@@ -380,23 +231,6 @@ function mapMatchHistoryItem(row: MatchResultRow): MatchHistoryItem {
     lpChange: row.lp_change,
     createdAt: row.created_at,
   };
-}
-
-function createUserClient(accessToken?: string): SupabaseClient | null {
-  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY || !accessToken) return null;
-
-  return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
-    global: {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  });
-}
-
-function createAdminClient(): SupabaseClient | null {
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 function mapProfile(row: ProfileRow): PublicProfile {

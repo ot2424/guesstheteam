@@ -1,8 +1,10 @@
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
-import { createClient } from '@supabase/supabase-js';
+import { pool, upsertRows } from '../backend/src/db/pool';
 import { TransfermarktBackupService } from '../backend/src/services/TransfermarktBackupService';
 import type { Difficulty, Position, TeamData } from '../backend/src/types';
+
+try {
 
 interface SeedFile {
   teams: SeedTeam[];
@@ -53,17 +55,13 @@ for (let index = 0; index < teams.length; index += 1) {
 if (args.dryRun) {
   console.log(`Dry run: prepared ${rows.length} team seasons.`);
 } else {
-  const supabase = createSupabaseClient();
+
 
   for (const batch of chunk(rows, 50)) {
-    const { error } = await supabase
-      .from('team_seasons')
-      .upsert(batch, { onConflict: 'id' });
-
-    if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
+    await upsertRows('team_seasons', batch);
   }
 
-  console.log(`Synced ${rows.length} team seasons to Supabase.`);
+  console.log(`Synced ${rows.length} team seasons to PostgreSQL.`);
 }
 
 function parseArgs(argv: string[]): Args {
@@ -92,15 +90,6 @@ function parseArgs(argv: string[]): Args {
   };
 }
 
-function createSupabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
-  }
-
-  return createClient(url, serviceRoleKey);
-}
 
 function toTeamSeasonRow(team: TeamData, seedTeam: SeedTeam, provider: string) {
   const payload = {
@@ -243,7 +232,7 @@ function applyPatch(team: TeamData, patch: OpenAiTeamPatch): TeamData {
       const position = patchPlayer?.position && POSITION_VALUES.has(patchPlayer.position)
         ? patchPlayer.position
         : player.position;
-      const formationSlot = Number.isInteger(patchPlayer?.formationSlot)
+      const formationSlot = patchPlayer && Number.isInteger(patchPlayer.formationSlot)
         ? patchPlayer.formationSlot as number
         : index;
 
@@ -277,3 +266,5 @@ function chunk<T>(items: T[], size: number) {
   }
   return chunks;
 }
+
+} finally { await pool.end(); }

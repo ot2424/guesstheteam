@@ -20,26 +20,26 @@ export function createOnlineRouter(service = new OnlineMatchupService()) {
   const router = Router();
 
   router.get('/matchups', requireAuth, async (req, res) => {
-    res.json(await service.list(req.user?.accessToken));
+    res.json(await service.list(req.user?.id));
   });
 
   router.post('/matchups', requireAuth, async (req, res) => {
     const payload = createSchema.parse(req.body);
-    const result = await service.create(req.user?.accessToken, payload.opponentId);
+    const result = await service.create(req.user?.id, payload.opponentId);
     if ('error' in result) throw new HttpError(400, result.error);
     res.status(201).json({ matchup: result });
   });
 
   router.get('/matchups/:matchupId', requireAuth, async (req, res) => {
     const params = paramsSchema.parse(req.params);
-    const matchup = await service.get(req.user?.accessToken, params.matchupId);
+    const matchup = await service.get(req.user?.id, params.matchupId);
     if (!matchup) throw new HttpError(404, 'Online-Match nicht gefunden.');
     res.json({ matchup });
   });
 
   router.post('/matchups/:matchupId/join', requireAuth, async (req, res) => {
     const params = paramsSchema.parse(req.params);
-    const matchup = await service.join(req.user?.accessToken, params.matchupId);
+    const matchup = await service.join(req.user?.id, params.matchupId);
     if (!matchup) throw new HttpError(404, 'Online-Match nicht gefunden.');
     res.json({ matchup });
   });
@@ -47,21 +47,21 @@ export function createOnlineRouter(service = new OnlineMatchupService()) {
   router.post('/matchups/:matchupId/guess', requireAuth, async (req, res) => {
     const params = paramsSchema.parse(req.params);
     const payload = guessSchema.parse(req.body);
-    const result = await service.guess(req.user?.accessToken, params.matchupId, payload.input);
+    const result = await service.guess(req.user?.id, params.matchupId, payload.input);
     if (!result) throw new HttpError(404, 'Online-Match nicht aktiv.');
     res.json(result);
   });
 
   router.post('/matchups/:matchupId/finish', requireAuth, async (req, res) => {
     const params = paramsSchema.parse(req.params);
-    const matchup = await service.finish(req.user?.accessToken, params.matchupId);
+    const matchup = await service.finish(req.user?.id, params.matchupId);
     if (!matchup) throw new HttpError(404, 'Online-Match nicht aktiv.');
     res.json({ matchup });
   });
 
   router.post('/matchups/:matchupId/leave', requireAuth, async (req, res) => {
     const params = paramsSchema.parse(req.params);
-    const matchup = await service.leave(req.user?.accessToken, params.matchupId);
+    const matchup = await service.leave(req.user?.id, params.matchupId);
     if (!matchup) throw new HttpError(404, 'Online-Match nicht gefunden.');
     res.json({ matchup });
   });

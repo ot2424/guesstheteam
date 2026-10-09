@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { query } from '../db/pool';
 import { env } from '../config/env';
 import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
 import { MIN_SOLVED_TO_COMPLETE, ProgressionService } from './ProgressionService';
@@ -73,18 +73,12 @@ export class GameSessionService {
   }
 
   async get(sessionId: string, userId?: string): Promise<GameSession | null> {
-    const supabase = createSessionClient();
-    if (!supabase) return this.sessions.get(sessionId) ?? null;
-
-    const { data, error } = await supabase
-      .from('active_game_sessions')
-      .select('session')
-      .eq('id', sessionId)
-      .eq('user_id', userId ?? '')
-      .maybeSingle<ActiveGameSessionRow>();
-
-    if (error || !data) return null;
-    return data.session;
+    if (env.NODE_ENV === 'test') {
+      const session = this.sessions.get(sessionId);
+      return session && (!userId || session.userId === userId) ? session : null;
+    }
+    const [row] = await query<ActiveGameSessionRow>('SELECT session FROM active_game_sessions WHERE id = $1 AND user_id = $2', [sessionId, userId]);
+    return row?.session ?? null;
   }
 
   async markSolved(sessionId: string, userId: string | undefined, playerId: string): Promise<void> {
@@ -106,18 +100,12 @@ export class GameSessionService {
   }
 
   async skip(sessionId: string, userId?: string): Promise<boolean> {
-    const supabase = createSessionClient();
-    if (supabase) {
-      const { error } = await supabase
-        .from('active_game_sessions')
-        .delete()
-        .eq('id', sessionId)
-        .eq('user_id', userId ?? '');
-
-      return !error;
+    if (env.NODE_ENV === 'test') {
+      if (!await this.get(sessionId, userId)) return false;
+      return this.sessions.delete(sessionId);
     }
-
-    return this.sessions.delete(sessionId);
+    const rows = await query('DELETE FROM active_game_sessions WHERE id = $1 AND user_id = $2 RETURNING id', [sessionId, userId]);
+    return rows.length > 0;
   }
 
   async incrementWrong(sessionId: string, userId?: string): Promise<void> {
@@ -133,7 +121,7 @@ export class GameSessionService {
     await this.persist(session);
   }
 
-  async finish(sessionId: string, userId: string | undefined, reason: FinishReason = 'complete') {
+  async finish(sessionId: string, userId: string | undefined, reason: FinishReason = 'complete', removeSession = true) {
     const session = await this.get(sessionId, userId);
     if (!session) return null;
 
@@ -184,36 +172,14 @@ export class GameSessionService {
       },
     };
 
-    await this.skip(sessionId, userId);
+    if (removeSession) await this.skip(sessionId, userId);
     return finished;
   }
 
   private async persist(session: GameSession): Promise<void> {
-    const supabase = createSessionClient();
-    if (!supabase) {
-      this.sessions.set(session.sessionId, session);
-      return;
-    }
-
-    const { error } = await supabase
-      .from('active_game_sessions')
-      .upsert({
-        id: session.sessionId,
-        user_id: session.userId,
-        session,
-      }, { onConflict: 'id' });
-
-    if (error) {
-      this.sessions.set(session.sessionId, session);
-    }
+    if (env.NODE_ENV === 'test') { this.sessions.set(session.sessionId, session); return; }
+    await query('INSERT INTO active_game_sessions(id, user_id, session) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET session = EXCLUDED.session', [session.sessionId, session.userId, JSON.stringify(session)]);
   }
-}
-
-function createSessionClient(): SupabaseClient | null {
-  if (env.NODE_ENV === 'test') return null;
-  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
-
-  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
 function getNextSeriesState(

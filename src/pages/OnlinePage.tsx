@@ -40,7 +40,7 @@ export function OnlinePage() {
   useEffect(() => {
     if (!isAuthenticated) return;
     let mounted = true;
-    setProfileLoading(true);
+    queueMicrotask(() => { if (mounted) setProfileLoading(true); });
     getProfile()
       .then((response) => {
         if (mounted) setProfile(response.profile);

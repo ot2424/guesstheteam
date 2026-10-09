@@ -38,7 +38,7 @@ We use `dcaribou/transfermarkt-datasets` as the upstream source, but we do not c
 
 ## Why This Shape
 
-The upstream dataset is excellent, but too large to ship with the app. The importer creates a curated subset of team-season starting elevens. That seed can run locally now and later be imported into Postgres/Supabase for production.
+The upstream dataset is excellent, but too large to ship with the app. The importer creates a curated subset of team-season starting elevens. That seed can run locally now and later be imported into PostgreSQL for production.
 
 ## Output Contract
 

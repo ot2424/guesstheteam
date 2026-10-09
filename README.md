@@ -1,73 +1,21 @@
-# React + TypeScript + Vite
+# GuessTheTeam
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React/Vite-Frontend auf Vercel, Express-API und PostgreSQL auf Hetzner.
 
-Currently, two official plugins are available:
+Einrichtung, Repo-Analyse, Datenübernahme und Deployment stehen in [docs/migration.md](docs/migration.md).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm ci
+# .env.example nach .env kopieren und PostgreSQL-Zugang konfigurieren
+npm run db:migrate
+npm run backend:dev
+# Zweites Terminal
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Die API verwendet eigene cookiebasierte Authentifizierung mit E-Mail-Bestätigung und Passwort-Reset. SMTP wird im Backend konfiguriert. Frontend-Konfiguration auf Vercel:
+`VITE_API_BASE_URL=https://api.guesstheteam.de/api/v1`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Der gewünschte Account-Neustart mit neuem Admin ist über `npm run db:reset:accounts -- --execute` vorbereitet. Dafür `DATABASE_URL` und `ADMIN_EMAIL` setzen; Details stehen in der Migrationsanleitung.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Zentrale Serverkonfiguration: `/root/guesstheteam/.env`. Für Brevo dort `SMTP_USER` (SMTP-Login) und `SMTP_PASSWORD` (SMTP-Schlüssel) eintragen. Alle Backend-Skripte aus diesem Projektordner ausführen.

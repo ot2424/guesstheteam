@@ -109,5 +109,4 @@ export interface GameSession {
 
 export interface AuthenticatedRequestUser {
   id: string;
-  accessToken?: string;
 }

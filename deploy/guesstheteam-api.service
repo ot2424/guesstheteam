@@ -1,0 +1,23 @@
+[Unit]
+Description=GuessTheTeam Express API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=guesstheteam
+Group=guesstheteam
+WorkingDirectory=/opt/guesstheteam
+EnvironmentFile=/root/guesstheteam/.env
+ExecStart=/usr/bin/npm run backend:start
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/guesstheteam/data
+
+[Install]
+WantedBy=multi-user.target

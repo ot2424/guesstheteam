@@ -1,22 +1,14 @@
 import type { Difficulty, FriendRequestSummary, MatchHistoryItem, MatchResult, MatchType, OnlineMatchup, PlayMode, PublicUserSummary, Rank, Team } from '../types';
 import type { UserProfile } from '../types';
-import { hasSupabase, supabase } from './supabase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:4000/api/v1';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? 'https://api.guesstheteam.de/api/v1' : 'http://localhost:4000/api/v1')).replace(/\/$/, '');
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const authHeaders: Record<string, string> = {};
-  if (hasSupabase) {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (token) authHeaders.Authorization = `Bearer ${token}`;
-  }
-
+export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...authHeaders,
       ...options.headers,
     },
   });

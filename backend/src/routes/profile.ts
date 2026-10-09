@@ -26,13 +26,13 @@ export function createProfileRouter(profileService = new ProfileService()) {
   const router = Router();
 
   router.get('/me', requireAuth, async (req, res) => {
-    const profile = await profileService.getProfile(req.user?.accessToken);
+    const profile = await profileService.getProfile(req.user?.id);
     if (!profile) throw new HttpError(404, 'Profil nicht gefunden.');
     res.json({ profile });
   });
 
   router.get('/matches', requireAuth, async (req, res) => {
-    const matches = await profileService.getMatchHistory(req.user?.accessToken);
+    const matches = await profileService.getMatchHistory(req.user?.id);
     res.json({ matches });
   });
 
@@ -44,18 +44,18 @@ export function createProfileRouter(profileService = new ProfileService()) {
 
   router.get('/users/search', requireAuth, async (req, res) => {
     const query = userSearchQuerySchema.parse(req.query);
-    const users = await profileService.searchUsers(req.user?.accessToken, query.q, query.limit);
+    const users = await profileService.searchUsers(req.user?.id, query.q, query.limit);
     res.json({ users });
   });
 
   router.get('/social', requireAuth, async (req, res) => {
-    const social = await profileService.getSocialOverview(req.user?.accessToken);
+    const social = await profileService.getSocialOverview(req.user?.id);
     res.json(social);
   });
 
   router.post('/friends/request', requireAuth, async (req, res) => {
     const payload = friendRequestSchema.parse(req.body);
-    const result = await profileService.sendFriendRequest(req.user?.accessToken, payload.profileId);
+    const result = await profileService.sendFriendRequest(req.user?.id, payload.profileId);
     if (result.error) throw new HttpError(400, result.error);
     res.status(201).json({ ok: true });
   });
@@ -63,7 +63,7 @@ export function createProfileRouter(profileService = new ProfileService()) {
   router.post('/friends/:requestId/respond', requireAuth, async (req, res) => {
     const params = z.object({ requestId: z.string().uuid() }).parse(req.params);
     const payload = friendResponseSchema.parse(req.body);
-    const result = await profileService.respondToFriendRequest(req.user?.accessToken, params.requestId, payload.action);
+    const result = await profileService.respondToFriendRequest(req.user?.id, params.requestId, payload.action);
     if (result.error) throw new HttpError(400, result.error);
     res.json({ ok: true });
   });

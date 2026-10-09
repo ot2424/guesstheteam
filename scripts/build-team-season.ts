@@ -4,9 +4,11 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { createInterface } from 'node:readline';
 import { createGunzip } from 'node:zlib';
-import { createClient } from '@supabase/supabase-js';
+import { pool, upsertRows } from '../backend/src/db/pool';
 import { TransfermarktBackupService } from '../backend/src/services/TransfermarktBackupService';
 import type { CareerClub, Difficulty, InternalPlayer, Position, TeamData } from '../backend/src/types';
+
+try {
 
 interface Args {
   club: string;
@@ -556,7 +558,7 @@ async function enrichCandidatesWithStats(players: ClubPlayer[], clubId: string, 
     const seasonStats = (stats?.stats ?? []).filter((entry) => entry.seasonId === season);
     const clubStats = seasonStats.filter((entry) => entry.clubId === clubId);
     const relevantStats = clubStats.length > 0 ? clubStats : seasonStats;
-    const totals = relevantStats.reduce((sum, entry) => ({
+    const totals = relevantStats.reduce<{ appearances: number; minutesPlayed: number; goals: number; assists: number }>((sum, entry) => ({
       appearances: sum.appearances + (entry.appearances ?? 0),
       minutesPlayed: sum.minutesPlayed + (entry.minutesPlayed ?? 0),
       goals: sum.goals + (entry.goals ?? 0),
@@ -789,17 +791,8 @@ async function outputTeam(team: TeamData, clubId: string, provider: string, diff
     return;
   }
 
-  const supabase = createSupabaseClient();
-  const { error } = await supabase
-    .from('team_seasons')
-    .upsert(row, { onConflict: 'id' });
 
-  if (error) {
-    const hint = error.message.includes("Could not find the table 'public.team_seasons'")
-      ? ' Run supabase/migrations/0004_create_team_seasons.sql in the Supabase SQL editor for this project, then retry.'
-      : '';
-    throw new Error(`Supabase upsert failed: ${error.message}.${hint}`);
-  }
+  await upsertRows('team_seasons', [row]);
   console.log(`Built and synced ${team.name} ${team.season} (${team.formation}) with ${team.players.length} starters.`);
 }
 
@@ -938,15 +931,6 @@ function parseOpenAiJson(body: Record<string, unknown>): OpenAiStarterSelection 
   throw new Error('OpenAI response did not contain parseable JSON.');
 }
 
-function createSupabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
-  }
-
-  return createClient(url, serviceRoleKey);
-}
 
 async function fetchJson<T>(path: string): Promise<T | null> {
   const controller = new AbortController();
@@ -1139,3 +1123,5 @@ function resolveCsv(source: string, name: string) {
   if (existsSync(gz)) return gz;
   throw new Error(`Missing ${name}.csv or ${name}.csv.gz in ${source}`);
 }
+
+} finally { await pool.end(); }

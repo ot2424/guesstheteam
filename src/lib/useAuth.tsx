@@ -1,12 +1,12 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import type { User } from '@supabase/supabase-js';
-import { hasSupabase, supabase } from './supabase';
+import { request } from './api';
 
 interface AuthUser {
   id: string;
   email: string;
   username?: string;
+  role?: 'user' | 'admin';
   firstName?: string;
   lastName?: string;
 }
@@ -32,43 +32,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-function mapUser(user: User): AuthUser {
-  return {
-    id: user.id,
-    email: user.email ?? '',
-    username: typeof user.user_metadata?.username === 'string' ? user.user_metadata.username : undefined,
-    firstName: typeof user.user_metadata?.first_name === 'string' ? user.user_metadata.first_name : undefined,
-    lastName: typeof user.user_metadata?.last_name === 'string' ? user.user_metadata.last_name : undefined,
-  };
-}
-
-function mapAuthError(message: string) {
-  const normalized = message.toLowerCase();
-
-  if (normalized.includes('invalid login credentials')) {
-    return 'E-Mail oder Passwort stimmt nicht. Falls du dich gerade registriert hast, bestätige bitte zuerst deine E-Mail.';
-  }
-
-  if (normalized.includes('email not confirmed')) {
-    return 'Bitte bestätige zuerst deine E-Mail. Danach kannst du dich einloggen.';
-  }
-
-  if (normalized.includes('user already registered') || normalized.includes('already registered')) {
-    return 'Für diese E-Mail gibt es bereits einen Account. Bitte logge dich ein.';
-  }
-
-  if (normalized.includes('password')) {
-    return 'Das Passwort erfüllt die Anforderungen nicht. Nutze mindestens 6 Zeichen.';
-  }
-
-  return message || 'Anmeldung fehlgeschlagen. Bitte versuche es erneut.';
-}
-
-function getAuthRedirectUrl() {
-  if (typeof window === 'undefined') return undefined;
-  return `${window.location.origin}/auth`;
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,65 +39,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    if (!hasSupabase) {
-      queueMicrotask(() => {
-        if (active) setLoading(false);
-      });
-      return () => { active = false; };
-    }
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      setUser(data.session?.user ? mapUser(data.session.user) : null);
-      setLoading(false);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ? mapUser(session.user) : null);
-      setLoading(false);
-    });
-
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
+    request<{ user: AuthUser }>('/auth/me')
+      .then(({ user }) => { if (active) setUser(user); })
+      .catch(() => { if (active) setUser(null); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   const signIn: AuthContextValue['signIn'] = async (email, password) => {
-    if (!hasSupabase) return { error: 'Supabase ist noch nicht konfiguriert.' };
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    return { error: error ? mapAuthError(error.message) : null };
+    try {
+      const { user } = await request<{ user: AuthUser }>('/auth/login', { method: 'POST', body: JSON.stringify({ email: email.trim(), password }) });
+      setUser(user);
+      return { error: null };
+    } catch (error) { return { error: error instanceof Error ? error.message : 'Anmeldung fehlgeschlagen.' }; }
   };
-
-  const signUp: AuthContextValue['signUp'] = async ({ email, password, username, firstName, lastName }) => {
-    if (!hasSupabase) return { error: 'Supabase ist noch nicht konfiguriert.' };
-
-    const { data, error } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-      options: {
-        emailRedirectTo: getAuthRedirectUrl(),
-        data: {
-          username: username.trim(),
-          first_name: firstName.trim(),
-          last_name: lastName.trim(),
-        },
-      },
-    });
-
-    if (error) return { error: mapAuthError(error.message) };
-    return { error: null, needsEmailConfirmation: !data.session };
+  const signUp: AuthContextValue['signUp'] = async (payload) => {
+    try {
+      await request<{ needsEmailConfirmation: boolean }>('/auth/register', { method: 'POST', body: JSON.stringify({ ...payload, email: payload.email.trim(), username: payload.username.trim(), firstName: payload.firstName.trim(), lastName: payload.lastName.trim() }) });
+      return { error: null, needsEmailConfirmation: true };
+    } catch (error) { return { error: error instanceof Error ? error.message : 'Registrierung fehlgeschlagen.' }; }
   };
-
   const signOut = async () => {
-    if (hasSupabase) {
-      await supabase.auth.signOut();
-    }
+    await request('/auth/logout', { method: 'POST' });
     setUser(null);
   };
 
@@ -145,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isAuthenticated: Boolean(user),
       displayName,
-      authReady: hasSupabase,
+      authReady: true,
       signIn,
       signUp,
       signOut,

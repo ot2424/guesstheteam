@@ -1,7 +1,9 @@
 import 'dotenv/config';
-import { createClient } from '@supabase/supabase-js';
+import { pool, upsertRows } from '../backend/src/db/pool';
 import { WORLD_CUP_TEAMS } from '../backend/src/data/worldCupTeams';
 import type { TeamData } from '../backend/src/types';
+
+try {
 
 const args = parseArgs(process.argv.slice(2));
 const rows = WORLD_CUP_TEAMS.map(toTeamSeasonRow);
@@ -9,17 +11,13 @@ const rows = WORLD_CUP_TEAMS.map(toTeamSeasonRow);
 if (args.dryRun) {
   console.log(JSON.stringify(rows, null, 2));
 } else {
-  const supabase = createSupabaseClient();
+
 
   for (const batch of chunk(rows, 50)) {
-    const { error } = await supabase
-      .from('team_seasons')
-      .upsert(batch, { onConflict: 'id' });
-
-    if (error) throw new Error(`Supabase upsert failed: ${error.message}`);
+    await upsertRows('team_seasons', batch);
   }
 
-  console.log(`Synced ${rows.length} World Cup national teams to Supabase.`);
+  console.log(`Synced ${rows.length} World Cup national teams to PostgreSQL.`);
 }
 
 function parseArgs(argv: string[]) {
@@ -28,15 +26,6 @@ function parseArgs(argv: string[]) {
   };
 }
 
-function createSupabaseClient() {
-  const url = process.env.SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceRoleKey) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
-  }
-
-  return createClient(url, serviceRoleKey);
-}
 
 function toTeamSeasonRow(team: TeamData) {
   return {
@@ -61,3 +50,5 @@ function chunk<T>(items: T[], size: number) {
   }
   return batches;
 }
+
+} finally { await pool.end(); }
