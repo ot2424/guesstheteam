@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { PlayerSearchService } from '../services/PlayerSearchService';
 
 const querySchema = z.object({
-  q: z.string().trim().default(''),
+  q: z.string().trim().max(80).default(''),
   limit: z.coerce.number().int().min(1).max(20).default(8),
 });
 

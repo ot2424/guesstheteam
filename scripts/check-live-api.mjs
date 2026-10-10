@@ -4,6 +4,7 @@ import { hashPassword } from '../backend/src/services/AuthService.ts';
 import { pool } from '../backend/src/db/pool.ts';
 import 'dotenv/config';
 import pg from 'pg';
+import { setTimeout as delay } from 'node:timers/promises';
 const suffix = randomBytes(8).toString('hex');
 const credentials = { email: `live-check-${suffix}@example.com`, password: randomBytes(32).toString('hex') };
 let testUserId;
@@ -14,6 +15,7 @@ let cookie = '';
 let sessionId;
 let userId;
 async function call(path, method = 'GET', body, requestOrigin = origin) {
+  await delay(80); // Keep the verification below the public proxy's request limit.
   return fetch(base + path, { method, headers: { Origin: requestOrigin, Cookie: cookie, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(10000) });
 }
 try {
@@ -39,6 +41,8 @@ try {
   userId = user.id;
   assert.equal(user.role, 'user');
   assert.equal((await call('/api/v1/profile/me')).status, 200);
+  assert.equal((await call('/api/v1/game/start', 'POST', { playMode: 'ranked', level: 99, rank: 'Platinum 1' })).status, 403);
+  assert.equal((await call('/api/v1/game/start', 'POST', { playMode: 'worldcup', level: 99 })).status, 403);
   const start = await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'easy' });
   assert.equal(start.status, 201);
   const game = await start.json();
@@ -91,6 +95,13 @@ try {
   assert.equal(hardResult.progression.xpGained, 61);
   assert.ok(hardResult.progression.xpTimeMultiplier <= 0.8 && hardResult.progression.xpTimeMultiplier > 0.79);
   assert.deepEqual(await call('/api/v1/game/finish', 'POST', { sessionId: hard.sessionId, reason: 'complete' }).then(response => response.json()), hardResult);
+  const forgedGame = await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'easy', rank: 'Platinum 1', winStreak: 50 }).then(response => response.json());
+  assert.equal(forgedGame.rank, 'Bronze 3');
+  assert.equal(forgedGame.winStreak, 0);
+  const forgedFinish = await call('/api/v1/game/finish', 'POST', { sessionId: forgedGame.sessionId, reason: 'complete', solved: 11, isWin: true, xpGained: 999999, lpChange: 999999 }).then(response => response.json());
+  assert.equal(forgedFinish.result.isWin, false);
+  assert.equal(forgedFinish.progression.xpGained, 0);
+  assert.equal(forgedFinish.progression.lpChange, 0);
   assert.equal((await call('/api/v1/auth/logout', 'POST')).status, 200);
   assert.equal((await call('/api/v1/auth/me')).status, 401);
   console.log('Public HTTPS checks passed: database readiness, temporary account login, CORS/CSRF, secure cookies, profile, PostgreSQL game persistence, server resume, guess and logout. No email sent; temporary account removed.');

@@ -19,4 +19,4 @@ systemctl reload nginx
 install -d -m 0755 /etc/letsencrypt/renewal-hooks/deploy
 install -m 0755 deploy/reload-nginx.sh /etc/letsencrypt/renewal-hooks/deploy/guesstheteam-nginx
 systemctl enable --now certbot.timer
-curl --fail --silent --show-error --max-time 15 https://api.guesstheteam.de/ready
+curl --fail --silent --show-error --retry 5 --retry-delay 1 --retry-connrefused --retry-all-errors --max-time 5 https://api.guesstheteam.de/ready

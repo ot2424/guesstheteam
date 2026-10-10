@@ -1,16 +1,28 @@
 // Run with NODE_PATH pointing to a separately installed Playwright package.
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 const { chromium, devices } = require(process.env.GTT_PLAYWRIGHT_MODULE || 'playwright');
 let base = process.env.GTT_BROWSER_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 const errors = [];
+const csp = process.env.GTT_TEST_CSP === 'true'
+  ? JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8')).headers.flatMap(rule => rule.headers).find(header => header.key === 'Content-Security-Policy').value
+  : null;
 try {
   for (const device of ['iPhone 13', 'Pixel 7']) {
     const context = await browser.newContext({ ...devices[device], serviceWorkers: 'allow' });
+    if (csp) await context.route('**/*', async route => {
+      if (!route.request().isNavigationRequest()) return route.fallback();
+      const response = await route.fetch();
+      await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': csp } });
+    });
     const page = await context.newPage();
     page.on('pageerror', error => errors.push(error.message));
+    if (csp) page.on('console', message => {
+      if (message.type() === 'error' && /Content Security Policy|violates.*directive/i.test(message.text())) errors.push(message.text());
+    });
     // UI tests use isolated API fixtures; no production accounts or email are touched.
     await page.route('**/api/v1/**', async route => {
       const path = new URL(route.request().url()).pathname;

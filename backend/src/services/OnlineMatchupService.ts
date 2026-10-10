@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { query, upsertRows } from '../db/pool';
+import { query, upsertRows, withAdvisoryLock } from '../db/pool';
 import { env } from '../config/env';
 import type { Difficulty, GameSession, PublicPlayer, Rank, TeamData } from '../types';
 import { PlayerMatchService } from './PlayerMatchService';
@@ -116,6 +116,12 @@ export class OnlineMatchupService {
     private teamSeedService = new TeamSeedService(),
   ) {}
 
+  get(userId: string | undefined, id: string) { return withAdvisoryLock('online', id, () => this.getLocked(userId, id)); }
+  join(userId: string | undefined, id: string) { return withAdvisoryLock('online', id, () => this.joinLocked(userId, id)); }
+  leave(userId: string | undefined, id: string) { return withAdvisoryLock('online', id, () => this.leaveLocked(userId, id)); }
+  guess(userId: string | undefined, id: string, input: string) { return withAdvisoryLock('online', id, () => this.guessLocked(userId, id, input)); }
+  finish(userId: string | undefined, id: string) { return withAdvisoryLock('online', id, () => this.finishLocked(userId, id)); }
+
   async create(authenticatedUserId: string | undefined, opponentId: string): Promise<OnlineMatchupView | { error: string }> {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     if (!profile) return { error: 'Profil nicht gefunden.' };
@@ -159,11 +165,14 @@ export class OnlineMatchupService {
 
     const useDatabase = env.NODE_ENV !== 'test';
     const rows = useDatabase ? await this.fetchRows(profile.id) : [...this.rows.values()].filter((row) => isParticipant(row, profile.id));
-    const views = await Promise.all(rows.map((row) => this.toView(row, profile.id)));
+    const views = await Promise.all(rows.map(row => withAdvisoryLock('online', row.id, async () => {
+      const latest = await this.getRow(row.id, profile.id);
+      return this.toView(latest ?? row, profile.id);
+    })));
     return { matchups: views.sort((a, b) => Number(a.status === 'completed') - Number(b.status === 'completed')) };
   }
 
-  async get(authenticatedUserId: string | undefined, matchupId: string) {
+  private async getLocked(authenticatedUserId: string | undefined, matchupId: string) {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
@@ -172,7 +181,7 @@ export class OnlineMatchupService {
     return this.toView(await this.touchPresence(checked, profile.id), profile.id);
   }
 
-  async join(authenticatedUserId: string | undefined, matchupId: string) {
+  private async joinLocked(authenticatedUserId: string | undefined, matchupId: string) {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
@@ -190,7 +199,7 @@ export class OnlineMatchupService {
     return this.toView(await this.save(next), profile.id);
   }
 
-  async leave(authenticatedUserId: string | undefined, matchupId: string) {
+  private async leaveLocked(authenticatedUserId: string | undefined, matchupId: string) {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row) return null;
@@ -201,7 +210,7 @@ export class OnlineMatchupService {
     return this.toView(await this.save(next), profile.id);
   }
 
-  async guess(authenticatedUserId: string | undefined, matchupId: string, input: string) {
+  private async guessLocked(authenticatedUserId: string | undefined, matchupId: string, input: string) {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row || row.status !== 'active') return null;
@@ -228,7 +237,7 @@ export class OnlineMatchupService {
     };
   }
 
-  async finish(authenticatedUserId: string | undefined, matchupId: string) {
+  private async finishLocked(authenticatedUserId: string | undefined, matchupId: string) {
     const profile = await this.profileService.getProfile(authenticatedUserId);
     const row = profile ? await this.getRow(matchupId, profile.id) : null;
     if (!profile || !row || row.status !== 'active') return null;

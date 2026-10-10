@@ -18,3 +18,4 @@ systemctl daemon-reload
 systemctl enable guesstheteam-api
 systemctl restart guesstheteam-api
 systemctl is-active guesstheteam-api
+curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-connrefused --retry-all-errors --max-time 3 http://127.0.0.1:4000/ready

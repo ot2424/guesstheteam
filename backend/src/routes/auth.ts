@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { env } from '../config/env';
 import { getSessionToken, SESSION_COOKIE } from '../middleware/auth';
 import { HttpError } from '../middleware/errorHandler';
-import { AuthService } from '../services/AuthService';
+import { AuthService, hashToken } from '../services/AuthService';
 
 const loginSchema = z.object({ email: z.string().trim().email().max(254), password: z.string().min(1).max(256) });
 const registerSchema = loginSchema.extend({
@@ -17,11 +17,17 @@ const cookieOptions = { httpOnly: true, secure: env.NODE_ENV === 'production', s
 export function createAuthRouter(service = new AuthService()) {
   const router = Router();
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false, message: { error: 'Zu viele Anmeldeversuche. Bitte später erneut versuchen.' } });
+  const accountLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 15, skipSuccessfulRequests: true,
+    keyGenerator: req => hashToken(typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase().slice(0, 254) : 'invalid-login'),
+    standardHeaders: 'draft-8', legacyHeaders: false,
+    message: { error: 'Zu viele fehlgeschlagene Anmeldeversuche für diesen Account. Bitte später erneut versuchen.' },
+  });
   router.post('/register', limiter, async (req, res) => {
     await service.register(registerSchema.parse(req.body));
     res.status(201).json({ needsEmailConfirmation: true });
   });
-  router.post('/login', limiter, async (req, res) => {
+  router.post('/login', limiter, accountLimiter, async (req, res) => {
     const payload = loginSchema.parse(req.body);
     const { user, token } = await service.loginWithSession(payload.email, payload.password);
     await service.logout(getSessionToken(req));

@@ -90,15 +90,15 @@ export class GameSessionService {
       return;
     }
     const session = await this.get(sessionId, userId);
-    const player = session?.players[playerId];
-    if (!player) return;
+    const player = session && Object.hasOwn(session.players, playerId) ? session.players[playerId] : undefined;
+    if (!session || !player) return;
     player.solved = true;
     await this.persist(session);
   }
 
   async autoSolve(sessionId: string, userId: string | undefined, playerId: string): Promise<{ playerId: string; name: string } | null> {
     const session = await this.get(sessionId, userId);
-    const player = session?.players[playerId];
+    const player = session && Object.hasOwn(session.players, playerId) ? session.players[playerId] : undefined;
     if (!player || player.solved) return null;
 
     await this.markSolved(sessionId, userId, playerId);

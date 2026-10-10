@@ -11,6 +11,7 @@ import { createGameRouter } from './routes/game';
 import { createOnlineRouter } from './routes/online';
 import { createPlayersRouter } from './routes/players';
 import { createProfileRouter } from './routes/profile';
+import { apiRateLimit } from './middleware/rateLimits';
 
 function getCorsOrigins() {
   const origins = env.CORS_ORIGIN.split(',')
@@ -27,6 +28,7 @@ export function createApp() {
   app.use(helmet());
   app.use(cors({ origin: getCorsOrigins(), credentials: true }));
   app.use(requireTrustedOrigin);
+  app.use('/api/v1', apiRateLimit());
   app.use(express.json({ limit: '32kb' }));
   app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
@@ -34,7 +36,10 @@ export function createApp() {
     res.json({ ok: true });
   });
 
-  app.get('/ready', async (_req, res) => { await query('SELECT 1'); res.json({ ok: true }); });
+  app.get('/ready', async (_req, res) => {
+    try { await query('SELECT 1'); res.json({ ok: true }); }
+    catch { res.status(503).json({ ok: false }); }
+  });
   app.use('/api/v1', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   app.use('/api/v1/auth', createAuthRouter());
   app.use('/api/v1/game', createGameRouter());
