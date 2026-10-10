@@ -55,11 +55,18 @@ describe('savedGame', () => {
     expect(matchesSavedGame(saved, { playMode: 'casual', matchType: 'single', difficulty: 'medium', rank: 'Silver 3', leagueId: 'GB1' })).toBe(false);
   });
 
-  it('allows ranked resume independent from selected difficulty because rank controls difficulty', () => {
+  it('resumes ranked games using the server rank instead of default URL options', () => {
     const saved = savedGame({ playMode: 'ranked', difficulty: 'easy', rank: 'Gold 3' });
 
     expect(matchesSavedGame(saved, { playMode: 'ranked', matchType: 'single', difficulty: 'hard', rank: 'Gold 3' })).toBe(true);
-    expect(matchesSavedGame(saved, { playMode: 'ranked', matchType: 'single', difficulty: 'hard', rank: 'Gold 2' })).toBe(false);
+    expect(matchesSavedGame(saved, { playMode: 'ranked', matchType: 'single', difficulty: 'hard', rank: 'Bronze 3' })).toBe(true);
+  });
+
+  it('does not fail a game when device storage is unavailable', () => {
+    vi.stubGlobal('window', { localStorage: { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); }, removeItem() { throw new Error('blocked'); } } });
+    expect(loadSavedGame()).toBeNull();
+    expect(() => saveGame(savedGame())).not.toThrow();
+    expect(() => clearSavedGame()).not.toThrow();
   });
 
   it('builds resume URLs with the original game options', () => {

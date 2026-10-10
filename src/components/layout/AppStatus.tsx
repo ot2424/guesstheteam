@@ -10,6 +10,9 @@ export function AppStatus() {
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    let registration: ServiceWorkerRegistration | undefined;
+    const checkUpdate = () => { if (!document.hidden && navigator.onLine) void registration?.update().catch(() => {}); };
+    document.addEventListener('visibilitychange', checkUpdate);
     const online = () => { setOffline(false); window.dispatchEvent(new Event('gtt:retry')); };
     const offline = () => setOffline(true);
     const failed = (event: Event) => setConnectionError((event as CustomEvent<string>).detail);
@@ -17,17 +20,18 @@ export function AppStatus() {
     window.addEventListener('offline', offline);
     window.addEventListener('gtt:connection-error', failed);
     if ('serviceWorker' in navigator && import.meta.env.PROD) {
-      void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registration => {
-        if (registration.waiting) setWaitingWorker(registration.waiting);
-        registration.addEventListener('updatefound', () => {
-          const worker = registration.installing;
+      void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(registered => {
+        registration = registered;
+        if (registered.waiting) setWaitingWorker(registered.waiting);
+        registered.addEventListener('updatefound', () => {
+          const worker = registered.installing;
           worker?.addEventListener('statechange', () => {
             if (worker.state === 'installed' && navigator.serviceWorker.controller) setWaitingWorker(worker);
           });
         });
       }).catch(() => { /* Browsing remains available if installation is unsupported. */ });
     }
-    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); window.removeEventListener('gtt:connection-error', failed); };
+    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); window.removeEventListener('gtt:connection-error', failed); document.removeEventListener('visibilitychange', checkUpdate); };
   }, []);
 
   const retry = async () => {
@@ -49,7 +53,7 @@ export function AppStatus() {
     waitingWorker?.postMessage({ type: 'SKIP_WAITING' });
   };
 
-  const canUpdate = pathname !== '/play' && pathname !== '/online' && pathname !== '/auth';
+  const canUpdate = pathname !== '/play' && pathname !== '/online' && pathname !== '/auth' && pathname !== '/tutorial';
   if (!offline && !connectionError && (!waitingWorker || !canUpdate)) return null;
   return <div className="app-status" role="status" aria-live="polite">
     {(offline || connectionError) && <div className="flex flex-wrap items-center justify-between gap-3">

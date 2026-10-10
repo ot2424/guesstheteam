@@ -45,7 +45,7 @@ export function matchesSavedGame(
   return saved.playMode === opts.playMode
     && saved.matchType === opts.matchType
     && (opts.playMode === 'ranked' || saved.difficulty === opts.difficulty)
-    && saved.rank === opts.rank
+    && (opts.playMode === 'ranked' || saved.rank === opts.rank)
     && (saved.leagueId ?? '') === (opts.leagueId ?? '');
 }
 
