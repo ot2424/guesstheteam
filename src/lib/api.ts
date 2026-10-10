@@ -84,8 +84,10 @@ export interface SkipTeamResponse {
 }
 
 export interface FinishGameResponse {
+  difficulty?: Difficulty;
   result: Pick<MatchResult, 'solved' | 'total' | 'durationSec' | 'isWin' | 'isPerfect' | 'completionRatio'>;
   progression: {
+    xpTimeMultiplier?: number;
     xpGained: number;
     lpChange: number;
     newAchievements: string[];

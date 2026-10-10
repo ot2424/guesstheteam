@@ -17,15 +17,26 @@ describe('ProgressionService', () => {
   });
 
   it('awards base, accuracy, perfect and speed XP for wins', () => {
-    expect(service.calcXP({ difficulty: 'easy', solved: 9, total: 11, durationSec: 200, isWin: true })).toBe(87);
+    expect(service.calcXP({ difficulty: 'easy', solved: 9, total: 11, durationSec: 200, isWin: true })).toBe(102);
     expect(service.calcXP({ difficulty: 'medium', solved: 11, total: 11, durationSec: 90, isWin: true })).toBe(305);
-    expect(service.calcXP({ difficulty: 'hard', solved: 11, total: 11, durationSec: 130, isWin: true })).toBe(375);
+    expect(service.calcXP({ difficulty: 'hard', solved: 11, total: 11, durationSec: 130, isWin: true })).toBe(401);
   });
 
   it('scales XP and ranked LP by solved players for early completion', () => {
-    expect(service.calcXP({ difficulty: 'hard', solved: 4, total: 11, durationSec: 200, isWin: true })).toBe(91);
+    expect(service.calcXP({ difficulty: 'hard', solved: 4, total: 11, durationSec: 200, isWin: true })).toBe(93);
     expect(service.calcLP({ playMode: 'ranked', difficulty: 'easy', matchType: 'single', isWin: true, solved: 4, total: 11 })).toBe(5);
     expect(service.calcLP({ playMode: 'ranked', difficulty: 'easy', matchType: 'single', isWin: true, solved: 11, total: 11 })).toBe(14);
+  });
+
+  it('scales all XP with server duration and rewards three hard solves proportionally', () => {
+    const full = { difficulty: 'hard' as const, solved: 11, total: 11, isWin: true };
+    expect([120, 300, 600, 900].map(durationSec => service.calcXP({ ...full, durationSec }))).toEqual([405, 324, 203, 101]);
+    expect(service.calcXP({ ...full, solved: 3, durationSec: 120 })).toBe(76);
+    expect(service.calcXP({ ...full, solved: 3, durationSec: 300 })).toBe(61);
+    expect(service.calcXP({ ...full, solved: 2, durationSec: 120 })).toBe(0);
+    expect(service.calcXP({ ...full, difficulty: 'easy', solved: 3, durationSec: 120 })).toBe(0);
+    const rewards = Array.from({ length: 1201 }, (_, durationSec) => service.calcXP({ ...full, durationSec }));
+    expect(rewards.every((xp, index) => index === 0 || xp <= rewards[index - 1])).toBe(true);
   });
 
   it('keeps LP out of casual and world cup modes', () => {

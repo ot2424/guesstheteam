@@ -247,7 +247,7 @@ function getSelectionDescriptor(playMode: PlayMode, difficulty: Difficulty, leag
   if (playMode === 'casual') {
     return {
       pool: 'mixed-european-leagues',
-      seasons: { from: difficulty === 'medium' ? 2010 : 2000, to: 2026 },
+      seasons: difficulty === 'hard' ? { from: 2013, to: 2015 } : { from: 2016, to: 2017 },
     };
   }
 
@@ -261,14 +261,14 @@ function getSelectionDescriptor(playMode: PlayMode, difficulty: Difficulty, leag
   if (difficulty === 'medium') {
     return {
       pool: 'ranked-established-euro-clubs',
-      seasons: { from: 2010, to: 2026 },
+      seasons: { from: 2016, to: 2017 },
     };
   }
 
   if (difficulty === 'hard') {
     return {
       pool: 'mixed-leagues-nostalgia',
-      seasons: { from: 2000, to: 2015 },
+      seasons: { from: 2013, to: 2015 },
     };
   }
 

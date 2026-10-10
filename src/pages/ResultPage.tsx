@@ -5,6 +5,7 @@ import { TeamBadge } from '../components/ui/TeamBadge';
 import { XPBar } from '../components/ui/XPBar';
 import { XP_REWARDS } from '../lib/rewards';
 import type { MatchResult } from '../types';
+import { getMinimumSolved } from '../../shared/gameRules';
 
 function ResultIcon({ isPerfect, isWin }: { isPerfect?: boolean; isWin: boolean }) {
   if (isPerfect) {
@@ -116,8 +117,9 @@ export function ResultPage() {
         {isWin && (
           <div className="px-6 py-3 border-t border-white/5 text-center">
             <div className="text-xs font-semibold text-green-300">
-              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : 'Ab 4 Spielern abgeschlossen. Mehr Treffer geben mehr XP und LP.'}
+              {isPerfect ? 'Alle Spieler erraten: Perfect-Bonus erhalten.' : `Ab ${getMinimumSolved(result.difficulty ?? 'easy', total)} Spielern abgeschlossen. Mehr Treffer geben mehr XP und LP.`}
             </div>
+            {result.xpTimeMultiplier !== undefined && <div className="mt-1 text-xs text-gray-400">Zeitfaktor: {Math.round(result.xpTimeMultiplier * 100)} % der erreichten XP.</div>}
           </div>
         )}
 

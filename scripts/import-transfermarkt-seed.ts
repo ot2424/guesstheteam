@@ -185,6 +185,7 @@ if (logoLookup) {
 
 const teams = selectedTeams.map((team) => ({
   ...team,
+  season: `${team.season}/${Number(team.season) + 1}`,
   logoUrl: teamLogos.get(team.name) || `https://tmssl.akamaized.net/images/wappen/big/${team.clubId}.png`,
   league: ({ L1: 'Bundesliga', GB1: 'Premier League', ES1: 'La Liga', IT1: 'Serie A', FR1: 'Ligue 1' } as Record<string, string>)[team.league] ?? team.league,
   players: team.players.map((player) => ({
@@ -372,7 +373,7 @@ function selectTeams(input: {
     }
   }
 
-  return spreadTeamsBySeason(teams, input.args.limit);
+  return spreadTeamsBySeasonAndLeague(teams, input.args.limit);
 }
 
 function toSeedPlayer(lineupPlayer: LineupPlayer, formationSlot: number, season: number, players: Map<string, PlayerRecord>, club: ClubRecord): SeedPlayer | null {
@@ -450,7 +451,7 @@ function compactCareer(career: CareerClub[]) {
 
 function getDifficulty(season: number): 'easy' | 'medium' | 'hard' {
   if (season >= 2018) return 'easy';
-  if (season >= 2010) return 'medium';
+  if (season >= 2016) return 'medium';
   return 'hard';
 }
 
@@ -461,16 +462,17 @@ function inferPosition(index: number) {
   return 'ST';
 }
 
-function spreadTeamsBySeason(teams: SeedTeam[], limit: number) {
+function spreadTeamsBySeasonAndLeague(teams: SeedTeam[], limit: number) {
   const bySeason = new Map<string, SeedTeam[]>();
 
   for (const team of teams) {
-    const seasonTeams = bySeason.get(team.season) ?? [];
+    const key = `${team.season}:${team.league}`;
+    const seasonTeams = bySeason.get(key) ?? [];
     seasonTeams.push(team);
-    bySeason.set(team.season, seasonTeams);
+    bySeason.set(key, seasonTeams);
   }
 
-  const seasons = [...bySeason.keys()].sort((a, b) => Number(b) - Number(a));
+  const seasons = [...bySeason.keys()].sort((a, b) => parseInt(b, 10) - parseInt(a, 10) || a.localeCompare(b));
   const selected: SeedTeam[] = [];
   let offset = 0;
 

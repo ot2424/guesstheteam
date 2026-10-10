@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { query } from '../db/pool';
 import { env } from '../config/env';
 import type { Difficulty, GameSession, MatchType, PlayMode, PublicPlayer, Rank, TeamData } from '../types';
-import { MIN_SOLVED_TO_COMPLETE, ProgressionService } from './ProgressionService';
+import { ProgressionService } from './ProgressionService';
+import { getMinimumSolved, getTimeXpMultiplier } from '../../../shared/gameRules';
 
 export type FinishReason = 'complete' | 'surrender';
 
@@ -141,8 +142,8 @@ export class GameSessionService {
     const total = Object.keys(session.players).length;
     const durationSec = Math.floor((Date.now() - session.startedAt) / 1000);
     const completionRatio = total > 0 ? solved / total : 0;
-    const minimumSolved = Math.min(MIN_SOLVED_TO_COMPLETE, total);
-    const isWin = reason !== 'surrender' && solved >= minimumSolved;
+    const minimumSolved = getMinimumSolved(session.difficulty, total);
+    const isWin = reason !== 'surrender' && total > 0 && solved >= minimumSolved;
     const series = session.series
       ? getNextSeriesState(session.series, isWin)
       : undefined;
@@ -178,6 +179,7 @@ export class GameSessionService {
         series,
       },
       progression: {
+        xpTimeMultiplier: getTimeXpMultiplier(durationSec),
         xpGained,
         lpChange,
         newAchievements: durationSec < 60 && isWin ? ['speed_demon'] : [],

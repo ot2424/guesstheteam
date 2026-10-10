@@ -366,7 +366,7 @@ function Landing() {
 const DIFFICULTIES = [
   { id: 'easy', label: 'Leicht', dot: '#22c55e', desc: 'Feste Liga · moderne Top-Teams · 2018–2026', xp: 'Nur XP' },
   { id: 'medium', label: 'Mittel', dot: '#f59e0b', desc: 'Ligen-Mix · etablierte Euro-Clubs · 2010–2026', xp: 'Nur XP' },
-  { id: 'hard', label: 'Schwer', dot: '#ef4444', desc: 'Ligen-Mix · historische Nostalgie-Teams · 2000–2015', xp: 'Nur XP' },
+  { id: 'hard', label: 'Schwer', dot: '#ef4444', desc: 'Ligen-Mix · Nostalgie-Teams 2013–2015 · ab 3 Spielern', xp: 'Nur XP' },
 ] as const;
 
 const MATCH_TYPES = [

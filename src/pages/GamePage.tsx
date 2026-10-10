@@ -17,8 +17,8 @@ import { getPositionLabel } from '../utils/footballDisplay';
 import { ApiError } from '../lib/apiErrors';
 import { useAuth } from '../lib/useAuth';
 import { getCurrentClub } from '../utils/playerHints';
+import { getMinimumSolved } from '../../shared/gameRules';
 
-const MIN_SOLVED_TO_COMPLETE = 4;
 const RANKED_INACTIVITY_WARNING_MS = 75_000;
 const RANKED_ANTI_CHEAT_COUNTDOWN_SEC = 15;
 
@@ -63,6 +63,7 @@ export function GamePage() {
         teamName: currentTeam.name,
         teamLogo: currentTeam.logoUrl,
         season: currentTeam.season,
+        difficulty: finish.difficulty ?? 'easy',
         solved: finish.result.solved,
         total: finish.result.total,
         durationSec: finish.result.durationSec,
@@ -70,6 +71,7 @@ export function GamePage() {
         isPerfect: finish.result.isPerfect,
         completionRatio: finish.result.completionRatio,
         xpGained: finish.progression.xpGained,
+        xpTimeMultiplier: finish.progression.xpTimeMultiplier,
         lpChange: finish.progression.lpChange,
         profile: finish.profile,
       },
@@ -192,7 +194,7 @@ export function GamePage() {
     [guesses]
   );
   const total = team?.players.length ?? 0;
-  const minimumSolvedToComplete = Math.min(MIN_SOLVED_TO_COMPLETE, total);
+  const minimumSolvedToComplete = getMinimumSolved(effectiveDifficulty, total);
   const canCompleteLevel = solved >= minimumSolvedToComplete && solved < total && !finished;
   const rankedLossText = `${surrenderLpChange ?? getRankedSurrenderLpChange(effectiveDifficulty, matchType)} LP`;
   const inventory = profile?.inventory ?? { skipShields: 0, autoSolveJokers: 0 };
@@ -535,6 +537,9 @@ export function GamePage() {
               disabled={finished}
               lastResult={lastResult}
             />
+            <div className="mt-2 text-center text-xs text-gray-400">
+              Bestehen ab {minimumSolvedToComplete} Spielern · Schnellere Abschlüsse geben mehr XP.
+            </div>
             {playMode === 'ranked' && (
               <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
                 <button
@@ -592,7 +597,7 @@ export function GamePage() {
                   Level abschließen · {solved}/{total}
                 </button>
                 <div className="ml-3 self-center text-xs text-gray-500">
-                  Mehr Treffer geben mehr XP{playMode === 'ranked' ? ' & LP' : ''}.
+                  Mehr Treffer geben mehr XP{playMode === 'ranked' ? ' & LP' : ''}. Längere Spielzeit reduziert XP.
                 </div>
               </div>
             )}

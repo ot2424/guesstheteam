@@ -158,6 +158,8 @@ export interface PrestigeVisual {
 }
 
 export interface MatchResult {
+  xpTimeMultiplier?: number;
+  difficulty?: Difficulty;
   teamName: string;
   teamLogo: string;
   season: string;

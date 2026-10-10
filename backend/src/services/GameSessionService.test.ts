@@ -108,7 +108,7 @@ describe('GameSessionService', () => {
     const finished = await service.finish(session.sessionId, 'user-1');
 
     expect(finished?.result).toMatchObject({ solved: 4, total: 11, isWin: true, isPerfect: false });
-    expect(finished?.progression.xpGained).toBe(36);
+    expect(finished?.progression.xpGained).toBe(45);
     expect(finished?.progression.lpChange).toBe(5);
   });
 
@@ -131,6 +131,18 @@ describe('GameSessionService', () => {
     expect(finished?.result.isWin).toBe(false);
     expect(finished?.progression.xpGained).toBe(0);
     expect(finished?.progression.lpChange).toBe(-10);
+  });
+
+  it('allows hard completion from three players with reduced XP and preserves its clock on resume', async () => {
+    const service = new GameSessionService();
+    const session = await service.create('user-1', team(), { playMode: 'casual', matchType: 'single', difficulty: 'hard', rank: 'Gold 3', winStreak: 0 });
+    for (const id of Object.keys(session.players).slice(0, 3)) await service.markSolved(session.sessionId, 'user-1', id);
+    vi.advanceTimersByTime(300_000);
+    const restored = await service.get(session.sessionId, 'user-1');
+    expect(restored?.startedAt).toBe(session.startedAt);
+    const finished = await service.finish(session.sessionId, 'user-1');
+    expect(finished?.result).toMatchObject({ solved: 3, isWin: true, durationSec: 300 });
+    expect(finished?.progression.xpGained).toBe(61);
   });
 
   it('keeps 3er-series LP pending until the series is decided', async () => {

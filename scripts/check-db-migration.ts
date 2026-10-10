@@ -110,6 +110,17 @@ try {
   assert.equal(exhausted.casualSkipsRemaining, 0);
   assert.equal((await call('/game/skip', 'POST', { sessionId: exhausted.sessionId })).status, 400);
   assert.equal((await call(`/game/sessions/${exhausted.sessionId}`)).status, 200, 'Rejected skip preserves the game');
+  const hard = await call('/game/start', 'POST', { playMode: 'casual', difficulty: 'hard' }).then(response => response.json());
+  const [hardRow] = await query('SELECT session FROM active_game_sessions WHERE id=$1', [hard.sessionId]);
+  for (const player of Object.values(hardRow.session.players as Record<string, { name: string }>).slice(0, 3)) {
+    assert.equal((await call('/game/guess', 'POST', { sessionId: hard.sessionId, input: player.name })).status, 200);
+  }
+  await query("UPDATE active_game_sessions SET session=jsonb_set(session, '{startedAt}', to_jsonb($2::bigint)) WHERE id=$1", [hard.sessionId, Date.now() - 300_000]);
+  const hardFinish = await call('/game/finish', 'POST', { sessionId: hard.sessionId, reason: 'complete' }).then(response => response.json());
+  assert.equal(hardFinish.result.isWin, true);
+  assert.equal(hardFinish.result.solved, 3);
+  assert.equal(hardFinish.progression.xpGained, 61);
+  assert.deepEqual(await call('/game/finish', 'POST', { sessionId: hard.sessionId, reason: 'complete' }).then(response => response.json()), hardFinish);
   await query('UPDATE profiles SET skip_shields=1 WHERE id=$1', [user.id]);
   const consumed = await Promise.all([service.consumeSkipShield(user.id), service.consumeSkipShield(user.id)]);
   assert.equal(consumed.filter(Boolean).length, 1);

@@ -1,8 +1,8 @@
 import type { Difficulty, MatchType, PlayMode, Rank } from '../types';
+import { getMinimumSolved, getTimeXpMultiplier } from '../../../shared/gameRules';
 
 const BRONZE_RANKS: Rank[] = ['Bronze 3', 'Bronze 2', 'Bronze 1'];
 const SILVER_RANKS: Rank[] = ['Silver 3', 'Silver 2', 'Silver 1'];
-export const MIN_SOLVED_TO_COMPLETE = 4;
 const BONUS_THRESHOLD = 0.8;
 export const RANKED_UNLOCK_LEVEL = 5;
 export const WORLD_CUP_UNLOCK_LEVEL = 10;
@@ -18,7 +18,7 @@ export class ProgressionService {
   calcXP(opts: { difficulty: Difficulty; solved: number; total: number; durationSec: number; isWin: boolean }): number {
     const solvedRatio = opts.total > 0 ? opts.solved / opts.total : 0;
 
-    if (!opts.isWin) {
+    if (!opts.isWin || opts.total <= 0 || opts.solved < getMinimumSolved(opts.difficulty, opts.total)) {
       return 0;
     }
 
@@ -26,9 +26,9 @@ export class ProgressionService {
     const scaledBase = Math.round(base * solvedRatio);
     const solvedBonus = Math.round(Math.max(0, solvedRatio - BONUS_THRESHOLD) * 250);
     const perfectBonus = opts.solved === opts.total ? 75 : 0;
-    const speedBonus = opts.durationSec < 120 ? Math.round(30 * solvedRatio) : 0;
+    const solvedPlayerBonus = Math.round(30 * solvedRatio);
 
-    return scaledBase + solvedBonus + perfectBonus + speedBonus;
+    return Math.round((scaledBase + solvedBonus + perfectBonus + solvedPlayerBonus) * getTimeXpMultiplier(opts.durationSec));
   }
 
   calcLP(opts: { playMode: PlayMode; difficulty: Difficulty; matchType: MatchType; isWin: boolean; winStreak?: number; isSeriesComplete?: boolean; solved?: number; total?: number }): number {

@@ -60,6 +60,8 @@ try {
     await page.evaluate(game => localStorage.setItem('footyguesser.activeGame.v1', JSON.stringify(game)), saved);
     await page.unroute('**/api/v1/**');
     let skipRequests = 0;
+    let fixtureDifficulty = 'easy';
+    let fixtureSolved = 1;
     await page.route('**/api/v1/**', async route => {
       const path = new URL(route.request().url()).pathname;
       if (path === '/api/v1/game/guess') return route.abort('failed');
@@ -67,7 +69,7 @@ try {
       const body = path === '/api/v1/auth/me' ? { user: { id: 'fixture-user', email: 'test@example.com' } }
         : path === '/api/v1/game/skip' ? { skipped: true, profile: null, casualSkipsRemaining: 2 }
           : path === '/api/v1/game/start' ? { ...saved, sessionId: '22222222-2222-4222-8222-222222222222', team: { ...team, id: 'next-team', name: 'Next FC' }, casualSkipsRemaining: 2 }
-        : path.startsWith('/api/v1/game/sessions/') ? { ...saved, status: 'active', guesses: { ...initialGuesses, p0: { ...initialGuesses.p0, solved: true, guessedName: 'Solved Player' } } }
+        : path.startsWith('/api/v1/game/sessions/') ? { ...saved, difficulty: fixtureDifficulty, status: 'active', guesses: Object.fromEntries(team.players.map((player, index) => [player.id, { ...initialGuesses[player.id], solved: index < fixtureSolved, ...(index < fixtureSolved ? { guessedName: `Solved Player ${index}` } : {}) }])) }
           : path === '/api/v1/profile/me' ? { profile: null } : path === '/api/v1/players/search' ? { results: [] } : { notificationCount: 0 };
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
@@ -90,6 +92,17 @@ try {
     await page.getByRole('button', { name: /Free Skip 2\/3/ }).waitFor();
     await page.waitForFunction(() => JSON.parse(localStorage.getItem('footyguesser.activeGame.v1'))?.team.id === 'next-team');
     assert.equal(skipRequests, 1, 'Free skip must be persisted on the server before starting the next game');
+    fixtureDifficulty = 'hard';
+    fixtureSolved = 3;
+    await page.evaluate(game => localStorage.setItem('footyguesser.activeGame.v1', JSON.stringify({ ...game, difficulty: 'hard' })), saved);
+    await page.goto(`${base}/play?difficulty=hard`);
+    await page.getByRole('button', { name: 'Level abschließen · 3/11' }).waitFor();
+    await page.getByText('Bestehen ab 3 Spielern', { exact: false }).waitFor();
+    fixtureSolved = 2;
+    await page.reload();
+    await page.getByLabel('Spielername').waitFor();
+    await page.getByText('2/11', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: /Level abschließen/ }).count(), 0);
     await context.close();
     console.log(`${device}: responsive layout, bottom navigation, reset form, connection banner and offline recovery, server resume, club logo and input retention passed.`);
   }

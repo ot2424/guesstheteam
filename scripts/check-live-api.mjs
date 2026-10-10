@@ -73,6 +73,24 @@ try {
   assert.equal(noSkips.casualSkipsRemaining, 0);
   assert.equal((await call('/api/v1/game/skip', 'POST', { sessionId: noSkips.sessionId })).status, 400);
   assert.equal((await call(`/api/v1/game/sessions/${noSkips.sessionId}`)).status, 200);
+  const hardStart = await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'hard' });
+  assert.equal(hardStart.status, 201);
+  const hard = await hardStart.json();
+  assert.equal(hard.difficulty, 'hard');
+  const { rows: [hardStored] } = await database.query('SELECT session FROM active_game_sessions WHERE id=$1 AND user_id=$2', [hard.sessionId, userId]);
+  for (const player of Object.values(hardStored.session.players).slice(0, 3)) {
+    assert.equal((await call('/api/v1/game/guess', 'POST', { sessionId: hard.sessionId, input: player.name })).status, 200);
+  }
+  // Only the disposable account's game clock is moved to exercise the five-minute rule.
+  await database.query("UPDATE active_game_sessions SET session=jsonb_set(session, '{startedAt}', to_jsonb($3::bigint)) WHERE id=$1 AND user_id=$2", [hard.sessionId, userId, Date.now() - 300_000]);
+  const hardFinish = await call('/api/v1/game/finish', 'POST', { sessionId: hard.sessionId, reason: 'complete' });
+  assert.equal(hardFinish.status, 200);
+  const hardResult = await hardFinish.json();
+  assert.equal(hardResult.result.isWin, true);
+  assert.equal(hardResult.result.solved, 3);
+  assert.equal(hardResult.progression.xpGained, 61);
+  assert.ok(hardResult.progression.xpTimeMultiplier <= 0.8 && hardResult.progression.xpTimeMultiplier > 0.79);
+  assert.deepEqual(await call('/api/v1/game/finish', 'POST', { sessionId: hard.sessionId, reason: 'complete' }).then(response => response.json()), hardResult);
   assert.equal((await call('/api/v1/auth/logout', 'POST')).status, 200);
   assert.equal((await call('/api/v1/auth/me')).status, 401);
   console.log('Public HTTPS checks passed: database readiness, temporary account login, CORS/CSRF, secure cookies, profile, PostgreSQL game persistence, server resume, guess and logout. No email sent; temporary account removed.');
