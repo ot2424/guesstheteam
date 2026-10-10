@@ -8,8 +8,23 @@
   },
   "rewrites": [
     {
-      "source": "/((?!assets/|favicon.ico|robots.txt).*)",
+      "source": "/((?!assets/|favicon.svg|favicon.ico|robots.txt|manifest.webmanifest|apple-touch-icon.png|app-icon-192.png|app-icon-512.png|sw.js|offline.html|offline.js).*)",
       "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
+      ]
     }
   ]
 }

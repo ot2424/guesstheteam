@@ -1,8 +1,9 @@
+import { TeamBadge } from '../ui/TeamBadge';
 import { motion } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getDetailedPositionLabel, getPositionGroup, getPositionLabel, type PositionGroup } from '../../utils/footballDisplay';
-import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
+import { getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   players: PlayerCardType[];
@@ -77,7 +78,7 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId, hi
                     }}
                   >
                     {showClubHint ? (
-                      <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} />
+                      <TeamBadge name={currentClub.clubName} logoUrl={currentClub.logoUrl} clubId={currentClub.clubId} size={28} className="flex-shrink-0" />
                     ) : (
                       <FlagIcon
                         nationality={player.nationality}
@@ -120,29 +121,5 @@ export function MobilePlayerList({ players, guesses, onTipClick, activeTipId, hi
         );
       })}
     </div>
-  );
-}
-
-function ClubHintLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
-  if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name}
-        className="h-7 w-7 object-contain flex-shrink-0"
-        onError={(event) => {
-          event.currentTarget.style.display = 'none';
-        }}
-      />
-    );
-  }
-
-  return (
-    <span
-      className="h-7 w-7 rounded-lg flex-shrink-0 flex items-center justify-center text-[10px] font-black"
-      style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}
-    >
-      {getClubInitials(name)}
-    </span>
   );
 }

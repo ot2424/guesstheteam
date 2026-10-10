@@ -54,7 +54,8 @@ export function Navbar() {
   };
 
   return (
-    <nav className={`${hideOnMobileDuringPlay ? 'hidden sm:block' : ''} sticky top-0 z-50 border-b backdrop-blur-md`}
+    <>
+    <nav className={`${hideOnMobileDuringPlay ? 'hidden sm:block' : ''} app-header sticky top-0 z-50 border-b backdrop-blur-md`}
          style={{ background: 'rgba(6,9,15,0.82)', borderColor: 'rgba(255,255,255,0.08)' }}>
       <div className="max-w-6xl mx-auto px-3 sm:px-4 min-h-14 sm:h-14 flex flex-wrap sm:flex-nowrap items-center gap-x-3 gap-y-2 py-2 sm:py-0">
         {/* Logo — Trikot-Icon */}
@@ -73,6 +74,7 @@ export function Navbar() {
               <Link
                 key={to}
                 to={to}
+                aria-current={active ? 'page' : undefined}
                 className={`relative px-3.5 py-1.5 text-sm rounded-lg transition-colors ${
                   active ? 'text-white' : 'text-gray-400 hover:text-gray-200'
                 }`}
@@ -84,24 +86,6 @@ export function Navbar() {
                     style={{ zIndex: -1, background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' }}
                   />
                 )}
-                {label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="order-3 grid w-full grid-cols-5 gap-1 sm:hidden">
-          {NAV_LINKS.map(({ to, label }) => {
-            const active = pathname === to || (to !== '/' && pathname.startsWith(to));
-            return (
-              <Link
-                key={to}
-                to={to}
-                className={`rounded-lg px-1 py-2 text-center text-[11px] font-semibold transition-colors ${
-                  active ? 'text-white' : 'text-gray-500'
-                }`}
-                style={active ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' } : { border: '1px solid transparent' }}
-              >
                 {label}
               </Link>
             );
@@ -187,5 +171,26 @@ export function Navbar() {
         )}
       </div>
     </nav>
+    {!hideOnMobileDuringPlay && (
+        <div role="navigation" aria-label="Hauptnavigation" className="app-tabbar fixed bottom-0 left-0 right-0 grid w-full grid-cols-5 gap-1 sm:hidden">
+          {NAV_LINKS.map(({ to, label }) => {
+            const active = pathname === to || (to !== '/' && pathname.startsWith(to));
+            return (
+              <Link
+                key={to}
+                to={to}
+                aria-current={active ? 'page' : undefined}
+                className={`flex min-h-12 items-center justify-center rounded-lg px-1 py-2 text-center text-[11px] font-semibold transition-colors ${
+                  active ? 'text-white' : 'text-gray-500'
+                }`}
+                style={active ? { background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.35)' } : { border: '1px solid transparent' }}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+    )}
+    </>
   );
 }

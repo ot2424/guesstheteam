@@ -1,8 +1,9 @@
+import { TeamBadge } from '../ui/TeamBadge';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard as PlayerCardType, GuessState } from '../../types';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getDetailedPositionLabel, getPositionGroup } from '../../utils/footballDisplay';
-import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
+import { getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   player: PlayerCardType;
@@ -86,7 +87,7 @@ export function PlayerCard({ player, displayPosition, guess, onTipClick, index, 
                 className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1 pt-5"
               >
                 {showClubHint ? (
-                  <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} size={24} />
+                  <TeamBadge name={currentClub.clubName} logoUrl={currentClub.logoUrl} clubId={currentClub.clubId} size={24} />
                 ) : (
                   <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={22} />
                 )}
@@ -102,7 +103,7 @@ export function PlayerCard({ player, displayPosition, guess, onTipClick, index, 
               >
                 {showClubHint ? (
                   <>
-                    <ClubHintLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} size={30} />
+                    <TeamBadge name={currentClub.clubName} logoUrl={currentClub.logoUrl} clubId={currentClub.clubId} size={30} />
                     <span className="max-w-[62px] truncate text-center text-[9px] font-semibold text-gray-300">
                       {currentClub.clubName}
                     </span>
@@ -121,30 +122,5 @@ export function PlayerCard({ player, displayPosition, guess, onTipClick, index, 
         </div>
       </button>
     </motion.div>
-  );
-}
-
-function ClubHintLogo({ name, logoUrl, size }: { name: string; logoUrl: string; size: number }) {
-  if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name}
-        className="object-contain"
-        style={{ width: size, height: size }}
-        onError={(event) => {
-          (event.currentTarget as HTMLImageElement).style.display = 'none';
-        }}
-      />
-    );
-  }
-
-  return (
-    <span
-      className="flex items-center justify-center rounded-lg text-[10px] font-black text-gray-300"
-      style={{ width: size, height: size, background: '#1f2937', border: '1px solid rgba(255,255,255,0.12)' }}
-    >
-      {getClubInitials(name)}
-    </span>
   );
 }

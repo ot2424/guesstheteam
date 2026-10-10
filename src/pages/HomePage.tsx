@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AmbientPreview } from '../components/GameplayPreview';
 import { useAuth } from '../lib/useAuth';
 import { RankBadge } from '../components/ui/RankBadge';
@@ -354,8 +354,8 @@ function Landing() {
           <Jersey size={26} />
           <span style={{ fontWeight: 800, fontSize: 15, letterSpacing: '0.12em', color: '#cfd6e0' }}>GUESSTHETEAM</span>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 24, fontSize: 14, color: '#7b8595' }}>
-          <span>Freizeit</span><span>Ranked</span><span>Rangliste</span><span>Impressum</span>
+        <div style={{ marginLeft: 'auto', display: 'flex', flexWrap: 'wrap', gap: 24, fontSize: 14, color: '#7b8595' }}>
+          <Link to="/play">Freizeit</Link><Link to="/leaderboard">Rangliste</Link><Link to="/impressum">Impressum</Link><Link to="/datenschutz">Datenschutz</Link>
         </div>
       </footer>
     </div>
@@ -439,7 +439,7 @@ function Dashboard() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#06090f', color: '#f3f6fa', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100dvh', background: '#06090f', color: '#f3f6fa', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <style>{`
         @keyframes gttHeroIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
         .gtt-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }

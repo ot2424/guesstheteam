@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { hashPassword } from '../backend/src/services/AuthService.ts';
+import { pool } from '../backend/src/db/pool.ts';
 import 'dotenv/config';
 import pg from 'pg';
-const credentials = JSON.parse(readFileSync(new URL('../.admin-test-account.json', import.meta.url)));
+const suffix = randomBytes(8).toString('hex');
+const credentials = { email: `live-check-${suffix}@example.com`, password: randomBytes(32).toString('hex') };
+let testUserId;
 const base = 'https://api.guesstheteam.de';
 const origin = 'https://guesstheteam.de';
 const database = new pg.Client({ connectionString: process.env.DATABASE_URL });
@@ -14,6 +18,13 @@ async function call(path, method = 'GET', body, requestOrigin = origin) {
 }
 try {
   await database.connect();
+  await database.query('BEGIN');
+  try {
+    const { rows: [user] } = await database.query('INSERT INTO users(email,password_hash,email_verified) VALUES ($1,$2,true) RETURNING id', [credentials.email, await hashPassword(credentials.password)]);
+    testUserId = user.id;
+    await database.query("INSERT INTO profiles(id,email,username,first_name,last_name) VALUES ($1,$2,$3,'Live','Check')", [testUserId, credentials.email, `live_${suffix}`]);
+    await database.query('COMMIT');
+  } catch (error) { await database.query('ROLLBACK'); throw error; }
   assert.equal((await call('/ready')).status, 200);
   assert.equal((await call('/api/v1/auth/me')).status, 401);
   assert.equal((await call('/api/v1/auth/login', 'POST', { email: credentials.email, password: credentials.password }, 'https://untrusted.example')).status, 403);
@@ -26,7 +37,7 @@ try {
   cookie = setCookie.split(';')[0];
   const { user } = await login.json();
   userId = user.id;
-  assert.equal(user.role, 'admin');
+  assert.equal(user.role, 'user');
   assert.equal((await call('/api/v1/profile/me')).status, 200);
   const start = await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'easy' });
   assert.equal(start.status, 201);
@@ -39,11 +50,16 @@ try {
   const guess = await call('/api/v1/game/guess', 'POST', { sessionId, input: player.name });
   assert.equal(guess.status, 200);
   assert.equal((await guess.json()).correct, true);
+  const restored = await call(`/api/v1/game/sessions/${sessionId}`).then(response => response.json());
+  assert.equal(restored.status, 'active');
+  assert.equal(Object.values(restored.guesses).filter(guess => guess.solved).length, 1);
   assert.equal((await call('/api/v1/auth/logout', 'POST')).status, 200);
   assert.equal((await call('/api/v1/auth/me')).status, 401);
-  console.log('Public HTTPS checks passed: database readiness, admin login, CORS/CSRF, secure cookies, profile, PostgreSQL game persistence, guess and logout.');
+  console.log('Public HTTPS checks passed: database readiness, temporary account login, CORS/CSRF, secure cookies, profile, PostgreSQL game persistence, server resume, guess and logout. No email sent; temporary account removed.');
 } finally {
   if (cookie) await call('/api/v1/auth/logout', 'POST').catch(() => {});
   if (sessionId && userId) await database.query('DELETE FROM active_game_sessions WHERE id=$1 AND user_id=$2', [sessionId, userId]);
+  if (testUserId) await database.query('DELETE FROM users WHERE id=$1', [testUserId]);
   await database.end();
+  await pool.end();
 }

@@ -1,5 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ApiError } from './apiErrors';
+import { clearSavedGame } from './savedGame';
 import { request } from './api';
 
 interface AuthUser {
@@ -28,6 +30,7 @@ interface AuthContextValue {
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (payload: SignUpPayload) => Promise<{ error: string | null; needsEmailConfirmation?: boolean }>;
   signOut: () => Promise<void>;
+  clearSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -35,16 +38,24 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(true);
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  useEffect(() => {
+    const retry = () => setRetryNonce(value => value + 1);
+    window.addEventListener('gtt:retry', retry);
+    return () => { window.removeEventListener('gtt:retry', retry); };
+  }, []);
 
   useEffect(() => {
     let active = true;
 
     request<{ user: AuthUser }>('/auth/me')
-      .then(({ user }) => { if (active) setUser(user); })
-      .catch(() => { if (active) setUser(null); })
+      .then(({ user }) => { if (active) { setUser(user); setAuthReady(true); } })
+      .catch(error => { if (active) { if (error instanceof ApiError && error.status === 401) { setUser(null); setAuthReady(true); } else setAuthReady(false); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, []);
+  }, [retryNonce]);
 
   const signIn: AuthContextValue['signIn'] = async (email, password) => {
     try {
@@ -61,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const signOut = async () => {
     await request('/auth/logout', { method: 'POST' });
+    clearSavedGame();
     setUser(null);
   };
 
@@ -71,12 +83,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       isAuthenticated: Boolean(user),
       displayName,
-      authReady: true,
+      authReady,
       signIn,
       signUp,
       signOut,
+      clearSession: () => { clearSavedGame(); setUser(null); },
     };
-  }, [loading, user]);
+  }, [authReady, loading, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

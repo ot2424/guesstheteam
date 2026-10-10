@@ -8,6 +8,7 @@ install -d -o guesstheteam -g guesstheteam -m 0750 /opt/guesstheteam
 # Keep the one central .env and the admin password outside the service checkout.
 rsync -a --chown=guesstheteam:guesstheteam \
   --exclude='/.git/' --exclude='/.env*' --exclude='/.admin*.json' \
+  --exclude='/problems/' --exclude='/docs/previews/' --exclude='/.agents/' --exclude='/.aws/' --exclude='/.codex/' \
   --exclude='/backup/' --exclude='/dist/' --exclude='/coverage/' \
   --exclude='/data/transfermarkt/' --exclude='/data/cache/' \
   /root/guesstheteam/ /opt/guesstheteam/

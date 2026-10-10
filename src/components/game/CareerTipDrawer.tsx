@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PlayerCard } from '../../types';
+import { TeamBadge } from '../ui/TeamBadge';
 import { FlagIcon } from '../ui/FlagIcon';
 import { getPositionLabel } from '../../utils/footballDisplay';
-import { getClubInitials, getCurrentClub } from '../../utils/playerHints';
+import { getCurrentClub } from '../../utils/playerHints';
 
 interface Props {
   player: PlayerCard | null;
@@ -36,13 +37,13 @@ export function CareerTipDrawer({ player, onClose, hintMode = 'nationality' }: P
             exit={{ opacity: 0, y: 12, scale: 0.97 }}
             transition={{ type: 'spring', stiffness: 320, damping: 26 }}
             className="
-              fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t
+              app-drawer fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl border-t
               sm:static sm:rounded-2xl sm:border sm:mt-3
             "
             style={{
               background: 'linear-gradient(180deg,#0e141d,#0a0e16)',
               borderColor: 'rgba(255,255,255,0.13)',
-              maxHeight: '60vh',
+              maxHeight: '60dvh',
               overflowY: 'auto',
               boxShadow: '0 28px 70px rgba(0,0,0,0.55)',
             }}
@@ -57,14 +58,7 @@ export function CareerTipDrawer({ player, onClose, hintMode = 'nationality' }: P
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2.5">
                   {hintMode === 'club' && currentClub ? (
-                    currentClub.logoUrl ? (
-                      <img src={currentClub.logoUrl} alt={currentClub.clubName} className="h-7 w-7 object-contain" />
-                    ) : (
-                      <div className="h-7 w-7 rounded flex items-center justify-center text-[10px] font-bold"
-                           style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}>
-                        {getClubInitials(currentClub.clubName)}
-                      </div>
-                    )
+                    <TeamBadge name={currentClub.clubName} logoUrl={currentClub.logoUrl} clubId={currentClub.clubId} size={28} className="flex-shrink-0" />
                   ) : (
                     <FlagIcon nationality={player.nationality} nationality2={player.nationality2} size={26} />
                   )}
@@ -79,6 +73,7 @@ export function CareerTipDrawer({ player, onClose, hintMode = 'nationality' }: P
                 </div>
                 <button
                   onClick={onClose}
+                  aria-label="Karriere-Tipp schließen"
                   className="text-gray-500 hover:text-gray-300 transition-colors w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5 text-base"
                 >
                   ✕
@@ -113,22 +108,7 @@ export function CareerTipDrawer({ player, onClose, hintMode = 'nationality' }: P
                       </div>
 
                       {/* Club logo */}
-                      {club.logoUrl ? (
-                        <img
-                          src={club.logoUrl}
-                          alt={club.clubName}
-                          className="w-7 h-7 object-contain flex-shrink-0 rounded"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%234B5563'/%3E%3C/svg%3E";
-                          }}
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center text-[10px] font-bold"
-                             style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}>
-                          {getClubInitials(club.clubName)}
-                        </div>
-                      )}
+                      <TeamBadge name={club.clubName} logoUrl={club.logoUrl} clubId={club.clubId} size={28} className="flex-shrink-0" />
 
                       {/* Name + years */}
                       <div className="flex-1 min-w-0">

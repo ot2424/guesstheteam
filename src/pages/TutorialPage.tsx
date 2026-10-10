@@ -110,7 +110,7 @@ export function TutorialPage() {
         </AnimatePresence>
 
         {/* Search field */}
-        <div className="sticky top-14 z-30 py-2 -mx-4 px-4 sm:static sm:p-0 sm:mx-0"
+        <div className="app-tutorial-search sticky top-14 z-30 py-2 -mx-4 px-4 sm:static sm:p-0 sm:mx-0"
              style={{ background: 'rgba(6,9,15,0.95)', backdropFilter: 'blur(8px)' }}>
           <CentralSearchField
             onGuess={handleGuess}

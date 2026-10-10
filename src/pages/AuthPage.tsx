@@ -13,7 +13,7 @@ const inputStyle = { background: '#0f1722', borderColor: 'rgba(255,255,255,0.1)'
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { authReady, signIn, signUp, signOut } = useAuth();
+  const { authReady, signIn, signUp, clearSession } = useAuth();
   const [link, setLink] = useState(() => parseAuthLink(window.location.hash));
   const [mode, setMode] = useState<Mode>(() => parseAuthLink(window.location.hash)?.action ?? 'login');
   const [confirmation, setConfirmation] = useState('');
@@ -66,7 +66,7 @@ export function AuthPage() {
       } else {
         if (password !== confirmation) { setError('Die Passwörter stimmen nicht überein.'); return; }
         await request('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token: link?.token, password }) });
-        await signOut();
+        clearSession();
         setPassword('');
         setConfirmation('');
         setLink(null);
@@ -80,6 +80,8 @@ export function AuthPage() {
     }
   };
 
+  const accountAction = ['forgot-password', 'reset-password', 'verify-email'].includes(mode);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10 relative overflow-hidden" style={{ background: '#06090f' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(50% 50% at 50% 28%, rgba(34,197,94,0.1), transparent 70%)' }} />
@@ -92,7 +94,7 @@ export function AuthPage() {
         style={{ ...cardStyle, boxShadow: '0 30px 80px rgba(0,0,0,0.55)' }}
       >
         {/* ── Marken-Panel ── */}
-        <div className="relative md:w-[44%] p-8 sm:p-10 overflow-hidden flex flex-col" style={{ background: 'linear-gradient(160deg,#0c1a12,#0a0e16)' }}>
+        <div className={`relative md:w-[44%] p-8 sm:p-10 overflow-hidden flex-col ${accountAction ? 'hidden md:flex' : 'flex'}`} style={{ background: 'linear-gradient(160deg,#0c1a12,#0a0e16)' }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(60% 50% at 30% 18%, rgba(34,197,94,0.16), transparent 70%)' }} />
           <div className="absolute -left-16 -bottom-16 w-80 h-80 rounded-full pointer-events-none" style={{ border: '2px solid rgba(255,255,255,0.05)' }} />
           <div className="absolute left-5 bottom-10 w-60 h-60 rounded-full pointer-events-none" style={{ border: '2px solid rgba(255,255,255,0.05)' }} />
@@ -104,15 +106,15 @@ export function AuthPage() {
 
           <div className="relative mt-auto pt-12">
             <h2 className="bebas text-white leading-[0.94] tracking-wide mb-4" style={{ fontSize: 'clamp(40px, 5vw, 54px)' }}>
-              {mode === 'register' ? <>Werde<br />zur Legende</> : <>Willkommen<br />zurück</>}
+              {mode === 'register' ? <>Werde<br />zur Legende</> : accountAction ? <>Zurück<br />ins Spiel.</> : <>Willkommen<br />zurück</>}
             </h2>
             <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: '#9aa4b2' }}>
-              {mode === 'login'
+              {accountAction ? 'Dein Account. Dein Fortschritt. Dein Fußballwissen. In wenigen Schritten bist du wieder dabei.' : mode === 'login'
                 ? 'Melde dich an, damit Level, Rang und Fortschritt gespeichert werden.'
                 : 'Erstelle deinen Account und sichere dir XP, Rang und Abzeichen.'}
             </p>
             <div className="flex flex-col gap-2.5">
-              {['Dein Level & XP gespeichert', 'Ranglisten-Platzierung', 'Abzeichen & Match-Verlauf'].map((t) => (
+              {(accountAction ? ['Dein Fortschritt bleibt gespeichert', 'Sicherer Zugang zu deinem Account', 'Bereit für das nächste Match'] : ['Dein Level & XP gespeichert', 'Ranglisten-Platzierung', 'Abzeichen & Match-Verlauf']).map((t) => (
                 <div key={t} className="flex items-center gap-2.5 text-sm" style={{ color: '#cfd6e0' }}>
                   <span style={{ color: '#22c55e' }}>✓</span> {t}
                 </div>
@@ -124,7 +126,7 @@ export function AuthPage() {
         {/* ── Formular-Panel ── */}
         <div className="flex-1 p-8 sm:p-12 flex flex-col justify-center">
           {/* Tabs */}
-          <div className="flex gap-1.5 p-1.5 rounded-xl mb-7" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.08)' }}>
+          {!accountAction && <div className="flex gap-1.5 p-1.5 rounded-xl mb-7" style={{ background: '#111827', border: '1px solid rgba(255,255,255,0.08)' }}>
             {(['login', 'register'] as Mode[]).map((m) => (
               <button
                 key={m}
@@ -137,7 +139,9 @@ export function AuthPage() {
                 {m === 'login' ? 'Einloggen' : 'Registrieren'}
               </button>
             ))}
-          </div>
+          </div>}
+
+          {accountAction && <div className="mb-7"><p className="text-xs font-bold tracking-[0.18em] text-green-400 mb-3">DEIN ACCOUNT</p><h1 className="bebas text-4xl text-white">{mode === 'reset-password' ? 'Neues Passwort setzen' : mode === 'forgot-password' ? 'Passwort vergessen?' : 'E-Mail bestätigen'}</h1><p className="text-sm text-gray-400 mt-3 leading-relaxed">{mode === 'reset-password' ? 'Wähle ein neues Passwort mit mindestens 12 Zeichen. Danach kannst du dich wieder anmelden.' : 'Nur noch ein Schritt bis zum nächsten Match.'}</p></div>}
 
           <form onSubmit={handleSubmit} className="flex flex-col">
             {mode === 'register' && (
@@ -224,9 +228,9 @@ export function AuthPage() {
               <label className="text-xs font-semibold mb-1.5 text-gray-400">Neues Passwort wiederholen</label>
               <input type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)}
                 minLength={12} maxLength={256} autoComplete="new-password" required
-                className="h-12 rounded-xl border px-3.5 mb-6 text-white" style={inputStyle} />
+                className="h-12 rounded-xl border px-3.5 mb-6 text-white focus:outline-none focus:border-green-500/50 transition-colors" style={inputStyle} />
             </>}
-            {error && <div className="text-sm text-red-400 mb-4">{error}</div>}
+            {error && <div role="alert" className="text-sm text-red-400 mb-4">{error}</div>}
             {info && <div className="text-sm mb-4" style={{ color: '#2bd46a' }}>{info}</div>}
             {!authReady && (
               <div className="text-sm text-yellow-300 mb-4">

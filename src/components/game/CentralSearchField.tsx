@@ -4,7 +4,7 @@ import { searchPlayers } from '../../lib/api';
 
 // ─── Component ───────────────────────────────────────────────────────────────
 interface Props {
-  onGuess: (name: string) => void;
+  onGuess: (name: string) => void | boolean | Promise<void | boolean>;
   solvedCount: number;
   totalCount: number;
   disabled?: boolean;
@@ -13,6 +13,8 @@ interface Props {
 
 export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled, lastResult }: Props) {
   const [input, setInput] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const pendingRef = useRef(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [focused, setFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,11 +50,15 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
     }, 120);
   }, []);
 
-  const submit = useCallback((name: string) => {
-    if (!name.trim() || disabled) return;
+  const submit = useCallback(async (name: string) => {
+    if (!name.trim() || disabled || pendingRef.current) return;
+    pendingRef.current = true;
+    setSubmitting(true);
     setSuggestions([]);
-    onGuess(name.trim());
-    setInput('');
+    try {
+      const success = await onGuess(name.trim());
+      if (success !== false) setInput('');
+    } finally { pendingRef.current = false; setSubmitting(false); }
   }, [onGuess, disabled]);
 
   const progress = Math.round((solvedCount / totalCount) * 100);
@@ -94,11 +100,11 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
             name="gtt-player-guess"
             value={input}
             onChange={(e) => handleInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submit(input)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void submit(input); } }}
             onFocus={() => setFocused(true)}
             onBlur={() => setTimeout(() => { setFocused(false); setSuggestions([]); }, 150)}
             placeholder="Spieler erraten – Nachname oder vollständiger Name…"
-            disabled={disabled}
+            disabled={disabled || submitting}
             className="min-w-0 flex-1 bg-transparent py-3.5 text-sm text-white placeholder-gray-600 focus:outline-none"
             autoComplete="new-password"
             autoCorrect="off"
@@ -106,18 +112,19 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
             inputMode="search"
             enterKeyHint="search"
             data-form-type="other"
+            aria-label="Spielername"
             aria-autocomplete="list"
             spellCheck={false}
           />
 
           {/* Submit button */}
           <button
-            onClick={() => submit(input)}
-            disabled={!input.trim() || disabled}
+            onClick={() => void submit(input)}
+            disabled={!input.trim() || disabled || submitting}
             className="flex-shrink-0 rounded-xl px-3 py-1.5 text-sm font-extrabold transition-all active:scale-95 disabled:opacity-30 sm:px-4"
             style={{ background: '#22C55E', color: '#04130a' }}
           >
-            Raten
+            {submitting ? '…' : 'Raten'}
           </button>
         </div>
 
@@ -135,7 +142,8 @@ export function CentralSearchField({ onGuess, solvedCount, totalCount, disabled,
                 <li key={s}>
                   <button
                     className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-gray-200 hover:bg-white/5 transition-colors flex items-center gap-2.5"
-                    onMouseDown={() => submit(s)}
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => void submit(s)}
                   >
                     {/* Anti-spoiler: name only */}
                     <span className="text-gray-500 text-xs">👤</span>

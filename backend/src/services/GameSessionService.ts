@@ -82,6 +82,10 @@ export class GameSessionService {
   }
 
   async markSolved(sessionId: string, userId: string | undefined, playerId: string): Promise<void> {
+    if (env.NODE_ENV !== 'test') {
+      await query("UPDATE active_game_sessions SET session=jsonb_set(session, ARRAY['players',$3,'solved'], 'true'::jsonb) WHERE id=$1 AND user_id=$2 AND session->'players'->$3 IS NOT NULL", [sessionId, userId, playerId]);
+      return;
+    }
     const session = await this.get(sessionId, userId);
     const player = session?.players[playerId];
     if (!player) return;
@@ -94,8 +98,7 @@ export class GameSessionService {
     const player = session?.players[playerId];
     if (!player || player.solved) return null;
 
-    player.solved = true;
-    await this.persist(session);
+    await this.markSolved(sessionId, userId, playerId);
     return { playerId, name: player.name };
   }
 
@@ -109,6 +112,13 @@ export class GameSessionService {
   }
 
   async incrementWrong(sessionId: string, userId?: string): Promise<void> {
+    if (env.NODE_ENV !== 'test') {
+      await query(`UPDATE active_game_sessions SET session=jsonb_set(session, '{players}',
+        (SELECT jsonb_object_agg(key, CASE WHEN (value->>'solved')::boolean THEN value
+          ELSE jsonb_set(value, '{wrongAttempts}', to_jsonb((value->>'wrongAttempts')::int+1)) END)
+         FROM jsonb_each(session->'players'))) WHERE id=$1 AND user_id=$2`, [sessionId, userId]);
+      return;
+    }
     const session = await this.get(sessionId, userId);
     if (!session) return;
 

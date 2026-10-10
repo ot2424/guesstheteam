@@ -31,11 +31,11 @@ export function loadSavedGame(): SavedGame | null {
 }
 
 export function saveGame(game: SavedGame) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...game, savedAt: Date.now() }));
+  try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...game, savedAt: Date.now() })); } catch { /* Server remains the source of truth when device storage is unavailable. */ }
 }
 
 export function clearSavedGame() {
-  window.localStorage.removeItem(STORAGE_KEY);
+  try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* Device storage may be disabled. */ }
 }
 
 export function matchesSavedGame(

@@ -24,3 +24,6 @@ data/seeds/*.json
 
 # Locally generated admin credentials
 .admin-test-account.json
+
+# User screenshots can contain email addresses and recovery links.
+problems/

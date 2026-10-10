@@ -3,7 +3,7 @@ import type { PoolClient } from 'pg';
 import { env } from '../config/env';
 import { transaction } from '../db/pool';
 
-type MailPurpose = 'verify-email' | 'reset-password' | 'password-changed';
+import { renderAuthMail, type MailPurpose } from './AuthMailTemplate';
 export async function enqueueAuthMail(client: PoolClient, userId: string, email: string, purpose: MailPurpose, token?: string) {
   const url = new URL('/auth', env.AUTH_FRONTEND_URL);
   if (token) url.hash = new URLSearchParams({ action: purpose, token }).toString();
@@ -39,14 +39,14 @@ export function startMailWorker() {
   return async () => { clearInterval(timer); await running; transporter.close(); };
 }
 
-export async function deliverAuthMail(send: (mail: { to: string; subject: string; text: string }) => Promise<unknown>) {
+export async function deliverAuthMail(send: (mail: { to: string; subject: string; text: string; html: string }) => Promise<unknown>) {
   await transaction(async client => {
     await client.query('DELETE FROM auth_mail_outbox WHERE expires_at <= now()');
-    const { rows: [mail] } = await client.query<{ id: string; recipient: string; subject: string; body: string }>(
-      'SELECT id,recipient,subject,body FROM auth_mail_outbox WHERE next_attempt_at<=now() ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED');
+    const { rows: [mail] } = await client.query<{ id: string; recipient: string; subject: string; body: string; purpose: MailPurpose }>(
+      'SELECT id,recipient,subject,body,purpose FROM auth_mail_outbox WHERE next_attempt_at<=now() ORDER BY created_at LIMIT 1 FOR UPDATE SKIP LOCKED');
     if (!mail) return;
     try {
-      await send({ to: mail.recipient, subject: mail.subject, text: mail.body });
+      await send({ to: mail.recipient, subject: mail.subject, text: mail.body, html: renderAuthMail(mail.purpose, mail.body) });
       await client.query('DELETE FROM auth_mail_outbox WHERE id=$1', [mail.id]);
     } catch {
       // Do not log recipients, tokens or mail bodies.

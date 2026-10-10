@@ -12,6 +12,7 @@ import {
   joinOnlineMatchup,
   leaveOnlineMatchup,
 } from '../lib/api';
+import { TeamBadge } from '../components/ui/TeamBadge';
 import { ONLINE_UNLOCK_LEVEL } from '../lib/progression';
 import { useAuth } from '../lib/useAuth';
 import type { FriendRequestSummary, OnlineMatchup, UserProfile } from '../types';
@@ -324,9 +325,7 @@ export function OnlinePage() {
                       </div>
                       <div className="mt-3 flex gap-2">
                         {player.career.slice(-2).map((club) => (
-                          club.logoUrl
-                            ? <img key={`${player.id}-${club.clubId}`} src={club.logoUrl} alt={club.clubName} title={club.clubName} className="h-7 w-7 object-contain" />
-                            : <div key={`${player.id}-${club.clubId}`} className="h-7 w-7 rounded border" style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+                          <TeamBadge key={`${player.id}-${club.clubId}`} name={club.clubName} logoUrl={club.logoUrl} clubId={club.clubId} size={28} />
                         ))}
                       </div>
                     </div>

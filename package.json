@@ -28,7 +28,11 @@
     "db:import:supabase": "tsx scripts/import-supabase-db.ts",
     "db:check": "node --import tsx scripts/check-db-migration.ts",
     "db:delete:accounts": "node --import tsx scripts/delete-all-accounts.ts",
-    "db:reset:accounts": "node --import tsx scripts/reset-accounts.ts"
+    "db:reset:accounts": "node --import tsx scripts/reset-accounts.ts",
+    "check:operations": "node scripts/check-operations.mjs",
+    "db:backup": "node scripts/backup-database.mjs",
+    "check:live": "node --import tsx scripts/check-live-api.mjs",
+    "check:mobile": "node scripts/check-mobile.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

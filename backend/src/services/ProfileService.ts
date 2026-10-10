@@ -137,22 +137,30 @@ export class ProfileService {
       if (!row) return null;
       const current = mapProfile(row);
       const { session, result, progression } = payload;
+      const next = applyProgress(current, session.playMode, session.matchType, result, progression);
+      const completionResponse = { result, progression, profile: next, team: session.team, sessionId: session.sessionId, startedAt: session.startedAt, playMode: session.playMode, matchType: session.matchType, difficulty: session.difficulty, rank: session.rank };
       const inserted = await client.query(`INSERT INTO match_results
         (user_id, session_id, team_id, team_name, season, league, play_mode, match_type, difficulty, rank_at_start,
-         solved, total, duration_sec, completion_ratio, is_win, is_perfect, xp_gained, lp_change)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         solved, total, duration_sec, completion_ratio, is_win, is_perfect, xp_gained, lp_change, completion_response)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
         ON CONFLICT (user_id, session_id) DO NOTHING RETURNING id`,
         [userId, session.sessionId, session.team.id, session.team.name, session.team.season, session.team.league,
          session.playMode, session.matchType, session.difficulty, session.rank, result.solved, result.total,
-         result.durationSec, result.completionRatio, result.isWin, result.isPerfect, progression.xpGained, progression.lpChange]);
+         result.durationSec, result.completionRatio, result.isWin, result.isPerfect, progression.xpGained, progression.lpChange, JSON.stringify(completionResponse)]);
       if (!inserted.rowCount) return current;
-      const next = applyProgress(current, session.playMode, session.matchType, result, progression);
       await client.query(`UPDATE profiles SET xp=$2, level=$3, lp=$4, rank=$5, badges=$6,
         matches_played=$7, matches_won=$8, win_streak=$9, best_win_streak=$10, skip_shields=$11, auto_solve_jokers=$12 WHERE id=$1`,
         [userId, next.xp, next.level, next.lp, next.rank, next.badges, next.matchesPlayed, next.matchesWon,
          next.winStreak, next.bestWinStreak, next.inventory.skipShields, next.inventory.autoSolveJokers]);
       return next;
     });
+  }
+
+  async getCompletedMatch(userId: string | undefined, sessionId: string) {
+    if (!userId) return null;
+    const [row] = await query<{ completion_response: Record<string, unknown> | null }>(
+      'SELECT completion_response FROM match_results WHERE user_id=$1 AND session_id=$2', [userId, sessionId]);
+    return row?.completion_response ?? null;
   }
 
   async getMatchHistory(userId?: string, limit = 12): Promise<MatchHistoryItem[]> {

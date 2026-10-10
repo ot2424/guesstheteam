@@ -8,13 +8,15 @@ import { GameTimer } from '../components/game/GameTimer';
 import { MatchPrepAnimation } from '../components/game/MatchPrepAnimation';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
-import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess } from '../lib/api';
+import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess, resumeGame } from '../lib/api';
 import { DAILY_CASUAL_SKIP_LIMIT, consumeDailyCasualSkip, getDailyCasualSkipsRemaining } from '../lib/dailyCasualSkips';
 import { getRankedSurrenderLpChange } from '../lib/progression';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team, UserProfile } from '../types';
 import { getPositionLabel } from '../utils/footballDisplay';
-import { getClubInitials, getCurrentClub } from '../utils/playerHints';
+import { ApiError } from '../lib/apiErrors';
+import { useAuth } from '../lib/useAuth';
+import { getCurrentClub } from '../utils/playerHints';
 
 const MIN_SOLVED_TO_COMPLETE = 4;
 const RANKED_INACTIVITY_WARNING_MS = 75_000;
@@ -24,6 +26,7 @@ type AntiCheatReason = 'tab' | 'blur' | 'inactive';
 
 export function GamePage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [params] = useSearchParams();
   const legacyMode = params.get('mode');
   const playMode = (params.get('playMode') ?? 'casual') as PlayMode;
@@ -53,10 +56,32 @@ export function GamePage() {
   const [antiCheatWarning, setAntiCheatWarning] = useState<{ reason: AntiCheatReason; countdown: number } | null>(null);
   const antiCheatTriggeredRef = useRef(false);
 
+  const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
+    clearSavedGame();
+    navigate('/result', {
+      state: {
+        teamName: currentTeam.name,
+        teamLogo: currentTeam.logoUrl,
+        season: currentTeam.season,
+        solved: finish.result.solved,
+        total: finish.result.total,
+        durationSec: finish.result.durationSec,
+        isWin: finish.result.isWin,
+        isPerfect: finish.result.isPerfect,
+        completionRatio: finish.result.completionRatio,
+        xpGained: finish.progression.xpGained,
+        lpChange: finish.progression.lpChange,
+        profile: finish.profile,
+      },
+    });
+  }, [navigate]);
+
   useEffect(() => {
+    if (authLoading) return;
     const controller = new AbortController();
 
     async function createSession() {
+      if (!user) { setError('Bitte melde dich an, um zu spielen.'); setLoading(false); return; }
       try {
         setLoading(true);
         setError(null);
@@ -65,14 +90,23 @@ export function GamePage() {
         const saved = loadSavedGame();
 
         if (saved && matchesSavedGame(saved, { playMode, matchType, difficulty, rank, leagueId })) {
-          setSessionId(saved.sessionId);
-          setTeam(saved.team);
-          setGuesses(saved.guesses);
-          setStartedAt(saved.startedAt);
-          setEffectiveDifficulty(saved.difficulty);
-          setEffectiveRank(saved.rank);
-          setSurrenderLpChange(saved.surrenderLpChange ?? getRankedSurrenderLpChange(saved.difficulty, saved.matchType));
-          return;
+          try {
+            const restored = await resumeGame(saved.sessionId, controller.signal);
+            if (controller.signal.aborted) return;
+            if (restored.status === 'completed' && restored.finish) { goToResult(restored.finish, restored.team); return; }
+            setSessionId(restored.sessionId);
+            setTeam(restored.team);
+            setGuesses(restored.guesses);
+            setStartedAt(restored.startedAt);
+            setEffectiveDifficulty(restored.difficulty);
+            setEffectiveRank(restored.rank);
+            setSurrenderLpChange(saved.surrenderLpChange ?? getRankedSurrenderLpChange(restored.difficulty, restored.matchType));
+            setFinished(false);
+            return;
+          } catch (error) {
+            if (!(error instanceof ApiError && error.status === 404)) throw error;
+            clearSavedGame();
+          }
         }
 
         const response = await startGame({
@@ -111,7 +145,7 @@ export function GamePage() {
     void createSession();
 
     return () => controller.abort();
-  }, [difficulty, excludedTeamIds, leagueId, matchType, playMode, rank, restartNonce]);
+  }, [authLoading, user, goToResult, difficulty, excludedTeamIds, leagueId, matchType, playMode, rank, restartNonce]);
 
   useEffect(() => {
     let active = true;
@@ -149,7 +183,7 @@ export function GamePage() {
     window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
     });
-  }, [loading, team?.id]);
+  }, [loading, team]);
 
   const solved = useMemo(
     () => Object.values(guesses).filter((g: GuessState) => g.solved).length,
@@ -166,30 +200,11 @@ export function GamePage() {
     ? (team?.players.find(p => p.id === activeTipId) ?? null)
     : null;
 
-  const goToResult = useCallback((finish: Awaited<ReturnType<typeof finishGame>>, currentTeam: Team) => {
-    clearSavedGame();
-    navigate('/result', {
-      state: {
-        teamName: currentTeam.name,
-        teamLogo: currentTeam.logoUrl,
-        season: currentTeam.season,
-        solved: finish.result.solved,
-        total: finish.result.total,
-        durationSec: finish.result.durationSec,
-        isWin: finish.result.isWin,
-        isPerfect: finish.result.isPerfect,
-        completionRatio: finish.result.completionRatio,
-        xpGained: finish.progression.xpGained,
-        lpChange: finish.progression.lpChange,
-        profile: finish.profile,
-      },
-    });
-  }, [navigate]);
-
   // Central guess handler — checks all unsolved players
   const handleGuess = useCallback(async (name: string) => {
-    if (finished || !sessionId || !team) return;
+    if (finished || !sessionId || !team) return false;
 
+    setError(null);
     try {
       const result = await submitGuess({ sessionId, input: name });
 
@@ -208,13 +223,6 @@ export function GamePage() {
           },
         };
 
-        const allSolved = Object.values(next).every((g: GuessState) => g.solved);
-        if (allSolved) {
-          setFinished(true);
-          window.setTimeout(() => {
-            void finishGame({ sessionId, reason: 'complete' }).then((finish) => goToResult(finish, team));
-          }, 900);
-        }
         return next;
       });
     } else {
@@ -227,19 +235,22 @@ export function GamePage() {
       });
     }
     } catch (err) {
-      setLastResult('wrong');
+      setLastResult(null);
       if (err instanceof Error && err.message.includes('Session not found')) clearSavedGame();
       setError(err instanceof Error ? err.message : 'Antwort konnte nicht geprüft werden.');
+      return false;
     }
 
     // Reset lastResult after flash
     window.setTimeout(() => setLastResult(null), 700);
-  }, [activeTipId, finished, goToResult, sessionId, team]);
+    return true;
+  }, [activeTipId, finished, sessionId, team]);
 
   const handleCompleteLevel = useCallback(async () => {
-    if (!sessionId || !team || finished || !canCompleteLevel) return;
+    if (!sessionId || !team || finished || solved < minimumSolvedToComplete) return;
 
     setFinished(true);
+    setError(null);
 
     try {
       const finish = await finishGame({ sessionId, reason: 'complete' });
@@ -248,7 +259,19 @@ export function GamePage() {
       setFinished(false);
       setError(err instanceof Error ? err.message : 'Level konnte nicht abgeschlossen werden.');
     }
-  }, [canCompleteLevel, finished, goToResult, sessionId, team]);
+  }, [solved, minimumSolvedToComplete, finished, goToResult, sessionId, team]);
+
+  useEffect(() => {
+    if (loading || total === 0 || solved !== total || finished || error) return;
+    const timer = window.setTimeout(() => void handleCompleteLevel(), 400);
+    return () => window.clearTimeout(timer);
+  }, [loading, total, solved, finished, error, handleCompleteLevel]);
+
+  useEffect(() => {
+    const retry = () => setRestartNonce(value => value + 1);
+    window.addEventListener('gtt:retry', retry);
+    return () => window.removeEventListener('gtt:retry', retry);
+  }, []);
 
   const handleSurrender = useCallback(async () => {
     if (!sessionId || !team || finished) {
@@ -257,12 +280,14 @@ export function GamePage() {
     }
 
     setFinished(true);
+    setError(null);
 
     try {
       const finish = await finishGame({ sessionId, reason: 'surrender' });
       goToResult(finish, team);
-    } catch {
-      navigate('/');
+    } catch (error) {
+      setFinished(false);
+      setError(error instanceof Error ? error.message : 'Das Ergebnis konnte nicht gespeichert werden. Bitte versuche es erneut.');
     }
   }, [finished, goToResult, navigate, sessionId, team]);
 
@@ -410,13 +435,6 @@ export function GamePage() {
             guessedName: response.solved.name,
           },
         };
-        const allSolved = Object.values(next).every((g: GuessState) => g.solved);
-        if (allSolved && team) {
-          setFinished(true);
-          window.setTimeout(() => {
-            void finishGame({ sessionId, reason: 'complete' }).then((finish) => goToResult(finish, team));
-          }, 900);
-        }
         return next;
       });
       setActiveTipId(null);
@@ -424,7 +442,7 @@ export function GamePage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Joker konnte nicht eingesetzt werden.');
     }
-  }, [activeTipId, finished, goToResult, inventory.autoSolveJokers, playMode, sessionId, team]);
+  }, [activeTipId, finished, inventory.autoSolveJokers, playMode, sessionId]);
 
   const handleTipClick = useCallback((playerId: string) => {
     setActiveTipId(prev => prev === playerId ? null : playerId);
@@ -441,12 +459,13 @@ export function GamePage() {
     );
   }
 
-  if (error || !team) {
+  if (!team) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#06090f' }}>
         <div className="max-w-sm w-full rounded-2xl border border-red-900/60 p-5 text-center" style={{ background: '#111827' }}>
           <div className="bebas text-2xl tracking-wider text-red-400">Start fehlgeschlagen</div>
           <p className="text-sm text-gray-400 mt-2">{error ?? 'Keine Teamdaten erhalten.'}</p>
+          <button onClick={() => setRestartNonce(value => value + 1)} className="mt-4 mr-3 px-4 py-2 rounded-lg text-sm font-semibold bg-green-500 text-black">Erneut versuchen</button>
           <button
             onClick={() => navigate('/')}
             className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold"
@@ -461,6 +480,10 @@ export function GamePage() {
 
   return (
     <div className="min-h-screen w-full max-w-full overflow-x-hidden" style={{ background: '#06090f' }}>
+      {error && <div role="alert" className="mx-auto max-w-6xl m-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+        {error}
+        <button onClick={() => setRestartNonce(value => value + 1)} className="ml-3 font-bold text-green-300">Erneut versuchen</button>
+      </div>}
       <div className="mx-auto flex w-full max-w-6xl gap-6 px-3 py-3 sm:px-4 sm:py-4">
 
         {/* ─── Main column ─── */}
@@ -499,7 +522,7 @@ export function GamePage() {
           </div>
 
           {/* ─── Central search field — FIXED on mobile ─── */}
-          <div className="sticky top-0 z-30 -mx-3 px-3 py-2 sm:static sm:mx-0 sm:p-0"
+          <div className="app-game-search sticky top-0 z-30 -mx-3 px-3 py-2 sm:static sm:mx-0 sm:p-0"
                style={{ background: 'rgba(6,9,15,0.95)', backdropFilter: 'blur(8px)' }}>
             <CentralSearchField
               onGuess={handleGuess}
@@ -615,7 +638,7 @@ export function GamePage() {
                 return (
                   <div key={p.id} className="flex items-center gap-2">
                     {hintMode === 'club' && currentClub ? (
-                      <ClubProgressLogo name={currentClub.clubName} logoUrl={currentClub.logoUrl} />
+                      <TeamBadge name={currentClub.clubName} logoUrl={currentClub.logoUrl} clubId={currentClub.clubId} size={24} className="flex-shrink-0" />
                     ) : (
                       <FlagIcon
                         nationality={p.nationality}
@@ -707,28 +730,4 @@ function getAntiCheatWarningText(reason: AntiCheatReason) {
   if (reason === 'tab') return 'Du hast den Spiel-Tab verlassen. In Ranked muss das Match aktiv im Vordergrund bleiben.';
   if (reason === 'blur') return 'Das Browserfenster ist nicht mehr aktiv. Bitte bleib im Spiel, damit das Match gewertet werden kann.';
   return 'Du warst zu lange inaktiv. Bewege die Maus, tippe oder spiele weiter, um den Countdown zu stoppen.';
-}
-
-function ClubProgressLogo({ name, logoUrl }: { name: string; logoUrl: string }) {
-  if (logoUrl) {
-    return (
-      <img
-        src={logoUrl}
-        alt={name}
-        className="h-5 w-10 object-contain flex-shrink-0"
-        onError={(event) => {
-          event.currentTarget.style.display = 'none';
-        }}
-      />
-    );
-  }
-
-  return (
-    <span
-      className="h-5 w-10 rounded flex-shrink-0 flex items-center justify-center text-[9px] font-black"
-      style={{ background: '#161d29', border: '1px solid rgba(255,255,255,0.1)', color: '#d4dae3' }}
-    >
-      {getClubInitials(name)}
-    </span>
-  );
 }

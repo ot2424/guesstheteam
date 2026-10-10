@@ -52,6 +52,22 @@ export function createGameRouter(
 ) {
   const router = Router();
 
+  router.get('/sessions/:id', requireAuth, async (req, res) => {
+    const id = z.string().uuid().parse(req.params.id);
+    const completed = await profileService.getCompletedMatch(req.user?.id, id);
+    if (completed) return res.json({ ...completed, status: 'completed', finish: completed });
+    const session = await sessionService.get(id, req.user?.id);
+    if (!session) throw new HttpError(404, 'Dieses Spiel ist nicht mehr verfügbar.');
+    return res.json({
+      status: 'active', sessionId: id, team: session.team, startedAt: session.startedAt,
+      playMode: session.playMode, matchType: session.matchType, difficulty: session.difficulty, rank: session.rank,
+      guesses: Object.fromEntries(Object.entries(session.players).map(([playerId, player]) => [playerId, {
+        playerId, solved: player.solved, attempts: player.wrongAttempts, revealed: false,
+        ...(player.solved ? { guessedName: player.name } : {}),
+      }])),
+    });
+  });
+
   router.post('/start', requireAuth, async (req, res) => {
     const payload = startSchema.parse(req.body);
     const matchType = (payload.mode && payload.mode !== 'tutorial' ? payload.mode : payload.matchType) as MatchType;
@@ -171,6 +187,8 @@ export function createGameRouter(
 
   router.post('/finish', requireAuth, async (req, res) => {
     const payload = finishSchema.parse(req.body);
+    const completed = await profileService.getCompletedMatch(req.user?.id, payload.sessionId);
+    if (completed) return res.json(completed);
     const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
 
@@ -186,10 +204,7 @@ export function createGameRouter(
     if (!profile) throw new HttpError(500, 'Match konnte nicht gespeichert werden.');
     await sessionService.skip(payload.sessionId, req.user?.id);
 
-    res.json({
-      ...result,
-      profile,
-    });
+    res.json(await profileService.getCompletedMatch(req.user?.id, payload.sessionId) ?? { ...result, profile });
   });
 
   return router;

@@ -1,25 +1,49 @@
+import { ApiError, ConnectionError } from './apiErrors';
 import type { Difficulty, FriendRequestSummary, MatchHistoryItem, MatchResult, MatchType, OnlineMatchup, PlayMode, PublicUserSummary, Rank, Team } from '../types';
 import type { UserProfile } from '../types';
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? (import.meta.env.PROD ? 'https://api.guesstheteam.de/api/v1' : 'http://localhost:4000/api/v1')).replace(/\/$/, '');
 
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.error ?? `Request failed with ${response.status}`);
+  const controller = new AbortController();
+  const abort = () => controller.abort(options.signal?.reason);
+  if (options.signal?.aborted) abort();
+  options.signal?.addEventListener('abort', abort, { once: true });
+  const timeout = window.setTimeout(() => controller.abort(new DOMException('Timeout', 'TimeoutError')), 15000);
+  try {
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      ...options, signal: controller.signal, credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      throw new ApiError(body?.error ?? (response.status >= 500 ? 'Der Dienst ist gerade nicht verfügbar. Bitte versuche es erneut.' : `Anfrage fehlgeschlagen (${response.status}).`), response.status);
+    }
+    return await response.json() as T;
+  } catch (error) {
+    if (options.signal?.aborted || error instanceof ApiError) throw error;
+    const failure = new ConnectionError(controller.signal.aborted ? 'Die Antwort dauert zu lange. Bitte versuche es erneut.' : undefined);
+    window.dispatchEvent(new CustomEvent('gtt:connection-error', { detail: failure.message }));
+    throw failure;
+  } finally {
+    window.clearTimeout(timeout);
+    options.signal?.removeEventListener('abort', abort);
   }
-
-  return response.json() as Promise<T>;
 }
+
+export interface ResumeGameResponse {
+  status: 'active' | 'completed';
+  sessionId: string;
+  team: Team;
+  startedAt: number;
+  playMode: PlayMode;
+  matchType: MatchType;
+  difficulty: Difficulty;
+  rank: Rank;
+  guesses: Record<string, import('../types').GuessState>;
+  finish?: FinishGameResponse;
+}
+export const resumeGame = (id: string, signal?: AbortSignal) => request<ResumeGameResponse>(`/game/sessions/${encodeURIComponent(id)}`, { signal });
 
 export interface StartGameResponse {
   sessionId: string;
