@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium, devices } = require(process.env.GTT_PLAYWRIGHT_MODULE || 'playwright');
-const base = process.env.GTT_BROWSER_URL || 'http://127.0.0.1:4173';
+let base = process.env.GTT_BROWSER_URL || 'http://127.0.0.1:4173';
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
 const errors = [];
 try {
@@ -17,6 +17,10 @@ try {
       const body = path === '/api/v1/auth/me' ? { error: 'Bitte melde dich an.' } : { error: 'Test connection unavailable' };
       await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify(body) });
     });
+    // Use the final origin after hosting redirects so offline navigation remains
+    // inside the installed service worker's scope.
+    await page.goto(base);
+    base = new URL(page.url()).origin;
     for (const path of ['/', '/auth', '/impressum', '/datenschutz']) {
       await page.goto(base + path);
       await page.locator('h1, h2').first().waitFor();
