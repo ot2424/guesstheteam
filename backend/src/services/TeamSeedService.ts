@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { query } from '../db/pool';
 import { env } from '../config/env';
+import { HttpError } from '../middleware/errorHandler';
 import { REAL_MADRID_2223, PLAYER_SEARCH_POOL } from '../data/mockTeams';
 import { WORLD_CUP_TEAMS } from '../data/worldCupTeams';
 import type { Difficulty, PlayMode, TeamData } from '../types';
@@ -19,6 +20,7 @@ type SeedTeam = TeamData & {
 
 interface TeamSeasonRow {
   team: SeedTeam;
+  difficulty: Difficulty;
 }
 
 interface TeamSelectionOptions {
@@ -26,6 +28,7 @@ interface TeamSelectionOptions {
   difficulty: Difficulty;
   leagueId?: string;
   excludeTeamIds?: string[];
+  recentTeamIds?: string[];
 }
 
 const DEFAULT_SEED_PATH = path.resolve(process.cwd(), 'data/seeds/guesstheteam-seed.json');
@@ -115,16 +118,15 @@ export class TeamSeedService {
     const teams = await this.getTeams();
     if (teams.length === 0) return REAL_MADRID_2223;
 
-    const filtered = this.filterTeams(teams, options);
-    const filteredWithoutRecent = excludeTeams(filtered, options.excludeTeamIds ?? []);
-    const allWithoutRecent = excludeTeams(teams, options.excludeTeamIds ?? []);
-    const pool = filteredWithoutRecent.length > 0
-      ? filteredWithoutRecent
-      : filtered.length > 0
-        ? filtered
-        : allWithoutRecent.length > 0
-          ? allWithoutRecent
-          : teams;
+    const identities = new Set<string>();
+    const uniqueTeams = teams.filter(team => {
+      const identity = `${getDisplayClubName(team.clubId, team.name).toLowerCase().replace(/[^a-z0-9]/g, '')}:${parseInt(team.season, 10)}`;
+      if (identities.has(identity)) return false;
+      identities.add(identity);
+      return true;
+    });
+    const filtered = this.filterTeams(uniqueTeams, options);
+    const pool = selectUnplayedPool(filtered, options);
     const index = Math.floor(Math.random() * pool.length);
 
     const team = this.toDisplayTeam(pool[index]);
@@ -156,8 +158,7 @@ export class TeamSeedService {
 
   private async selectWorldCupTeam(options: TeamSelectionOptions): Promise<TeamData> {
     const teams = await this.getWorldCupTeams();
-    const withoutRecent = excludeTeams(teams, options.excludeTeamIds ?? []);
-    const pool = withoutRecent.length > 0 ? withoutRecent : teams;
+    const pool = selectUnplayedPool(teams, options);
     const index = Math.floor(Math.random() * pool.length);
     return this.toDisplayTeam(pool[index] ?? WORLD_CUP_TEAMS[0]);
   }
@@ -167,7 +168,7 @@ export class TeamSeedService {
 
     if (options.playMode === 'casual' && options.difficulty === 'easy' && options.leagueId) {
       const fixedLeagueTeams = byDifficulty.filter((team) => team.league === options.leagueId);
-      if (fixedLeagueTeams.length > 0) return fixedLeagueTeams;
+      return fixedLeagueTeams;
     }
 
     return byDifficulty;
@@ -196,8 +197,8 @@ export class TeamSeedService {
   private async getDatabaseTeams() {
     if (this.databaseTeams !== undefined) return this.databaseTeams ?? [];
 
-    const rows = await query<TeamSeasonRow>('SELECT team FROM team_seasons ORDER BY season DESC');
-    this.databaseTeams = rows.map(row => row.team);
+    const rows = await query<TeamSeasonRow>('SELECT team, difficulty FROM team_seasons ORDER BY season DESC');
+    this.databaseTeams = rows.map(row => ({ ...row.team, difficulty: row.difficulty }));
     return this.databaseTeams;
   }
 
@@ -251,6 +252,17 @@ function excludeTeams(teams: SeedTeam[], excludeTeamIds: string[]) {
   if (excludeTeamIds.length === 0) return teams;
   const excluded = new Set(excludeTeamIds);
   return teams.filter((team) => !excluded.has(team.id));
+}
+
+function selectUnplayedPool(teams: SeedTeam[], options: TeamSelectionOptions) {
+  const available = excludeTeams(teams, options.excludeTeamIds ?? []);
+  if (!available.length) throw new HttpError(409, 'Für diese Auswahl ist gerade kein anderes Team verfügbar. Wähle eine andere Liga oder Schwierigkeit.');
+  const recent = options.recentTeamIds ?? [];
+  const unseen = excludeTeams(available, recent);
+  if (unseen.length) return unseen;
+  // Once the account has seen the whole pool, replay the least recently seen team.
+  const oldest = Math.max(...available.map(team => recent.indexOf(team.id)));
+  return available.filter(team => recent.indexOf(team.id) === oldest);
 }
 
 function uniqueNames(names: string[]) {

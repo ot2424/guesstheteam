@@ -275,7 +275,7 @@ export function ProfilePage() {
                   className="flex items-center gap-3 p-3 rounded-xl border"
                   style={{
                     background: '#161d29',
-                    borderColor: m.isWin ? '#22C55E30' : '#EF444430',
+                    borderColor: m.skipped ? '#9aa4b230' : m.isWin ? '#22C55E30' : '#EF444430',
                   }}
                 >
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black flex-shrink-0" style={{ background: '#0f1722', color: '#9aa4b2', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -288,9 +288,9 @@ export function ProfilePage() {
                   <div className="text-right flex-shrink-0">
                     <div
                       className="text-xs font-semibold"
-                      style={{ color: m.isWin ? '#22C55E' : '#EF4444' }}
+                      style={{ color: m.skipped ? '#9aa4b2' : m.isWin ? '#22C55E' : '#EF4444' }}
                     >
-                      {m.isWin ? 'Sieg' : 'Niederlage'}
+                      {m.skipped ? 'Übersprungen' : m.isWin ? 'Sieg' : 'Niederlage'}
                     </div>
                     <div
                       className="text-xs"

@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { env } from '../config/env';
 import { WORLD_CUP_TEAMS } from '../data/worldCupTeams';
 import { TeamSeedService } from './TeamSeedService';
+import { REAL_MADRID_2223 } from '../data/mockTeams';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
 describe('TeamSeedService', () => {
   beforeEach(() => {
@@ -45,5 +49,19 @@ describe('TeamSeedService', () => {
     const results = await service.searchPlayers('mbappe', 5);
 
     expect(results).toContainEqual({ name: 'Kylian Mbappe' });
+  });
+
+  it('avoids account history and never returns an explicitly skipped team', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'gtt-selection-'));
+    try {
+      const file = path.join(directory, 'seed.json');
+      const teams = ['a', 'b', 'c'].map(id => ({ ...REAL_MADRID_2223, id, name: `Team ${id}`, difficulty: 'easy' }));
+      writeFileSync(file, JSON.stringify({ teams }));
+      const service = new TeamSeedService(file, { enrichTeam: async (team: unknown) => team } as never);
+      expect((await service.selectTeam({ playMode: 'casual', difficulty: 'easy', recentTeamIds: ['a', 'b'] })).id).toBe('c');
+      expect((await service.selectTeam({ playMode: 'casual', difficulty: 'easy', recentTeamIds: ['c', 'b', 'a'], excludeTeamIds: ['c'] })).id).toBe('a');
+      await expect(service.selectTeam({ playMode: 'casual', difficulty: 'easy', excludeTeamIds: ['a', 'b', 'c'] })).rejects.toThrow('kein anderes Team');
+      await expect(service.selectTeam({ playMode: 'casual', difficulty: 'hard' })).rejects.toThrow('kein anderes Team');
+    } finally { rmSync(directory, { recursive: true, force: true }); }
   });
 });

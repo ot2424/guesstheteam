@@ -9,8 +9,15 @@ import { deliverAuthMail } from '../backend/src/services/MailService';
 import { ProfileService } from '../backend/src/services/ProfileService';
 import { ONLINE_UNLOCK_LEVEL } from '../backend/src/services/ProgressionService';
 import { TeamSeedService } from '../backend/src/services/TeamSeedService';
+import { REAL_MADRID_2223 } from '../backend/src/data/mockTeams';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import type { AddressInfo } from 'node:net';
 if (process.env.MIGRATION_TEST_DATABASE !== 'true') throw new Error('Set MIGRATION_TEST_DATABASE=true and DATABASE_URL to an isolated test database');
+const fixtureDirectory = mkdtempSync(path.join(tmpdir(), 'gtt-db-fixtures-'));
+process.env.GUESSTHETEAM_SEED_PATH = path.join(fixtureDirectory, 'seed.json');
+writeFileSync(process.env.GUESSTHETEAM_SEED_PATH, JSON.stringify({ teams: ['easy', 'medium', 'hard'].flatMap(difficulty => Array.from({ length: 6 }, (_, index) => ({ ...REAL_MADRID_2223, id: `skip-fixture-${difficulty}-${index}`, name: `Fixture ${difficulty} ${index}`, difficulty }))) }));
 const server = createApp().listen(0, '127.0.0.1');
 await once(server, 'listening');
 const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/v1`;
@@ -85,6 +92,24 @@ try {
   const before = await service.getProfile(user.id);
   await Promise.all([service.persistMatch(user.id, persistence), service.persistMatch(user.id, persistence)]);
   assert.equal((await service.getProfile(user.id))!.xp, before!.xp);
+  const seen = new Set([game.team.id]);
+  for (let index = 0; index < 3; index++) {
+    const next = await call('/game/start', 'POST', { playMode: 'casual', difficulty: 'easy' }).then(response => response.json());
+    assert.equal(seen.has(next.team.id), false, 'Previously completed/skipped teams must be avoided');
+    seen.add(next.team.id);
+    const skipped = await call('/game/skip', 'POST', { sessionId: next.sessionId });
+    assert.equal(skipped.status, 200);
+    assert.equal((await skipped.json()).casualSkipsRemaining, 2 - index);
+    assert.equal((await call('/game/skip', 'POST', { sessionId: next.sessionId })).status, 200, 'Skip retry is idempotent');
+    assert.equal((await query('SELECT id FROM active_game_sessions WHERE id=$1', [next.sessionId])).length, 0);
+  }
+  const skippedHistory = await call('/profile/matches').then(response => response.json());
+  assert.equal(skippedHistory.matches.filter((match: { skipped: boolean }) => match.skipped).length, 3);
+  assert.deepEqual(await service.getProfile(user.id), before, 'Skipping must preserve XP, LP and match counters');
+  const exhausted = await call('/game/start', 'POST', { playMode: 'casual' }).then(response => response.json());
+  assert.equal(exhausted.casualSkipsRemaining, 0);
+  assert.equal((await call('/game/skip', 'POST', { sessionId: exhausted.sessionId })).status, 400);
+  assert.equal((await call(`/game/sessions/${exhausted.sessionId}`)).status, 200, 'Rejected skip preserves the game');
   await query('UPDATE profiles SET skip_shields=1 WHERE id=$1', [user.id]);
   const consumed = await Promise.all([service.consumeSkipShield(user.id), service.consumeSkipShield(user.id)]);
   assert.equal(consumed.filter(Boolean).length, 1);
@@ -155,4 +180,5 @@ try {
   server.close();
   await once(server, 'close');
   await pool.end();
+  rmSync(fixtureDirectory, { recursive: true, force: true });
 }

@@ -185,10 +185,11 @@ if (logoLookup) {
 
 const teams = selectedTeams.map((team) => ({
   ...team,
-  logoUrl: teamLogos.get(team.name) ?? team.logoUrl,
+  logoUrl: teamLogos.get(team.name) || `https://tmssl.akamaized.net/images/wappen/big/${team.clubId}.png`,
+  league: ({ L1: 'Bundesliga', GB1: 'Premier League', ES1: 'La Liga', IT1: 'Serie A', FR1: 'Ligue 1' } as Record<string, string>)[team.league] ?? team.league,
   players: team.players.map((player) => ({
     ...player,
-    career: careers.get(player.id) ?? player.career,
+    career: (careers.get(player.id) ?? player.career).map(club => ({ ...club, logoUrl: /^\d+$/.test(club.clubId) ? `https://tmssl.akamaized.net/images/wappen/big/${club.clubId}.png` : '' })),
   })),
 }));
 

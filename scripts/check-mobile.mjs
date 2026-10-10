@@ -59,10 +59,14 @@ try {
     const saved = { sessionId: '11111111-1111-4111-8111-111111111111', team, guesses: initialGuesses, startedAt: Date.now(), playMode: 'casual', matchType: 'single', difficulty: 'easy', rank: 'Bronze 3', savedAt: Date.now() };
     await page.evaluate(game => localStorage.setItem('footyguesser.activeGame.v1', JSON.stringify(game)), saved);
     await page.unroute('**/api/v1/**');
+    let skipRequests = 0;
     await page.route('**/api/v1/**', async route => {
       const path = new URL(route.request().url()).pathname;
       if (path === '/api/v1/game/guess') return route.abort('failed');
+      if (path === '/api/v1/game/skip') skipRequests++;
       const body = path === '/api/v1/auth/me' ? { user: { id: 'fixture-user', email: 'test@example.com' } }
+        : path === '/api/v1/game/skip' ? { skipped: true, profile: null, casualSkipsRemaining: 2 }
+          : path === '/api/v1/game/start' ? { ...saved, sessionId: '22222222-2222-4222-8222-222222222222', team: { ...team, id: 'next-team', name: 'Next FC' }, casualSkipsRemaining: 2 }
         : path.startsWith('/api/v1/game/sessions/') ? { ...saved, status: 'active', guesses: { ...initialGuesses, p0: { ...initialGuesses.p0, solved: true, guessedName: 'Solved Player' } } }
           : path === '/api/v1/profile/me' ? { profile: null } : path === '/api/v1/players/search' ? { results: [] } : { notificationCount: 0 };
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
@@ -82,6 +86,10 @@ try {
     await page.getByRole('alert').filter({ hasText: 'Die Verbindung ist unterbrochen' }).waitFor();
     assert.equal(await page.getByLabel('Spielername').inputValue(), 'Retry Name');
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('footyguesser.activeGame.v1')).guesses.p0.solved), true);
+    await page.getByRole('button', { name: /Free Skip/ }).click();
+    await page.getByRole('button', { name: /Free Skip 2\/3/ }).waitFor();
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('footyguesser.activeGame.v1'))?.team.id === 'next-team');
+    assert.equal(skipRequests, 1, 'Free skip must be persisted on the server before starting the next game');
     await context.close();
     console.log(`${device}: responsive layout, bottom navigation, reset form, connection banner and offline recovery, server resume, club logo and input retention passed.`);
   }

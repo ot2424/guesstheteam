@@ -69,6 +69,7 @@ export interface PrestigeVisual {
 }
 
 export interface MatchHistoryItem {
+  skipped?: boolean;
   id: string;
   teamName: string;
   teamLogo?: string;
@@ -87,6 +88,7 @@ export interface MatchHistoryItem {
 }
 
 export interface GameSession {
+  leagueId?: string;
   sessionId: string;
   userId: string;
   playMode: PlayMode;

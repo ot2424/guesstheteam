@@ -32,6 +32,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
 }
 
 export interface ResumeGameResponse {
+  casualSkipsRemaining?: number;
   status: 'active' | 'completed';
   sessionId: string;
   team: Team;
@@ -46,6 +47,7 @@ export interface ResumeGameResponse {
 export const resumeGame = (id: string, signal?: AbortSignal) => request<ResumeGameResponse>(`/game/sessions/${encodeURIComponent(id)}`, { signal });
 
 export interface StartGameResponse {
+  casualSkipsRemaining?: number;
   sessionId: string;
   playMode: PlayMode;
   matchType: MatchType;
@@ -76,6 +78,7 @@ export interface AutoSolveResponse {
 }
 
 export interface SkipTeamResponse {
+  casualSkipsRemaining?: number;
   skipped: boolean;
   profile: UserProfile;
 }

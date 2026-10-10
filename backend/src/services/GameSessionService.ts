@@ -15,6 +15,7 @@ export class GameSessionService {
   private progressionService = new ProgressionService();
 
   async create(userId: string, team: TeamData, opts: {
+    leagueId?: string;
     playMode: PlayMode;
     matchType: MatchType;
     difficulty: Difficulty;
@@ -33,6 +34,7 @@ export class GameSessionService {
       career: player.career,
     }));
     const session: GameSession = {
+      leagueId: opts.leagueId,
       sessionId,
       userId,
       playMode: opts.playMode,

@@ -173,6 +173,7 @@ export interface MatchResult {
 }
 
 export interface MatchHistoryItem {
+  skipped?: boolean;
   id: string;
   teamName: string;
   teamLogo?: string;

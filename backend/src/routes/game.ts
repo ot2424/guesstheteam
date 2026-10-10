@@ -60,6 +60,7 @@ export function createGameRouter(
     if (!session) throw new HttpError(404, 'Dieses Spiel ist nicht mehr verfügbar.');
     return res.json({
       status: 'active', sessionId: id, team: session.team, startedAt: session.startedAt,
+      casualSkipsRemaining: await profileService.getCasualSkipsRemaining(req.user?.id),
       playMode: session.playMode, matchType: session.matchType, difficulty: session.difficulty, rank: session.rank,
       guesses: Object.fromEntries(Object.entries(session.players).map(([playerId, player]) => [playerId, {
         playerId, solved: player.solved, attempts: player.wrongAttempts, revealed: false,
@@ -95,8 +96,10 @@ export function createGameRouter(
       difficulty,
       leagueId: payload.leagueId,
       excludeTeamIds: payload.excludeTeamIds,
+      recentTeamIds: await profileService.getRecentTeamIds(req.user?.id),
     });
     const session = await sessionService.create(req.user?.id ?? 'dev-user', team, {
+      leagueId: payload.leagueId,
       playMode,
       matchType,
       difficulty,
@@ -113,6 +116,7 @@ export function createGameRouter(
     });
 
     res.status(201).json({
+      casualSkipsRemaining: await profileService.getCasualSkipsRemaining(req.user?.id),
       sessionId: session.sessionId,
       playMode: session.playMode,
       matchType: session.matchType,
@@ -170,9 +174,22 @@ export function createGameRouter(
 
   router.post('/skip', requireAuth, async (req, res) => {
     const payload = skipSchema.parse(req.body);
+    const completed = await profileService.getCompletedMatch(req.user?.id, payload.sessionId);
+    if (completed?.skipped) return res.json({ skipped: true, profile: completed.profile, casualSkipsRemaining: await profileService.getCasualSkipsRemaining(req.user?.id) });
+    if (completed) throw new HttpError(409, 'Dieses Spiel wurde bereits beendet.');
     const session = await sessionService.get(payload.sessionId, req.user?.id);
     if (!session) throw new HttpError(404, 'Session not found');
-    if (session.playMode !== 'ranked') throw new HttpError(400, 'Team-Skip-Schilde sind nur im Ranked-Modus nutzbar.');
+    if (session.playMode === 'casual') {
+      // Reject exhausted pools before spending a free skip or discarding progress.
+      await teamSeedService.selectTeam({ playMode: 'casual', difficulty: session.difficulty, leagueId: session.leagueId, excludeTeamIds: [session.team.id] });
+      const finish = await sessionService.finish(payload.sessionId, req.user?.id, 'surrender', false);
+      if (!finish) throw new HttpError(404, 'Session not found');
+      const profile = await profileService.persistMatch(req.user?.id, { session, skipped: true, result: finish.result, progression: { xpGained: 0, lpChange: 0 } });
+      if (!profile) throw new HttpError(500, 'Skip konnte nicht gespeichert werden.');
+      await sessionService.skip(payload.sessionId, req.user?.id);
+      return res.json({ skipped: true, profile, casualSkipsRemaining: await profileService.getCasualSkipsRemaining(req.user?.id) });
+    }
+    if (session.playMode !== 'ranked') throw new HttpError(400, 'Dieser Modus unterstützt keine Skips.');
 
     const profile = await profileService.consumeSkipShield(req.user?.id);
     if (!profile) throw new HttpError(400, 'Kein Team-Skip-Schild verfügbar.');

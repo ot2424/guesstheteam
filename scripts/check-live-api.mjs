@@ -53,6 +53,26 @@ try {
   const restored = await call(`/api/v1/game/sessions/${sessionId}`).then(response => response.json());
   assert.equal(restored.status, 'active');
   assert.equal(Object.values(restored.guesses).filter(guess => guess.solved).length, 1);
+  const profileBeforeSkip = await call('/api/v1/profile/me').then(response => response.json());
+  const seenTeams = new Set();
+  for (let index = 0; index < 3; index++) {
+    const current = index === 0 ? game : await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'easy' }).then(response => response.json());
+    assert.equal(seenTeams.has(current.team.id), false);
+    seenTeams.add(current.team.id);
+    const skipped = await call('/api/v1/game/skip', 'POST', { sessionId: current.sessionId });
+    assert.equal(skipped.status, 200);
+    assert.equal((await skipped.json()).casualSkipsRemaining, 2 - index);
+    assert.equal((await call('/api/v1/game/skip', 'POST', { sessionId: current.sessionId })).status, 200);
+  }
+  assert.deepEqual(await call('/api/v1/profile/me').then(response => response.json()), profileBeforeSkip);
+  const history = await call('/api/v1/profile/matches').then(response => response.json());
+  assert.equal(history.matches.length, 3);
+  assert.ok(history.matches.every(match => match.skipped && match.xpGained === 0 && match.lpChange === 0));
+  const noSkips = await call('/api/v1/game/start', 'POST', { playMode: 'casual', difficulty: 'easy' }).then(response => response.json());
+  assert.equal(seenTeams.has(noSkips.team.id), false);
+  assert.equal(noSkips.casualSkipsRemaining, 0);
+  assert.equal((await call('/api/v1/game/skip', 'POST', { sessionId: noSkips.sessionId })).status, 400);
+  assert.equal((await call(`/api/v1/game/sessions/${noSkips.sessionId}`)).status, 200);
   assert.equal((await call('/api/v1/auth/logout', 'POST')).status, 200);
   assert.equal((await call('/api/v1/auth/me')).status, 401);
   console.log('Public HTTPS checks passed: database readiness, temporary account login, CORS/CSRF, secure cookies, profile, PostgreSQL game persistence, server resume, guess and logout. No email sent; temporary account removed.');

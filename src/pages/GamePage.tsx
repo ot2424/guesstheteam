@@ -9,7 +9,7 @@ import { MatchPrepAnimation } from '../components/game/MatchPrepAnimation';
 import { FlagIcon } from '../components/ui/FlagIcon';
 import { TeamBadge } from '../components/ui/TeamBadge';
 import { autoSolvePlayer, finishGame, getProfile, skipRankedTeam, startGame, submitGuess, resumeGame } from '../lib/api';
-import { DAILY_CASUAL_SKIP_LIMIT, consumeDailyCasualSkip, getDailyCasualSkipsRemaining } from '../lib/dailyCasualSkips';
+import { DAILY_CASUAL_SKIP_LIMIT } from '../lib/dailyCasualSkips';
 import { getRankedSurrenderLpChange } from '../lib/progression';
 import { clearSavedGame, loadSavedGame, matchesSavedGame, saveGame } from '../lib/savedGame';
 import type { Difficulty, GuessState, MatchType, PlayerCard, PlayMode, Rank, Team, UserProfile } from '../types';
@@ -49,7 +49,7 @@ export function GamePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [restartNonce, setRestartNonce] = useState(0);
   const [excludedTeamIds, setExcludedTeamIds] = useState<string[]>([]);
-  const [casualSkipsRemaining, setCasualSkipsRemaining] = useState(() => getDailyCasualSkipsRemaining());
+  const [casualSkipsRemaining, setCasualSkipsRemaining] = useState(DAILY_CASUAL_SKIP_LIMIT);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showSurrenderModal, setShowSurrenderModal] = useState(false);
@@ -95,6 +95,7 @@ export function GamePage() {
             if (controller.signal.aborted) return;
             if (restored.status === 'completed' && restored.finish) { goToResult(restored.finish, restored.team); return; }
             setSessionId(restored.sessionId);
+            setCasualSkipsRemaining(restored.casualSkipsRemaining ?? DAILY_CASUAL_SKIP_LIMIT);
             setTeam(restored.team);
             setGuesses(restored.guesses);
             setStartedAt(restored.startedAt);
@@ -122,6 +123,7 @@ export function GamePage() {
 
         const nextStartedAt = Date.now();
         setSessionId(response.sessionId);
+        setCasualSkipsRemaining(response.casualSkipsRemaining ?? DAILY_CASUAL_SKIP_LIMIT);
         setTeam(response.team);
         setEffectiveDifficulty(response.difficulty);
         setEffectiveRank(response.rank);
@@ -397,25 +399,27 @@ export function GamePage() {
     }
   }, [finished, inventory.skipShields, playMode, sessionId, team]);
 
-  const handleCasualFreeSkip = useCallback(() => {
-    if (!team || playMode !== 'casual' || finished || casualSkipsRemaining <= 0) return;
-    if (!consumeDailyCasualSkip()) {
-      setCasualSkipsRemaining(0);
-      return;
-    }
-
-    setCasualSkipsRemaining(getDailyCasualSkipsRemaining());
-    clearSavedGame();
-    setExcludedTeamIds((ids) => [team.id, ...ids.filter((id) => id !== team.id)].slice(0, 10));
+  const handleCasualFreeSkip = useCallback(async () => {
+    if (!sessionId || !team || playMode !== 'casual' || finished || loading || casualSkipsRemaining <= 0) return;
     setLoading(true);
-    setSessionId(null);
-    setTeam(null);
-    setGuesses({});
-    setActiveTipId(null);
-    setFinished(false);
-    setError(null);
-    setRestartNonce((value) => value + 1);
-  }, [casualSkipsRemaining, finished, playMode, team]);
+    try {
+      const response = await skipRankedTeam({ sessionId });
+      setProfile(response.profile);
+      setCasualSkipsRemaining(response.casualSkipsRemaining ?? 0);
+      clearSavedGame();
+      setExcludedTeamIds((ids) => [team.id, ...ids.filter((id) => id !== team.id)].slice(0, 10));
+      setSessionId(null);
+      setTeam(null);
+      setGuesses({});
+      setActiveTipId(null);
+      setFinished(false);
+      setError(null);
+      setRestartNonce((value) => value + 1);
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : 'Team konnte nicht übersprungen werden.');
+    }
+  }, [casualSkipsRemaining, finished, loading, playMode, sessionId, team]);
 
   const handleAutoSolve = useCallback(async () => {
     if (!sessionId || !activeTipId || playMode !== 'ranked' || inventory.autoSolveJokers <= 0 || finished) return;
