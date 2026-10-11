@@ -125,7 +125,7 @@ export function LeaderboardPage() {
           <div>
             <div className="text-xs font-black uppercase tracking-[0.22em] text-green-400">Community</div>
             <h1 className="bebas mt-2 text-5xl leading-none text-white">Ranglisten</h1>
-            <p className="mt-2 max-w-xl text-sm text-gray-500">Vergleiche LP, Streak-Rekorde und Siege. Suche Spieler und baue deine Freundesliste fuer den Online-Modus auf.</p>
+            <p className="mt-2 max-w-xl text-sm text-gray-500">Vergleiche LP, Streak-Rekorde und Siege. Suche Spieler und baue deine Freundesliste für den Online-Modus auf.</p>
           </div>
           <div className="rounded-2xl border px-4 py-3 text-sm" style={cardStyle}>
             <span className="text-gray-500">Benachrichtigungen</span>
@@ -164,7 +164,7 @@ export function LeaderboardPage() {
                   user={entry}
                   index={index + 1}
                   metric={getMetric(activeTab, entry)}
-                  action={friendIds.has(entry.id) ? 'Freund' : outgoingIds.has(entry.id) ? 'Angefragt' : 'Hinzufuegen'}
+                  action={friendIds.has(entry.id) ? 'Freund' : outgoingIds.has(entry.id) ? 'Angefragt' : 'Hinzufügen'}
                   onAction={() => void handleAddFriend(entry)}
                   disabled={friendIds.has(entry.id) || outgoingIds.has(entry.id)}
                 />

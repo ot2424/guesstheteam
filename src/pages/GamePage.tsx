@@ -477,7 +477,7 @@ export function GamePage() {
             className="mt-4 px-4 py-2 rounded-lg text-sm font-semibold"
             style={{ background: '#22C55E', color: '#0A0E1A' }}
           >
-            Zurueck
+            Zurück
           </button>
         </div>
       </div>

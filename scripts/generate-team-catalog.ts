@@ -299,9 +299,9 @@ async function generateSegment(
           role: 'system',
           content: [
             'Du bist ein erfahrener Fussball-Historiker und Daten-Analyst.',
-            'Du kuratierst Team-Saisons fuer ein Fussball-Quizspiel.',
-            'Gib nur valide JSON-Daten aus, keine Erklaerungen.',
-            'Jeder Eintrag muss spaeter per Transfermarkt-API zu einem Club und einer Saison aufloesbar sein.',
+            'Du kuratierst Team-Saisons für ein Fussball-Quizspiel.',
+            'Gib nur valide JSON-Daten aus, keine Erklärungen.',
+            'Jeder Eintrag muss später per Transfermarkt-API zu einem Club und einer Saison auflösbar sein.',
           ].join(' '),
         },
         {
@@ -365,14 +365,14 @@ function buildSegmentPrompt(
   const rangeText = difficulty === 'easy'
     ? 'Saisons 2018/2019 bis 2025/2026. Nur absolute Mainstream-Clubs: Bayern Munich, Borussia Dortmund, RB Leipzig, Bayer Leverkusen, Schalke 04, Werder Bremen, VfB Stuttgart, Eintracht Frankfurt, Real Madrid, Barcelona, Atletico Madrid, Sevilla, Valencia, Manchester City, Liverpool, Manchester United, Arsenal, Chelsea, Tottenham Hotspur, Newcastle United, West Ham United, Juventus, Inter Milan, AC Milan, Napoli, Roma, Lazio, Atalanta, PSG, Lyon, Marseille, Monaco.'
     : difficulty === 'medium'
-      ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Mainstream-Clubs aus Bundesliga, Premier League, La Liga, Serie A und Ligue 1. Deutsche Traditionsvereine sind ausdruecklich erlaubt. Keine Nischenclubs wie Rennes, Anderlecht, Real Sociedad, Athletic Bilbao, Celta Vigo, Nice, Saint-Etienne, PSV oder Feyenoord.'
-      : 'Saisons 2013/2014 bis 2017/2018. Aeltere, aber in der lokalen Datenquelle voll abgedeckte Mainstream- und Nostalgie-Clubs. Fokus auf deutsche Traditionsvereine, Big-Six England, Real/Barca/Atletico/Sevilla/Valencia/Villarreal, grosse italienische Clubs und PSG/Lyon/Marseille/Monaco.';
+      ? 'Saisons 2016/2017 bis 2025/2026. Bekannte Mainstream-Clubs aus Bundesliga, Premier League, La Liga, Serie A und Ligue 1. Deutsche Traditionsvereine sind ausdrücklich erlaubt. Keine Nischenclubs wie Rennes, Anderlecht, Real Sociedad, Athletic Bilbao, Celta Vigo, Nice, Saint-Etienne, PSV oder Feyenoord.'
+      : 'Saisons 2013/2014 bis 2017/2018. Ältere, aber in der lokalen Datenquelle voll abgedeckte Mainstream- und Nostalgie-Clubs. Fokus auf deutsche Traditionsvereine, Big-Six England, Real/Barca/Atletico/Sevilla/Valencia/Villarreal, grosse italienische Clubs und PSG/Lyon/Marseille/Monaco.';
 
   return `
-Erzeuge Block ${options.block} eines 500er-Katalogs fuer mein Fussball-Quizspiel.
+Erzeuge Block ${options.block} eines 500er-Katalogs für mein Fussball-Quizspiel.
 
 Gib exakt ${count} Teams aus.
-IDs muessen exakt von ${startId} bis ${endId} laufen.
+IDs müssen exakt von ${startId} bis ${endId} laufen.
 Jeder Eintrag muss difficulty "${difficulty}" haben.
 Erlaubter Bereich: ${rangeText}
 
@@ -386,11 +386,11 @@ Datenstruktur:
 Regeln:
 - Keine Nationalteams.
 - Keine Fantasienamen.
-- Keine Randclubs oder Expertenvereine, die fuer normale Fussballfans fast unmoeglich wirken.
+- Keine Randclubs oder Expertenvereine, die für normale Fussballfans fast unmöglich wirken.
 - Lieber mehr Saison-Varianten von bekannten Vereinen als neue unbekannte Vereine.
 - Keine doppelten Kombinationen aus team_name + season.
-- Die folgenden Team-Saisons sind VERBOTEN und duerfen exakt nicht nochmal vorkommen: ${excluded.length > 0 ? excluded.map((team) => `${team.team_name} ${team.season}`).join('; ') : 'keine'}.
-- Pruefe vor der Antwort selbst, dass in deinen ${count} Eintraegen keine team_name + season Kombination doppelt ist.
+- Die folgenden Team-Saisons sind VERBOTEN und dürfen exakt nicht nochmal vorkommen: ${excluded.length > 0 ? excluded.map((team) => `${team.team_name} ${team.season}`).join('; ') : 'keine'}.
+- Prüfe vor der Antwort selbst, dass in deinen ${count} Einträgen keine team_name + season Kombination doppelt ist.
 - Verschiedene Saisons desselben Vereins sind erlaubt.
 - Jedes Team muss eine historisch eindeutige Stammelf oder klare Kernelf besitzen.
 - Antworte nur als JSON-Objekt mit Property "teams".

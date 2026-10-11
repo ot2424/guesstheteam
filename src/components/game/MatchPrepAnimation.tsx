@@ -43,7 +43,7 @@ export function MatchPrepAnimation({ playMode, matchType, difficulty, rank }: Pr
         </div>
 
         <div className="gtt-prep-copy">
-          <p className="gtt-prep-kicker">Scouting laeuft</p>
+          <p className="gtt-prep-kicker">Scouting läuft</p>
           <h1>Match wird vorbereitet</h1>
           <p>Wir suchen ein passendes Team, sortieren die Positionen und bauen deine Hinweise auf.</p>
         </div>

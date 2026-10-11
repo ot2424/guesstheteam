@@ -53,7 +53,7 @@ export function AuthPage() {
           <p className="text-sm text-gray-500 mt-1">
             {mode === 'login'
               ? 'Melde dich an, damit Level, Rang und Fortschritt gespeichert werden.'
-              : 'Erstelle dein Spielerprofil fuer Fortschritt, Rang und spaetere Freischaltungen.'}
+              : 'Erstelle dein Spielerprofil für Fortschritt, Rang und spätere Freischaltungen.'}
           </p>
         </div>
 
@@ -159,7 +159,7 @@ function getAuthErrorMessage(error: unknown, mode: AuthMode) {
   }
 
   if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-    return 'Bitte bestaetige zuerst deine Email-Adresse und versuche es danach erneut.';
+    return 'Bitte bestätige zuerst deine Email-Adresse und versuche es danach erneut.';
   }
 
   if (message.includes('user already registered') || message.includes('already registered') || message.includes('already exists')) {
@@ -177,10 +177,10 @@ function getAuthErrorMessage(error: unknown, mode: AuthMode) {
   }
 
   if (message.includes('email')) {
-    return 'Bitte pruefe die Email-Adresse.';
+    return 'Bitte prüfe die Email-Adresse.';
   }
 
   return mode === 'login'
-    ? 'Einloggen fehlgeschlagen. Bitte pruefe deine Daten.'
-    : 'Registrierung fehlgeschlagen. Bitte pruefe deine Angaben.';
+    ? 'Einloggen fehlgeschlagen. Bitte prüfe deine Daten.'
+    : 'Registrierung fehlgeschlagen. Bitte prüfe deine Angaben.';
 }

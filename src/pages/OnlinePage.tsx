@@ -127,7 +127,7 @@ export function OnlinePage() {
       const response = await guessOnlineMatchup(active.id, guess);
       setActive(response.matchup);
       setGuess('');
-      setNotice(response.correct ? `${response.name} geloest.` : 'Falsch geraten.');
+      setNotice(response.correct ? `${response.name} gelöst.` : 'Falsch geraten.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tipp konnte nicht gesendet werden.');
     }
@@ -211,7 +211,7 @@ export function OnlinePage() {
               </button>
             </div>
             <div className="space-y-2">
-              {friends.length === 0 && <div className="text-sm text-gray-600">Noch keine Freunde. Fuege sie in der Rangliste hinzu.</div>}
+              {friends.length === 0 && <div className="text-sm text-gray-600">Noch keine Freunde. Füge sie in der Rangliste hinzu.</div>}
               {friends.map((friend) => (
                 <button
                   key={friend.id}
@@ -321,7 +321,7 @@ export function OnlinePage() {
                     <div key={player.id} className="rounded-xl border p-3" style={{ background: '#111827', borderColor: solved ? 'rgba(34,197,94,0.35)' : 'rgba(255,255,255,0.08)' }}>
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg border px-2 py-1 text-xs font-black text-blue-300" style={{ borderColor: 'rgba(96,165,250,0.25)', background: 'rgba(37,99,235,0.12)' }}>{player.position}</div>
-                        <div className="text-sm font-bold text-white">{solved ? 'Geloest' : '???'}</div>
+                        <div className="text-sm font-bold text-white">{solved ? 'Gelöst' : '???'}</div>
                       </div>
                       <div className="mt-3 flex gap-2">
                         {player.career.slice(-2).map((club) => (
@@ -353,7 +353,7 @@ function ScoreCard({ label, score, total, duration, finished }: { label: string;
     <div className="rounded-xl border p-4" style={{ background: '#111827', borderColor: 'rgba(255,255,255,0.08)' }}>
       <div className="text-xs text-gray-500">{label}</div>
       <div className="mt-1 bebas text-3xl text-white">{score}/{total}</div>
-      <div className="text-xs text-gray-500">{formatDuration(duration)} · {finished ? 'abgegeben' : 'laeuft'}</div>
+      <div className="text-xs text-gray-500">{formatDuration(duration)} · {finished ? 'abgegeben' : 'läuft'}</div>
     </div>
   );
 }

@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
 
     if (!data.session || !data.user) {
-      return 'Account erstellt. Bitte bestaetige deine Email, bevor du dich einloggst.';
+      return 'Account erstellt. Bitte bestätige deine Email, bevor du dich einloggst.';
     }
 
     const profile = mapUserToProfileRow(createStarterProfile({
